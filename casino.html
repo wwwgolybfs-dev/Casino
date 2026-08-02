@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Petzker Casino</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-2: #12121a;
+      --surface: #1a1a24;
+      --surface-2: #22222e;
+      --gold: #d4af37;
+      --gold-light: #f0d878;
+      --gold-dark: #a88b2a;
+      --red: #c41e3a;
+      --red-soft: #3a1520;
+      --green: #1a7a4c;
+      --green-soft: #0f2e1f;
+      --text: #f5f0e6;
+      --muted: #8a8494;
+      --border: rgba(212, 175, 55, 0.18);
+      --shadow: 0 12px 40px rgba(0,0,0,.45);
+      --radius: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100%;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(212,175,55,.08), transparent 50%),
+        radial-gradient(ellipse 80% 50% at 100% 100%, rgba(196,30,58,.06), transparent 40%),
+        var(--bg);
+      min-height: 100vh;
+      padding-bottom: calc(24px + var(--safe-bottom));
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(12px + var(--safe-top)) 16px 12px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: 0 4px 14px rgba(212,175,55,.3);
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -.02em;
+      color: var(--gold-light);
+    }
+    .brand-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 1px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .balance-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(212,175,55,.04));
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 7px 12px 7px 9px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    }
+
+    .balance-chip .diamond {
+      font-size: 15px;
+      filter: drop-shadow(0 0 6px rgba(212,175,55,.5));
+    }
+
+    .balance-value {
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--gold-light);
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .balance-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      line-height: 1;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 22px 16px 8px;
+      text-align: center;
+    }
+
+    .hero-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: .85;
+      margin-bottom: 6px;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold), #e8c547);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.15;
+    }
+
+    .hero-desc {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.45;
+    }
+
+    /* ── Games grid ── */
+    .games-section {
+      padding: 18px 16px 0;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-left: 2px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .game-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    .game-card:active {
+      transform: scale(.97);
+    }
+
+    .game-card.wide {
+      grid-column: 1 / -1;
+      min-height: 120px;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(212,175,55,.07) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .game-visual {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      padding-top: 16px;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-card.wide .game-visual {
+      flex: 0 0 90px;
+      padding: 0 8px 0 16px;
+      font-size: 42px;
+    }
+
+    .game-info {
+      padding: 12px 14px 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-card.wide .game-info {
+      flex: 1;
+      padding: 14px 16px 14px 4px;
+    }
+
+    .game-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+
+    .game-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    .game-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 99px;
+      background: rgba(212,175,55,.15);
+      color: var(--gold);
+      border: 1px solid rgba(212,175,55,.25);
+      z-index: 2;
+    }
+
+    .game-badge.soon {
+      background: rgba(138,132,148,.12);
+      color: var(--muted);
+      border-color: rgba(138,132,148,.2);
+    }
+
+    .game-badge.live {
+      background: rgba(26,122,76,.2);
+      color: #3dd68c;
+      border-color: rgba(26,122,76,.35);
+    }
+
+    /* ── Info strip ── */
+    .info-strip {
+      max-width: 480px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .info-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .info-text strong {
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+
+    /* ── User bar (bottom) ── */
+    .user-bar {
+      max-width: 480px;
+      margin: 18px auto 0;
+      padding: 0 16px;
+    }
+
+    .user-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(212,175,55,.25), rgba(196,30,58,.2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--gold-light);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-meta { flex: 1; min-width: 0; }
+    .user-name {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-id {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: calc(28px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #1e1e28;
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 11px 18px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 200;
+      transition: .28s cubic-bezier(.34,1.4,.64,1);
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Loading ── */
+    .balance-loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(212,175,55,.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Coming soon overlay on card ── */
+    .game-card.disabled {
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    @media (min-width: 420px) {
+      .hero-title { font-size: 32px; }
+      .game-card { min-height: 175px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-icon">♠</div>
+      <div>
+        <div class="brand-title">Petzker Casino</div>
+        <div class="brand-sub">VIP Lounge</div>
+      </div>
+    </div>
+
+    <div class="balance-chip" id="balance-chip" title="Ваш баланс очков">
+      <span class="diamond">💎</span>
+      <div>
+        <div class="balance-label">Баланс</div>
+        <div class="balance-value" id="balance-value">
+          <span class="balance-loading"></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-kicker">Добро пожаловать</div>
+    <h1 class="hero-title">Игровой зал</h1>
+    <p class="hero-desc">Играйте на очки, заработанные в мини-играх и на событиях</p>
+  </section>
+
+  <!-- Games -->
+  <section class="games-section">
+    <div class="section-label">Столы</div>
+    <div class="games-grid">
+
+      <!-- Blackjack -->
+      <div class="game-card" onclick="openGame('blackjack')">
+        <span class="game-badge live">Скоро</span>
+        <div class="game-visual">🃏</div>
+        <div class="game-info">
+          <div class="game-name">Блэкджек</div>
+          <div class="game-desc">21 против дилера</div>
+        </div>
+      </div>
+
+      <!-- Roulette -->
+      <div class="game-card" onclick="openGame('roulette')">
+        <span class="game-badge live">Скоро</span>
+        <div class="game-visual">🎰</div>
+        <div class="game-info">
+          <div class="game-name">Рулетка</div>
+          <div class="game-desc">Классическое колесо</div>
+        </div>
+      </div>
+
+      <!-- Poker -->
+      <div class="game-card" onclick="openGame('poker')">
+        <span class="game-badge soon">Скоро</span>
+        <div class="game-visual">♠️</div>
+        <div class="game-info">
+          <div class="game-name">Покер</div>
+          <div class="game-desc">Техасский холдем</div>
+        </div>
+      </div>
+
+      <!-- Slots placeholder -->
+      <div class="game-card" onclick="openGame('slots')">
+        <span class="game-badge soon">Скоро</span>
+        <div class="game-visual">7️⃣</div>
+        <div class="game-info">
+          <div class="game-name">Слоты</div>
+          <div class="game-desc">Три барабана</div>
+        </div>
+      </div>
+
+      <!-- Coming soon wide -->
+      <div class="game-card wide" onclick="showToast('Новые столы появятся совсем скоро')">
+        <div class="game-visual">✨</div>
+        <div class="game-info">
+          <div class="game-name">Скоро больше игр</div>
+          <div class="game-desc">Баккара, кости и другие классические столы</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Info -->
+  <div class="info-strip">
+    <div class="info-card">
+      <div class="info-icon">ℹ️</div>
+      <div class="info-text">
+        Баланс берётся из вашего основного счёта очков (мини-игры + события).
+        Ставки и выигрыши будут списываться и начисляться <strong>в реальном времени</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- User -->
+  <div class="user-bar">
+    <div class="user-card">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-meta">
+        <div class="user-name" id="user-name">Гость</div>
+        <div class="user-id" id="user-id">Telegram не определён</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ═══════════════════════════════════════════
+  // CONFIG — те же ключи, что в основном приложении
+  // ═══════════════════════════════════════════
+  const SUPABASE_URL = 'https://heubrattlnikielnfheg.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+
+  // Ссылки на будущие игры (пока заглушки)
+  const GAME_URLS = {
+    blackjack: null,   // например: 'https://твой-ник.github.io/petzker-casino/blackjack.html'
+    roulette:  null,
+    poker:     null,
+    slots:     null
+  };
+
+  let supabaseClient = null;
+  let currentUser = null;
+  let userBalance = 0;
+
+  // ── Init Supabase ──
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (e) {
+    console.error('Supabase init error:', e);
+  }
+
+  // ── Telegram / URL user ──
+  function getUser() {
+    // 1. Telegram WebApp
+    try {
+      const tg = window.Telegram && window.Telegram.WebApp;
+      if (tg) {
+        tg.ready();
+        tg.expand();
+        const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+        if (u && u.id) {
+          const name = [u.first_name, u.last_name].filter(Boolean).join(' ').trim()
+            || u.username || ('User ' + u.id);
+          return {
+            id: String(u.id),
+            name,
+            photo_url: u.photo_url || null
+          };
+        }
+      }
+    } catch (e) {}
+
+    // 2. URL params (когда открывают из основного HTML)
+    const params = new URLSearchParams(location.search);
+    const uid = params.get('uid');
+    const name = params.get('name');
+    if (uid) {
+      return {
+        id: String(uid),
+        name: name || ('User ' + uid),
+        photo_url: null
+      };
+    }
+
+    return null;
+  }
+
+  // ── Balance ──
+  async function loadBalance() {
+    const el = document.getElementById('balance-value');
+    if (!currentUser || !supabaseClient) {
+      el.textContent = '—';
+      return;
+    }
+    try {
+      const { data, error } = await supabaseClient
+        .from('player_ratings')
+        .select('total_score')
+        .eq('telegram_user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      userBalance = data ? (data.total_score || 0) : 0;
+      el.textContent = formatNumber(userBalance);
+    } catch (e) {
+      console.error('loadBalance error:', e);
+      el.textContent = '—';
+    }
+  }
+
+  function formatNumber(n) {
+    return Number(n).toLocaleString('ru-RU');
+  }
+
+  // ── UI ──
+  function updateUserUI() {
+    const nameEl = document.getElementById('user-name');
+    const idEl = document.getElementById('user-id');
+    const avatarEl = document.getElementById('user-avatar');
+
+    if (!currentUser) {
+      nameEl.textContent = 'Гость';
+      idEl.textContent = 'Откройте через Telegram';
+      avatarEl.textContent = '?';
+      return;
+    }
+
+    nameEl.textContent = currentUser.name;
+    idEl.textContent = 'ID · ' + currentUser.id;
+
+    if (currentUser.photo_url) {
+      const img = document.createElement('img');
+      img.src = currentUser.photo_url;
+      img.alt = currentUser.name;
+      img.referrerPolicy = 'no-referrer';
+      img.onerror = () => {
+        avatarEl.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
+      };
+      img.onload = () => {
+        avatarEl.innerHTML = '';
+        avatarEl.appendChild(img);
+      };
+    } else {
+      avatarEl.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
+    }
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  function haptic(kind) {
+    try {
+      const tg = window.Telegram && window.Telegram.WebApp;
+      if (tg && tg.HapticFeedback) {
+        if (kind === 'success' || kind === 'error' || kind === 'warning') {
+          tg.HapticFeedback.notificationOccurred(kind);
+        } else {
+          tg.HapticFeedback.impactOccurred(kind || 'light');
+        }
+      }
+    } catch (e) {}
+  }
+
+  // ── Open game ──
+  function openGame(gameId) {
+    const url = GAME_URLS[gameId];
+    if (!url) {
+      showToast('Этот стол скоро откроется ✨');
+      haptic('warning');
+      return;
+    }
+
+    // Передаём uid и name в игру
+    const params = new URLSearchParams();
+    if (currentUser) {
+      params.set('uid', currentUser.id);
+      params.set('name', currentUser.name);
+    }
+    const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+    location.href = fullUrl;
+  }
+
+  // ── Init ──
+  async function init() {
+    currentUser = getUser();
+    updateUserUI();
+    await loadBalance();
+
+    // Периодически обновляем баланс (на случай выигрышей)
+    setInterval(loadBalance, 15000);
+  }
+
+  // Export for onclick
+  window.openGame = openGame;
+  window.showToast = showToast;
+
+  init();
+})();
+</script>
+</body>
+</html>
