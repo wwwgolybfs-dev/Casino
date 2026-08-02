@@ -1048,6 +1048,231 @@
       opacity: 0.5;
       pointer-events: none;
     }
+
+  /* ═══════════════════════════════════════════════
+   MOBILE PERFORMANCE MODE
+   Оптимизация для телефонов без сильной потери
+   визуальных эффектов и анимаций
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+
+  /* ─────────────────────────────────────────────
+     1. ФОНОВЫЕ ПЯТНА
+     Движение оставляем, тяжёлый blur убираем
+     ───────────────────────────────────────────── */
+
+  .bg-spot {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .16 !important;
+    animation-duration: 18s !important;
+    will-change: transform;
+  }
+
+  .bg-spot:nth-child(2) {
+    animation-duration: 22s !important;
+  }
+
+  .bg-spot:nth-child(3) {
+    animation-duration: 26s !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     2. ЛУЧИ
+     Оставляем лёгкое движение, но без blur
+     ───────────────────────────────────────────── */
+
+  .ray {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .07 !important;
+    animation-duration: 24s !important;
+    will-change: transform, opacity;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     3. ЧАСТИЦЫ
+     Оставляем анимацию, но убираем дорогие тени
+     ───────────────────────────────────────────── */
+
+  .particle {
+    filter: none !important;
+    -webkit-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation-duration: 12s !important;
+    will-change: transform, opacity;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     4. BACKDROP BLUR
+     Один из самых дорогих эффектов на мобильных.
+     Вместо размытия оставляем полупрозрачную
+     поверхность — визуально почти то же самое.
+     ───────────────────────────────────────────── */
+
+  .header,
+  .balance-chip,
+  .info-card,
+  .user-card,
+  .game-badge,
+  .modal,
+  .bottom-sheet {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 15, 20, .91) !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     5. КАРТОЧКИ И ИНТЕРАКТИВ
+     Плавность оставляем
+     ───────────────────────────────────────────── */
+
+  .game-card {
+    will-change: transform;
+    box-shadow:
+      0 5px 16px rgba(0, 0, 0, .28) !important;
+
+    transition:
+      transform .16s ease,
+      border-color .16s ease,
+      box-shadow .16s ease !important;
+  }
+
+  .game-card:active {
+    transform: scale(.975);
+  }
+
+
+  /* ─────────────────────────────────────────────
+     6. HOVER НА ТЕЛЕФОНЕ НЕ НУЖЕН
+     Убираем только постоянные hover-перерисовки.
+     Нажатие остаётся.
+     ───────────────────────────────────────────── */
+
+  .game-card:hover {
+    transform: none;
+    box-shadow:
+      0 5px 16px rgba(0, 0, 0, .28) !important;
+  }
+
+  .game-card:hover::before,
+  .game-card:hover::after {
+    transform: none !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     7. GAME VISUAL
+     Если используются фильтры — заменяем их
+     на обычное изображение.
+     ───────────────────────────────────────────── */
+
+  .game-visual {
+    filter: none !important;
+    -webkit-filter: none !important;
+    will-change: transform;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     8. СВЕЧЕНИЕ
+     Не убираем полностью — просто уменьшаем
+     интенсивность.
+     ───────────────────────────────────────────── */
+
+  .hero-title {
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, .10) !important;
+  }
+
+  .brand-icon {
+    filter: none !important;
+    -webkit-filter: none !important;
+    animation-duration: 4s !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     9. SHIMMER / БЛИКИ
+     Оставляем, но делаем медленнее.
+     ───────────────────────────────────────────── */
+
+  .card-shine {
+    animation-duration: 4.5s !important;
+    opacity: .35 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     10. БАЛАНС / СВЕЧЕНИЕ
+     Оставляем эффект, но без сильного blur.
+     ───────────────────────────────────────────── */
+
+  .balance-chip::before,
+  .balance-chip::after {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .55 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     11. УМЕНЬШАЕМ ЧИСЛО ОДНОВРЕМЕННЫХ АНИМАЦИЙ
+     Ничего не исчезает — просто декоративные
+     элементы двигаются медленнее.
+     ───────────────────────────────────────────── */
+
+  .hero::after {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: .45 !important;
+  }
+
+
+  /* ─────────────────────────────────────────────
+     12. GPU COMPOSITING
+     Просим браузер вынести часто изменяющиеся
+     элементы на отдельные слои.
+     ───────────────────────────────────────────── */
+
+  .bg-spot,
+  .ray,
+  .particle,
+  .game-card,
+  .game-visual,
+  .brand-icon {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+
+  /* ─────────────────────────────────────────────
+     13. УБИРАЕМ АНИМАЦИИ ТОЛЬКО ЕСЛИ
+     ПОЛЬЗОВАТЕЛЬ САМ ПРОСИТ REDUCED MOTION
+     ───────────────────────────────────────────── */
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .bg-spot,
+    .ray,
+    .particle,
+    .brand-icon,
+    .card-shine,
+    .game-card {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+
+  }
+
+}
   </style>
 </head>
 <body>
