@@ -2,221 +2,649 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Petzker Bet — Рулетка</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#08090d">
+<title>Petzker Bet — Roulette</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
-  --bg:#080a0e;--surface:#11151b;--surface2:#171c23;--border:rgba(255,255,255,.09);
-  --text:#f5f7fb;--muted:#8b94a4;--green:#18c985;--green2:#0d8158;
-  --red:#c9364c;--black:#181c22;--gold:#e8bb62;--shadow:0 10px 28px rgba(0,0,0,.38)
+  --bg:#08090d;--panel:#10131a;--panel2:#151922;--line:rgba(255,255,255,.09);
+  --text:#f5f7fb;--muted:#8c95a5;--gold:#e5b95e;--gold2:#8d6724;
+  --green:#14b77a;--green2:#08714d;--red:#c52f47;--black:#171a20;
 }
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{min-height:100dvh;overflow-x:hidden}
-button{font:inherit;color:inherit}
-.app{width:min(100%,720px);margin:auto;padding:7px 9px 14px}
-.topbar{height:43px;display:flex;align-items:center;gap:8px}
-.back{width:35px;height:35px;border:1px solid var(--border);border-radius:11px;background:var(--surface);display:grid;place-items:center;font-size:19px}
-.title{font-size:15px;font-weight:900}.balance{margin-left:auto;font-size:11px;font-weight:800;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 9px}.balance span{color:var(--gold)}
-.historybar{display:flex;align-items:center;gap:7px;height:37px;padding:5px 8px;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
-.history-label{font-size:9px;color:var(--muted);font-weight:900;white-space:nowrap;text-transform:uppercase}
-.history{display:flex;gap:5px;overflow:hidden}
-.ball{width:25px;height:25px;flex:0 0 25px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900;border:1px solid rgba(255,255,255,.12)}
-.ball.red{background:var(--red)}.ball.black{background:#20242b}.ball.green{background:var(--green2)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
 
-.roulette-area{display:grid;grid-template-columns:190px 1fr;gap:10px;align-items:center;margin-top:9px}
-.wheel-box{position:relative;display:grid;place-items:center}
-.wheel{width:178px;height:178px;border-radius:50%;position:relative;border:7px solid #252b32;
-background:conic-gradient(
-#171a1f 0 4.87%,#b93145 4.87% 9.74%,#171a1f 9.74% 14.61%,#b93145 14.61% 19.48%,#171a1f 19.48% 24.35%,#b93145 24.35% 29.22%,#171a1f 29.22% 34.09%,#b93145 34.09% 38.96%,#171a1f 38.96% 43.83%,#b93145 43.83% 48.70%,#171a1f 48.70% 53.57%,#b93145 53.57% 58.44%,#171a1f 58.44% 63.31%,#b93145 63.31% 68.18%,#171a1f 68.18% 73.05%,#b93145 73.05% 77.92%,#171a1f 77.92% 82.79%,#b93145 82.79% 87.66%,#171a1f 87.66% 92.53%,#b93145 92.53% 97.40%,#171a1f 97.40% 100%);
-box-shadow:0 0 0 2px #080a0e,0 9px 24px rgba(0,0,0,.5);transition:transform 3.7s cubic-bezier(.12,.72,.13,1);will-change:transform}
-.wheel:before{content:"";position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle,#343b45 0 7%,#11151b 8% 45%,#080a0e 46% 100%);border:2px solid rgba(255,255,255,.13)}
-.wheel-numbers{position:absolute;inset:4px;border-radius:50%;z-index:2;pointer-events:none}
-.wheel-number{position:absolute;left:50%;top:50%;width:19px;height:19px;margin:-9.5px;font-size:7px;font-weight:1000;text-align:center;line-height:19px;text-shadow:0 1px 3px #000;transform:rotate(var(--a)) translateY(-70px) rotate(calc(var(--a) * -1))}
-.wheel-number.red{color:#ffb0ba}.wheel-number.black{color:#fff}.wheel-number.green{color:#9ff3cc}
-.pointer{position:absolute;z-index:5;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:14px solid var(--gold);filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
-.wheel-center{position:absolute;z-index:4;inset:0;display:grid;place-items:center;font-size:14px;font-weight:1000;text-shadow:0 2px 6px #000}
+/* ── layout ── */
+.app{width:min(100%,900px);margin:auto;padding:6px 8px 16px}
 
-.bets{min-width:0}
-.section-title{font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin:0 0 5px}
-.zero{width:100%;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:linear-gradient(135deg,#159a68,#0b704d);font-size:12px;font-weight:1000}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:3px}
-.num{height:30px;border:1px solid rgba(255,255,255,.08);border-radius:6px;font-size:10px;font-weight:900;cursor:pointer}
-.num.red{background:#8e293c}.num.black{background:#1c2026}.num.green{background:#0d8158}
-.num.selected,.bet-option.selected{outline:1px solid var(--gold);outline-offset:-1px;box-shadow:inset 0 0 0 1px rgba(232,187,98,.35)}
-.outside{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:4px}
-.bet-option{height:29px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);font-size:9px;font-weight:800}
-.bet-option.red{background:#61202d}.bet-option.black{background:#1a1d23}
+/* ── top bar ── */
+.top{height:40px;display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.back{width:34px;height:34px;border:1px solid var(--line);background:var(--panel);border-radius:10px;display:grid;place-items:center;font-size:18px}
+.title{font-size:14px;font-weight:900}
+.balance{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:11px;font-weight:900}
+.balance b{color:var(--gold)}
 
-.controls{margin-top:8px;display:grid;grid-template-columns:auto 1fr auto;gap:7px;align-items:center}
-.chips{display:flex;gap:5px;overflow:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
-.chip{width:36px;height:30px;flex:0 0 36px;border:1px dashed rgba(255,255,255,.4);border-radius:50%;background:#20252d;font-size:9px;font-weight:1000}
-.chip.active{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 2px rgba(232,187,98,.10)}
-.betamount{font-size:10px;font-weight:800;white-space:nowrap;padding:8px 9px;border:1px solid var(--border);background:var(--surface);border-radius:9px}
-.actions{display:flex;gap:5px}
-.clear,.spin{height:34px;border-radius:9px;padding:0 11px;font-size:10px;font-weight:1000}
-.clear{border:1px solid var(--border);background:var(--surface)}.spin{border:0;background:linear-gradient(135deg,var(--green),var(--green2));box-shadow:0 6px 14px rgba(24,201,133,.15)}
-.spin:disabled{opacity:.45}
-.message{height:18px;margin-top:4px;text-align:center;color:var(--muted);font-size:9px;font-weight:700}
-.rules{font-size:8px;color:#667080;text-align:center}
+/* ── status bar ── */
+.status{height:34px;display:flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid var(--line);background:linear-gradient(90deg,#12161d,#0d1015);border-radius:10px;overflow:hidden;margin-bottom:7px}
+.status-result{font-size:11px;font-weight:900;white-space:nowrap}
+.status-result.win{color:#54e2a8}.status-result.loss{color:#ff7184}.status-result.neutral{color:var(--muted)}
+.status-detail{margin-left:auto;color:var(--muted);font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history{display:flex;gap:4px;overflow:hidden;margin-left:8px}
+.hball{width:20px;height:20px;flex:0 0 20px;border-radius:50%;display:grid;place-items:center;font-size:7px;font-weight:1000;border:1px solid rgba(255,255,255,.13)}
+.hball.red{background:var(--red)}.hball.black{background:#20242b}.hball.green{background:var(--green2)}
 
-@media(max-width:520px){
-  .roulette-area{grid-template-columns:150px 1fr;gap:7px}
-  .wheel{width:145px;height:145px;border-width:6px}
-  .wheel-number{width:16px;height:16px;margin:-8px;line-height:16px;font-size:6px;transform:rotate(var(--a)) translateY(-56px) rotate(calc(var(--a) * -1))}
-  .wheel-center{font-size:12px}
-  .pointer{top:-3px}
-  .controls{grid-template-columns:1fr auto}
-  .betamount{grid-column:1/-1;text-align:center;padding:5px}
+/* ── wheel stage ── */
+.wheel-stage{
+  height:min(54vw,380px);min-height:220px;position:relative;
+  display:grid;place-items:center;overflow:hidden;
+  border:1px solid var(--line);border-radius:18px;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(23,209,151,.08),transparent 30%),
+    radial-gradient(circle at 50% 100%,rgba(0,0,0,.6),transparent 65%),
+    #0c1016;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 28px rgba(0,0,0,.4);
+  margin-bottom:8px
 }
-@media(max-width:360px){
-  .roulette-area{grid-template-columns:132px 1fr}
-  .wheel{width:128px;height:128px}
-  .wheel-number{transform:rotate(var(--a)) translateY(-49px) rotate(calc(var(--a) * -1))}
-  .num{height:27px}.bet-option{height:27px}
+.wheel-shadow{
+  position:absolute;width:65%;height:10%;bottom:7%;border-radius:50%;
+  background:rgba(0,0,0,.6);filter:blur(18px)
+}
+
+/* ── 3D wheel ── */
+.wheel3d{
+  position:relative;
+  width:min(56vw,310px);aspect-ratio:1;border-radius:50%;
+  transform:perspective(800px) rotateX(12deg);
+  will-change:transform
+}
+.wheel3d.spinning{transition:transform 4.2s cubic-bezier(.10,.78,.10,1)}
+
+/* outer decorative ring */
+.wheel-outer{
+  position:absolute;inset:-8px;border-radius:50%;
+  background:conic-gradient(#4a4f58 0,#2c3038 25%,#4a4f58 50%,#2c3038 75%,#4a4f58 100%);
+  box-shadow:0 0 0 3px #07080b,0 16px 40px rgba(0,0,0,.7),inset 0 2px 0 rgba(255,255,255,.08)
+}
+
+/* coloured number sectors */
+.wheel-ring{
+  position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(
+    #0a7a52 0 2.7%,
+    #0e1116 2.7% 5.4%,#b82c43 5.4% 8.1%,
+    #0e1116 8.1% 10.8%,#b82c43 10.8% 13.5%,
+    #0e1116 13.5% 16.2%,#b82c43 16.2% 18.9%,
+    #0e1116 18.9% 21.6%,#b82c43 21.6% 24.3%,
+    #0e1116 24.3% 27%,  #b82c43 27% 29.7%,
+    #0e1116 29.7% 32.4%,#b82c43 32.4% 35.1%,
+    #0e1116 35.1% 37.8%,#b82c43 37.8% 40.5%,
+    #0e1116 40.5% 43.2%,#b82c43 43.2% 45.9%,
+    #0e1116 45.9% 48.6%,#b82c43 48.6% 51.3%,
+    #0e1116 51.3% 54%,  #b82c43 54% 56.7%,
+    #0e1116 56.7% 59.4%,#b82c43 59.4% 62.1%,
+    #0e1116 62.1% 64.8%,#b82c43 64.8% 67.5%,
+    #0e1116 67.5% 70.2%,#b82c43 70.2% 72.9%,
+    #0e1116 72.9% 75.6%,#b82c43 75.6% 78.3%,
+    #0e1116 78.3% 81%,  #b82c43 81% 83.7%,
+    #0e1116 83.7% 86.4%,#b82c43 86.4% 89.1%,
+    #0e1116 89.1% 91.8%,#b82c43 91.8% 94.5%,
+    #0e1116 94.5% 97.2%,#b82c43 97.2% 100%
+  );
+  box-shadow:inset 0 0 24px rgba(0,0,0,.7),inset 0 0 8px rgba(255,255,255,.03)
+}
+
+/* inner bowl / center */
+.wheel-ring:before{
+  content:"";position:absolute;inset:14%;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#3d4450 0 3%,#1e2430 4% 28%,#0d1018 29% 100%);
+  border:2px solid rgba(255,255,255,.10);
+  box-shadow:inset 0 4px 30px rgba(0,0,0,.8),inset 0 0 8px rgba(0,0,0,.5)
+}
+
+/* divider lines between sectors */
+.wheel-dividers{
+  position:absolute;inset:0;border-radius:50%;
+  background:repeating-conic-gradient(rgba(255,255,255,.07) 0deg 0.4deg, transparent 0.4deg 9.73deg);
+}
+
+/* number labels on wheel */
+.wheel-numbers{position:absolute;inset:4%;border-radius:50%;z-index:3;pointer-events:none}
+.wn{
+  position:absolute;left:50%;top:50%;
+  width:20px;height:20px;margin:-10px;
+  text-align:center;line-height:20px;
+  font-size:7.5px;font-weight:1000;
+  text-shadow:0 1px 4px #000,0 0 2px #000;
+  transform:rotate(var(--a)) translateY(calc(var(--r) * -1)) rotate(calc(var(--a) * -1))
+}
+.wn.red{color:#ffbec6}.wn.black{color:#e8edf3}.wn.green{color:#9ff3d0}
+
+/* hub */
+.hub{position:absolute;z-index:5;inset:0;display:grid;place-items:center;pointer-events:none}
+.hub-core{
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#6e7a88,#22282f 50%,#09090e);
+  border:2px solid #8a919a;
+  box-shadow:0 4px 14px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.12);
+  color:#cfd4da;font-size:10px;font-weight:1000
+}
+/* decorative screws */
+.hub-core:before,.hub-core:after{
+  content:"·";font-size:18px;position:absolute;color:rgba(255,255,255,.2)
+}
+.hub-core:before{transform:translate(-9px,-9px)}
+.hub-core:after{transform:translate(9px,9px)}
+
+/* ball */
+.ball{
+  position:absolute;z-index:7;
+  width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle at 33% 27%,#ffffff,#d8dde2 40%,#8a949e 80%,#606870);
+  box-shadow:0 3px 9px rgba(0,0,0,.8),inset 0 1px 2px rgba(255,255,255,.6);
+  left:50%;top:50%;margin:-7px;
+  transform:rotate(-90deg) translateY(-42%);
+  opacity:0;pointer-events:none
+}
+.ball.animate{
+  opacity:1;
+  animation:ballOrbit 4s cubic-bezier(.12,.72,.10,1) forwards
+}
+@keyframes ballOrbit{
+  0%  {transform:rotate(-90deg) translateY(-42%) scale(1.1)}
+  60% {transform:rotate(1320deg) translateY(-42%) scale(1)}
+  80% {transform:rotate(1400deg) translateY(-44%) scale(.9)}
+  100%{transform:rotate(1440deg) translateY(-45%) scale(.82)}
+}
+
+/* pointer */
+.pointer{
+  position:absolute;z-index:9;top:7px;left:50%;transform:translateX(-50%);
+  width:0;height:0;
+  border-left:8px solid transparent;border-right:8px solid transparent;
+  border-top:16px solid var(--gold);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))
+}
+
+/* result card */
+.result-card{
+  position:absolute;z-index:10;left:50%;bottom:10px;transform:translateX(-50%);
+  min-width:120px;padding:6px 12px;text-align:center;
+  border:1px solid rgba(229,185,94,.4);border-radius:10px;
+  background:rgba(7,9,12,.88);backdrop-filter:blur(6px);
+  font-size:9px;font-weight:900;opacity:0;transition:opacity .25s
+}
+.result-card.show{opacity:1}
+.result-card b{color:var(--gold);font-size:14px;display:block;margin-top:2px}
+
+/* ── bet panel ── */
+.bet-panel{
+  border:1px solid var(--line);border-radius:14px;
+  background:linear-gradient(180deg,#11151b,#0e1116);
+  padding:8px;margin-bottom:8px
+}
+
+/* zero row */
+.zero-row{display:grid;grid-template-columns:40px 1fr;gap:4px;margin-bottom:4px}
+.zero{
+  height:33px;border:1px solid rgba(255,255,255,.12);border-radius:8px;
+  background:linear-gradient(135deg,#159968,#0a6748);
+  font-size:11px;font-weight:1000;position:relative
+}
+
+/* numbers grid — 12 columns × 3 rows = 36 numbers */
+.num-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+.num{
+  height:33px;border:1px solid rgba(255,255,255,.07);border-radius:7px;
+  font-size:9px;font-weight:1000;position:relative;cursor:pointer;
+  transition:filter .1s,transform .08s
+}
+.num:active{transform:scale(.93);filter:brightness(1.2)}
+.num.red{background:#8d293b}.num.black{background:#1b1f26}
+.num.selected,
+.num.has-bet{box-shadow:inset 0 0 0 1.5px var(--gold),0 0 0 1px rgba(229,185,94,.25)}
+
+/* chip stack overlay on number */
+.chip-stack{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#ffe9a9,#d39a32 58%,#77521a);
+  border:1.5px dashed #fff3c8;color:#201707;
+  font-size:5.5px;font-weight:1000;
+  box-shadow:0 2px 6px rgba(0,0,0,.7);pointer-events:none
+}
+
+/* outside bets */
+.outside{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:4px}
+.outside button{
+  height:29px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel2);font-size:8px;font-weight:900;
+  transition:filter .1s,transform .08s;position:relative
+}
+.outside button:active{transform:scale(.93)}
+.outside button.red-btn{background:#5e202c}
+.outside button.black-btn{background:#191c22}
+.outside button.selected{outline:1.5px solid var(--gold);color:var(--gold);background:rgba(229,185,94,.08)}
+
+/* ── bottom bar ── */
+.bottom{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap
+}
+.chips{
+  display:flex;gap:5px;overflow-x:auto;flex:1;min-width:0;
+  scrollbar-width:none;padding:2px 1px 4px
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 38px;width:38px;height:38px;border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,.38);background:#22272f;
+  font-size:8px;font-weight:1000;display:grid;place-items:center;
+  transition:transform .1s
+}
+.chip:active{transform:scale(.9)}
+.chip.active{color:var(--gold);border-color:var(--gold);box-shadow:0 0 0 2.5px rgba(229,185,94,.15)}
+
+.total{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:9px;font-size:9px;font-weight:900;white-space:nowrap}
+.total b{color:var(--gold)}
+.clear,.spin{height:34px;border-radius:9px;padding:0 12px;font-size:9px;font-weight:1000;white-space:nowrap}
+.clear{border:1px solid var(--line);background:var(--panel)}
+.spin{border:0;background:linear-gradient(135deg,#19c987,#0b8259);box-shadow:0 5px 14px rgba(24,201,135,.18)}
+.spin:disabled{opacity:.4;cursor:not-allowed}
+.clear:disabled{opacity:.4;cursor:not-allowed}
+
+.note{text-align:center;color:#525b6a;font-size:7px;margin-top:6px}
+
+/* ── responsive ── */
+@media(max-width:600px){
+  .wheel-stage{height:58vw;min-height:210px}
+  .wheel3d{width:min(66vw,300px)}
+  .bet-panel{padding:6px}
+  .num,.zero{height:30px}
+  .outside button{height:27px}
+  .bottom{gap:5px}
+  .chip{flex:0 0 34px;width:34px;height:34px}
+  .clear,.spin{padding:0 9px}
+}
+@media(max-width:400px){
+  .wheel-stage{min-height:190px}
+  .wn{font-size:6.5px;width:17px;height:17px;margin:-8.5px;line-height:17px}
+  .num,.zero{height:27px;font-size:8px}
+  .outside button{height:25px;font-size:7px}
+  .num-grid{gap:2px}
+  .outside{gap:2px}
+  .chip{flex:0 0 30px;width:30px;height:30px;font-size:7px}
 }
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar">
-<button class="back" onclick="goBack()">←</button>
-<div class="title">Рулетка</div>
-<div class="balance">Баланс: <span id="balance">1 000</span> ₽</div>
-</header>
 
-<div class="historybar">
-<div class="history-label">История</div>
-<div class="history" id="history"></div>
-</div>
+  <!-- top bar -->
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker Roulette</div>
+    <div class="balance">💎 <b id="balance">—</b></div>
+  </header>
 
-<section class="roulette-area">
-<div class="wheel-box">
-<div class="pointer"></div>
-<div class="wheel" id="wheel">
-<div class="wheel-numbers" id="wheelNumbers"></div>
-<div class="wheel-center" id="wheelCenter">0</div>
-</div>
-</div>
+  <!-- status / history -->
+  <div class="status">
+    <div class="status-result neutral" id="status">Выберите ставку</div>
+    <div class="status-detail" id="statusDetail">—</div>
+    <div class="history" id="history"></div>
+  </div>
 
-<div class="bets">
-<div class="section-title">Выберите ставку</div>
-<button class="zero num green" data-number="0">0</button>
-<div class="grid" id="numberGrid"></div>
-<div class="outside">
-<button class="bet-option red" data-bet="red">Красное</button>
-<button class="bet-option black" data-bet="black">Чёрное</button>
-<button class="bet-option" data-bet="odd">Нечёт</button>
-<button class="bet-option" data-bet="even">Чёт</button>
-<button class="bet-option" data-bet="low">1–18</button>
-<button class="bet-option" data-bet="high">19–36</button>
-</div>
-</div>
-</section>
+  <!-- wheel -->
+  <div class="wheel-stage">
+    <div class="wheel-shadow"></div>
+    <div class="wheel3d" id="wheel">
+      <div class="wheel-outer"></div>
+      <div class="wheel-ring"></div>
+      <div class="wheel-dividers"></div>
+      <div class="wheel-numbers" id="wheelNumbers"></div>
+      <div class="hub"><div class="hub-core" id="hub">⬤</div></div>
+      <div class="ball" id="ball"></div>
+    </div>
+    <div class="pointer"></div>
+    <div class="result-card" id="resultCard">Выпало <b id="resultNumber">—</b></div>
+  </div>
 
-<div class="controls">
-<div class="chips" id="chips"></div>
-<div class="betamount">Ставка: <span id="betAmount">100</span> ₽</div>
-<div class="actions"><button class="clear" id="clearBtn">Сброс</button><button class="spin" id="spinBtn">Крутить</button></div>
-</div>
-<div class="message" id="message">Выберите ставку</div>
-<div class="rules">Демо-режим · Европейская рулетка · 0–36</div>
+  <!-- betting table -->
+  <div class="bet-panel">
+    <!-- zero + number grid -->
+    <div class="zero-row">
+      <button class="zero num" data-number="0">0<span class="chip-stack" id="cs0" style="display:none">0</span></button>
+      <div class="num-grid" id="numGrid"></div>
+    </div>
+
+    <!-- outside bets -->
+    <div class="outside">
+      <button data-bet="low">1–18</button>
+      <button data-bet="red" class="red-btn">🔴 Красн.</button>
+      <button data-bet="odd">Нечёт</button>
+      <button data-bet="even">Чёт</button>
+      <button data-bet="black" class="black-btn">⚫ Чёрн.</button>
+      <button data-bet="high">19–36</button>
+    </div>
+  </div>
+
+  <!-- chips + action buttons -->
+  <div class="bottom">
+    <div class="chips" id="chips"></div>
+    <div class="total">Ставки: <b id="totalBet">0</b></div>
+    <button class="clear" id="clearBtn">Сброс</button>
+    <button class="spin" id="spinBtn">🎰 Крутить</button>
+  </div>
+
+  <div class="note">Кликните ячейку, чтобы поставить фишку. Повторный клик увеличивает ставку.</div>
+
 </div>
 
 <script>
-const wheelOrder=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-const redNumbers=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-const colorOf=n=>n===0?'green':redNumbers.has(n)?'red':'black';
+/* ── Supabase (не трогать) ── */
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
 
-let balance=1000,betAmount=100,selectedBet=null,spinning=false,rotation=0;
-let history=[17,32,0,8,21,14];
+/* ── constants ── */
+const wheelOrder=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const red=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const color=n=>n===0?'green':red.has(n)?'red':'black';
+const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+
+/* ── state ── */
+const params=new URLSearchParams(location.search);
+let player={id:params.get('uid'),name:params.get('name')||'Игрок'};
+let balance=0,selectedChip=100,spinning=false,rotation=0;
+let bets={};
+let historyArr=[17,32,0,8,21,14];
 
 const $=id=>document.getElementById(id);
 
-function renderWheelNumbers(){
+/* ── resolve Telegram player ── */
+function resolvePlayer(){
+  try{
+    const tg=window.Telegram?.WebApp;
+    if(tg){
+      tg.ready();tg.expand();
+      const u=tg.initDataUnsafe?.user;
+      if(u?.id){
+        player={
+          id:String(u.id),
+          name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||('User '+u.id)
+        };
+      }
+    }
+  }catch(e){}
+}
+
+/* ── wheel number labels ── */
+function makeWheel(){
+  const r=window.innerWidth<400?'81px':window.innerWidth<600?'96px':'107px';
   $('wheelNumbers').innerHTML=wheelOrder.map((n,i)=>{
-    const a=(i*360/wheelOrder.length)-90;
-    return `<span class="wheel-number ${colorOf(n)}" style="--a:${a}deg">${n}</span>`;
+    const a=i*(360/wheelOrder.length)-90;
+    return `<span class="wn ${color(n)}" style="--a:${a}deg;--r:${r}">${n}</span>`;
   }).join('');
 }
+
+/* ── render number grid (1-36 in 12 cols × 3 rows, column-major layout) ── */
 function renderNumbers(){
-  $('numberGrid').innerHTML=Array.from({length:36},(_,i)=>i+1).map(n=>
-    `<button class="num ${colorOf(n)}" data-number="${n}">${n}</button>`
-  ).join('');
+  // Column-major: col 1 = 1,2,3 | col 2 = 4,5,6 ... matching real roulette table
+  // Arrange as 12 columns, numbers go down then across: 1,4,7...34 / 2,5,8...35 / 3,6,9...36
+  const rows=3,cols=12;
+  const cells=[];
+  // Build col-major order: first fill col 1 row1-3, then col2, etc.
+  for(let col=0;col<cols;col++){
+    for(let row=0;row<rows;row++){
+      cells.push(col*rows+row+1); // 1..36
+    }
+  }
+  $('numGrid').innerHTML=cells.map(n=>{
+    const amt=bets['n'+n]||0;
+    return `<button class="num ${color(n)}${amt?' has-bet':''}" data-number="${n}">${n}${amt?`<span class="chip-stack">${amt>=1000?Math.round(amt/1000)+'k':amt}</span>`:''}</button>`;
+  }).join('');
+
+  // zero chip display
+  const z=bets['n0']||0;
+  const cs0=$('cs0');
+  if(cs0){cs0.style.display=z?'grid':'none';cs0.textContent=z>=1000?Math.round(z/1000)+'k':z;}
 }
-function renderHistory(){
-  $('history').innerHTML=history.slice(0,9).map(n=>`<span class="ball ${colorOf(n)}">${n}</span>`).join('');
+
+/* ── outside bets ── */
+const betLabels={low:'1–18',red:'🔴 Красн.',odd:'Нечёт',even:'Чёт',black:'⚫ Чёрн.',high:'19–36'};
+function renderOutside(){
+  document.querySelectorAll('[data-bet]').forEach(b=>{
+    const key=b.dataset.bet;
+    const amt=bets[key]||0;
+    b.classList.toggle('selected',!!amt);
+    b.textContent=betLabels[key]+(amt?` · ${fmt(amt)}`:'');
+  });
 }
+
+/* ── chip selector ── */
 function renderChips(){
-  $('chips').innerHTML=[10,25,50,100,250,500].map(v=>
-    `<button class="chip ${v===betAmount?'active':''}" data-chip="${v}">${v}</button>`
+  $('chips').innerHTML=[10,25,50,100,250,500,1000].map(v=>
+    `<button class="chip ${v===selectedChip?'active':''}" data-chip="${v}">${v>=1000?v/1000+'k':v}</button>`
   ).join('');
 }
+
+/* ── history row ── */
+function renderHistory(){
+  $('history').innerHTML=historyArr.slice(0,7).map(n=>
+    `<span class="hball ${color(n)}">${n}</span>`
+  ).join('');
+}
+
+function betTotal(){return Object.values(bets).reduce((a,b)=>a+b,0)}
+
 function render(){
-  renderWheelNumbers();renderNumbers();renderHistory();renderChips();
-  $('balance').textContent=balance.toLocaleString('ru-RU');
-  $('betAmount').textContent=betAmount.toLocaleString('ru-RU');
+  makeWheel();renderNumbers();renderOutside();renderChips();
+  $('balance').textContent=fmt(balance);
+  $('totalBet').textContent=fmt(betTotal());
 }
-function label(t){return {red:'красное',black:'чёрное',odd:'нечёт',even:'чёт',low:'1–18',high:'19–36'}[t]}
-function selectBet(type,value=null){
-  selectedBet={type,value};
-  document.querySelectorAll('.num,.bet-option').forEach(x=>x.classList.remove('selected'));
-  const el=type==='number'?document.querySelector(`[data-number="${value}"]`):document.querySelector(`[data-bet="${type}"]`);
-  el?.classList.add('selected');
-  $('message').textContent=type==='number'?`Ставка на ${value}`:`Ставка: ${label(type)}`;
+
+/* ── load balance from Supabase ── */
+async function loadBalance(){
+  if(!player.id||!sb){$('balance').textContent='—';return}
+  try{
+    const {data,error}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    if(error)throw error;
+    balance=Number(data?.total_score||0);
+    $('balance').textContent=fmt(balance);
+  }catch(e){
+    console.error('roulette load balance',e);
+    $('status').textContent='Не удалось загрузить баланс';
+  }
 }
-function isWin(n){
-  if(!selectedBet)return false;
-  if(selectedBet.type==='number')return n===selectedBet.value;
+
+/* ── add bet ── */
+function addBet(key){
+  const next=(bets[key]||0)+selectedChip;
+  const total=betTotal()-(bets[key]||0)+next;
+  if(total>balance){
+    $('status').textContent='Недостаточно очков';
+    $('status').className='status-result loss';
+    return;
+  }
+  bets[key]=next;
+  render();
+  $('status').textContent=`Ставка ${fmt(next)} очков`;
+  $('status').className='status-result neutral';
+}
+
+/* ── clear bets ── */
+function clearBets(){
+  bets={};render();
+  $('status').textContent='Выберите ставку';
+  $('status').className='status-result neutral';
+  $('statusDetail').textContent='—';
+}
+
+/* ── win check ── */
+function winningBet(key,n){
+  if(key==='n'+n)return true;
   if(n===0)return false;
-  if(selectedBet.type==='red')return redNumbers.has(n);
-  if(selectedBet.type==='black')return !redNumbers.has(n);
-  if(selectedBet.type==='odd')return n%2===1;
-  if(selectedBet.type==='even')return n%2===0;
-  if(selectedBet.type==='low')return n<=18;
-  if(selectedBet.type==='high')return n>=19;
-  return false;
+  return (key==='red'&&red.has(n))||(key==='black'&&!red.has(n))
+    ||(key==='odd'&&n%2===1)||(key==='even'&&n%2===0)
+    ||(key==='low'&&n<=18)||(key==='high'&&n>=19);
 }
-function payout(){return selectedBet?.type==='number'?36:2}
-function spin(){
+
+function calculatePayout(n){
+  let payout=0;
+  for(const [key,amount] of Object.entries(bets)){
+    if(winningBet(key,n))payout+=amount*(key.startsWith('n')?36:2);
+  }
+  return payout;
+}
+
+/* ── save spin to Supabase (не трогать) ── */
+async function saveSpin(result,total,payout){
+  const payload={
+    telegram_user_id:player.id,name:player.name,game_id:'roulette',
+    result_number:result,total_bet:total,total_payout:payout,
+    net_result:payout-total,bets:JSON.stringify(bets),
+    played_at:new Date().toISOString()
+  };
+  if(sb&&player.id){
+    try{
+      const {error}=await sb.from('roulette_spins').insert([payload]);
+      if(error)throw error;
+    }catch(e){console.error('roulette_spins insert',e)}
+  }
+}
+
+/* ── settle balance (не трогать) ── */
+async function settleBalance(total,payout,result){
+  if(!sb||!player.id)return {ok:false};
+  try{
+    const {data,error}=await sb.rpc('roulette_settle',{
+      p_user_id:player.id,p_user_name:player.name,
+      p_total_bet:total,p_payout:payout,
+      p_result:result,p_bets:bets
+    });
+    if(!error&&data!==null&&data!==undefined){
+      balance=Number(data);return {ok:true,rpc:true};
+    }
+    // fallback
+    const {data:row,error:e}=await sb.from('player_ratings')
+      .select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    if(e)throw e;
+    const current=Number(row?.total_score||0),next=current-total+payout;
+    if(next<0)throw new Error('Недостаточно очков');
+    const {error:u}=await sb.from('player_ratings').upsert({
+      telegram_user_id:player.id,name:player.name,total_score:next,
+      updated_at:new Date().toISOString()
+    },{onConflict:'telegram_user_id'});
+    if(u)throw u;
+    balance=next;
+    await saveSpin(result,total,payout);
+    return {ok:true,rpc:false};
+  }catch(e){console.error('roulette settle',e);return {ok:false}}
+}
+
+/* ── spin ── */
+async function spin(){
   if(spinning)return;
-  if(!selectedBet){$('message').textContent='Сначала выберите ставку';return}
-  if(balance<betAmount){$('message').textContent='Недостаточно средств';return}
-  spinning=true;$('spinBtn').disabled=true;
-  balance-=betAmount;$('balance').textContent=balance.toLocaleString('ru-RU');
+  const total=betTotal();
+  if(!total){
+    $('status').textContent='Поставьте фишки на поле';
+    $('status').className='status-result loss';
+    return;
+  }
+  if(!player.id){
+    $('status').textContent='Откройте игру через Telegram';
+    $('status').className='status-result loss';
+    return;
+  }
+  if(total>balance){
+    $('status').textContent='Недостаточно очков';
+    $('status').className='status-result loss';
+    return;
+  }
+
+  spinning=true;
+  $('spinBtn').disabled=true;
+  $('clearBtn').disabled=true;
+  $('status').textContent='Вращение…';
+  $('status').className='status-result neutral';
+  $('statusDetail').textContent='Ставки '+fmt(total);
+  $('resultCard').classList.remove('show');
+
+  // pick result
   const result=wheelOrder[Math.floor(Math.random()*wheelOrder.length)];
-  const index=wheelOrder.indexOf(result);
+  const idx=wheelOrder.indexOf(result);
   const sector=360/wheelOrder.length;
-  const target=(index*sector)+sector/2;
-  const extra=5+Math.floor(Math.random()*2);
-  rotation+=extra*360+(360-target);
-  $('wheel').style.transform=`rotate(${rotation}deg)`;
-  $('wheelCenter').textContent='•';
-  $('message').textContent='Рулетка вращается…';
-  setTimeout(()=>{
-    const win=isWin(result);
-    if(win){
-      const prize=betAmount*payout();
-      balance+=prize;
-      $('message').textContent=`Выпало ${result} · +${prize.toLocaleString('ru-RU')} ₽`;
-    }else $('message').textContent=`Выпало ${result} · ставка проиграла`;
-    $('wheelCenter').textContent=result;
-    history.unshift(result);history=history.slice(0,10);renderHistory();
-    $('balance').textContent=balance.toLocaleString('ru-RU');
-    selectedBet=null;document.querySelectorAll('.num,.bet-option').forEach(x=>x.classList.remove('selected'));
-    spinning=false;$('spinBtn').disabled=false;
-  },3800);
+
+  // rotate wheel so winning sector lands under pointer
+  rotation+=360*6+(360-(idx*sector+sector/2));
+  $('wheel').classList.add('spinning');
+  $('wheel').style.transform=`perspective(800px) rotateX(12deg) rotate(${rotation}deg)`;
+
+  // ball animation
+  const ball=$('ball');
+  ball.classList.remove('animate');
+  void ball.offsetWidth; // reflow
+  ball.classList.add('animate');
+
+  const payout=calculatePayout(result);
+  const win=payout>0;
+
+  setTimeout(async()=>{
+    const settlement=await settleBalance(total,payout,result);
+    if(!settlement.ok){
+      $('status').textContent='Ошибка сохранения результата';
+      $('status').className='status-result loss';
+    }else{
+      $('balance').textContent=fmt(balance);
+      $('resultNumber').textContent=result;
+      $('resultCard').classList.add('show');
+      $('status').textContent=win?`Выигрыш +${fmt(payout)} очков`:`Проигрыш −${fmt(total)} очков`;
+      $('status').className='status-result '+(win?'win':'loss');
+      $('statusDetail').textContent=`Выпало ${result} · ${win?'победа':'поражение'}`;
+      historyArr.unshift(result);
+      historyArr=historyArr.slice(0,10);
+      renderHistory();
+      bets={};
+      renderNumbers();
+      renderOutside();
+      $('totalBet').textContent='0';
+      try{window.parent?.postMessage({type:'petzker-score',gameId:'roulette',points:payout-total,playerId:player.id,playerName:player.name,meta:{result,totalBet:total,payout}},'*')}catch(e){}
+      try{window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(win?'success':'error')}catch(e){}
+    }
+    $('wheel').classList.remove('spinning');
+    spinning=false;
+    $('spinBtn').disabled=false;
+    $('clearBtn').disabled=false;
+  },4400);
 }
+
+/* ── event delegation ── */
 document.addEventListener('click',e=>{
-  const n=e.target.closest('[data-number]'),b=e.target.closest('[data-bet]'),c=e.target.closest('[data-chip]');
-  if(n)selectBet('number',Number(n.dataset.number));
-  if(b)selectBet(b.dataset.bet);
-  if(c){betAmount=Number(c.dataset.chip);renderChips();$('betAmount').textContent=betAmount.toLocaleString('ru-RU')}
+  const num=e.target.closest('[data-number]');
+  const bet=e.target.closest('[data-bet]');
+  const chip=e.target.closest('[data-chip]');
+  if(num&&!spinning)addBet('n'+Number(num.dataset.number));
+  if(bet&&!spinning)addBet(bet.dataset.bet);
+  if(chip&&!spinning){selectedChip=Number(chip.dataset.chip);renderChips();}
 });
-$('spinBtn').onclick=spin;
-$('clearBtn').onclick=()=>{selectedBet=null;document.querySelectorAll('.num,.bet-option').forEach(x=>x.classList.remove('selected'));$('message').textContent='Выберите ставку'};
-function goBack(){if(document.referrer)history.back();else location.href='casino.html'}
+
+$('spinBtn').addEventListener('click',spin);
+$('clearBtn').addEventListener('click',clearBets);
+$('backBtn').addEventListener('click',()=>{
+  if(window.history.length>1)window.history.back();
+  else location.href='casino.html';
+});
+
+/* ── init ── */
+resolvePlayer();
+renderHistory();
 render();
+loadBalance();
+if(window.Telegram?.WebApp){
+  try{window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}catch(e){}
+}
 </script>
 </body>
 </html>
