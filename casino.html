@@ -805,11 +805,15 @@
       border-color: rgba(212, 175, 55, 0.35);
       box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
     }
-
     .game-badge.soon {
       background: rgba(141, 141, 150, 0.10);
       color: var(--text-secondary);
       border-color: rgba(141, 141, 150, 0.15);
+    } 
+    .game-badge.blue {
+      background: rgba(0, 170, 255, 0.12);
+      color: #00aaff;
+      border-color: rgba(0, 170, 255, 0.25);
     }
     .game-badge.live {
       background: rgba(212, 175, 55, 0.10);
@@ -1341,7 +1345,7 @@
 
         <!-- Blackjack -->
         <div class="game-card" onclick="openGame('blackjack')">
-          <span class="game-badge live">Скоро</span>
+          <span class="game-badge blue">Скоро</span>
           <div class="card-shine"></div>
           <div class="game-visual">🃏</div>
           <div class="game-info">
@@ -1363,7 +1367,7 @@
 
         <!-- Poker -->
         <div class="game-card" onclick="openGame('poker')">
-          <span class="game-badge soon">Скоро</span>
+          <span class="game-badge blue">Скоро</span>
           <div class="card-shine"></div>
           <div class="game-visual">♠️</div>
           <div class="game-info">
@@ -1374,7 +1378,7 @@
 
         <!-- Slots -->
         <div class="game-card" onclick="openGame('slots')">
-          <span class="game-badge soon">Скоро</span>
+          <span class="game-badge blue">Скоро</span>
           <div class="card-shine"></div>
           <div class="game-visual">7️⃣</div>
           <div class="game-info">
