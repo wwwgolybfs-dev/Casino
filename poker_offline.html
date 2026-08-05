@@ -520,15 +520,90 @@ async function dealerAct(){
   g.toAct='dealer';
   setStatus('Дилер думает…','info');
   await sleep(450+Math.random()*350);
-
+ 
   const toCall=Math.max(0,g.currentBet-g.dealerBet);
   const hand=bestHand(g.dealerHole,g.board);
-  const strength=hand.rank;
+  const strength=hand.rank; // 0=High Card, 1=Pair, 2=Two Pair, 3=Trips, 4=Straight, 5=Flush, 6=Full, 7=Quads, 8=StraightFlush
   const rand=Math.random();
-
+  const phase=g.phase;
+ 
+  // ========== PREFLOP (только 2 карты) ==========
+  if(phase==='preflop'){
+    if(toCall===0){
+      // Чек - дилер может поднять
+      if((strength>=2&&rand<0.35)||(strength>=3&&rand<0.6)||(rand<0.08)){
+        const raiseBy=Math.max(BB,g.minRaise);
+        const betTo=g.currentBet+raiseBy;
+        g.dealerBet=betTo;
+        g.minRaise=betTo-g.currentBet;
+        g.currentBet=betTo;
+        addLog('Дилер: ставка '+fmt(betTo),'dealer');
+        setStatus('Дилер ставит '+fmt(betTo),'info');
+        render();g.toAct='player';return;
+      }
+      addLog('Дилер: пропуск','dealer');
+      setStatus('Дилер пропустил','info');
+      await sleep(250);
+      await nextStreet();
+      return;
+    }
+ 
+    // Есть рейз от игрока - дилер теперь готов уравнять!
+    if(strength>=1){ // Есть пара
+      if(rand<0.75){ // 75% уравнивает
+        g.dealerBet=g.currentBet;
+        addLog('Дилер: уравнять','dealer');
+        setStatus('Дилер уравнял','info');
+        render();await sleep(250);await nextStreet();return;
+      }
+      if(rand<0.85){ // 10% контр-рейзит
+        const betTo=g.currentBet+Math.max(BB,g.minRaise);
+        g.dealerBet=betTo;g.minRaise=betTo-g.currentBet;g.currentBet=betTo;
+        addLog('Дилер: поднять до '+fmt(betTo),'dealer');
+        setStatus('Дилер поднял','info');
+        render();g.toAct='player';return;
+      }
+      // 15% фолдит пару (редко!)
+      g.handOver=true;
+      g.pot+=g.playerBet+g.dealerBet;
+      g.playerBet=0;g.dealerBet=0;
+      const won=g.pot;g.playerStack+=won;g.pot=0;
+      addLog('Дилер: сбросить','dealer');
+      setStatus('Дилер сбросил · +'+fmt(won),'win');
+      $('statusDetail').textContent='+'+fmt(won);
+      await writeBalance(g.playerStack);
+      render();
+      showEnd('Дилер сбросил карты','win','+'+fmt(won)+' · Баланс 💎 '+fmt(balance));
+      return;
+    }
+ 
+    // High card (нет пары) на рейз
+    if(rand<0.35){ // 35% уравнивает с высокой картой
+      g.dealerBet=g.currentBet;
+      addLog('Дилер: уравнять','dealer');
+      setStatus('Дилер уравнял','info');
+      render();await sleep(250);await nextStreet();return;
+    }
+ 
+    // 65% - фолд на хай кард
+    g.handOver=true;
+    g.pot+=g.playerBet+g.dealerBet;
+    g.playerBet=0;g.dealerBet=0;
+    const won=g.pot;g.playerStack+=won;g.pot=0;
+    addLog('Дилер: сбросить','dealer');
+    setStatus('Дилер сбросил · +'+fmt(won),'win');
+    $('statusDetail').textContent='+'+fmt(won);
+    await writeBalance(g.playerStack);
+    render();
+    showEnd('Дилер сбросил карты','win','+'+fmt(won)+' · Баланс 💎 '+fmt(balance));
+    return;
+  }
+ 
+  // ========== POSTFLOP (флоп, тёрн, ривер) ==========
   if(toCall===0){
-    if(strength>=3||(g.phase!=='preflop'&&strength>=1&&rand<0.3)||rand<0.12){
-      const raiseBy=Math.max(BB,g.minRaise)*(strength>=4?2:1);
+    // Дилер может поднять на хороших руках или сделать блеф
+    if(strength>=3||(strength>=2&&rand<0.4)||(strength===1&&rand<0.15)||(rand<0.06)){
+      const raiseBy=Math.max(BB,g.minRaise)*(strength>=4?1.5:1);
       const betTo=g.currentBet+raiseBy;
       g.dealerBet=betTo;
       g.minRaise=betTo-g.currentBet;
@@ -543,22 +618,53 @@ async function dealerAct(){
     await nextStreet();
     return;
   }
-
-  if(strength>=4||(strength>=2&&rand>0.3)||(strength>=1&&toCall<=BB)||rand<0.1){
+ 
+  // Есть рейз на постфлопе
+ 
+  if(strength>=3){ // Сет и выше - ВСЕГДА уравнивает
     g.dealerBet=g.currentBet;
     addLog('Дилер: уравнять','dealer');
     setStatus('Дилер уравнял','info');
     render();await sleep(250);await nextStreet();return;
   }
-  if(strength>=5&&rand<0.4){
-    const betTo=g.currentBet+Math.max(BB*2,g.minRaise);
-    g.dealerBet=betTo;g.minRaise=betTo-g.currentBet;g.currentBet=betTo;
-    addLog('Дилер: поднять до '+fmt(betTo),'dealer');
-    setStatus('Дилер поднял','info');
-    render();g.toAct='player';return;
+ 
+  if(strength===2){ // Две пары
+    if(rand<0.65){ // 65% уравнивает
+      g.dealerBet=g.currentBet;
+      addLog('Дилер: уравнять','dealer');
+      setStatus('Дилер уравнял','info');
+      render();await sleep(250);await nextStreet();return;
+    }
+    if(rand<0.85){ // 20% контр-рейзит
+      const betTo=g.currentBet+Math.max(BB,g.minRaise);
+      g.dealerBet=betTo;g.minRaise=betTo-g.currentBet;g.currentBet=betTo;
+      addLog('Дилер: поднять до '+fmt(betTo),'dealer');
+      setStatus('Дилер поднял','info');
+      render();g.toAct='player';return;
+    }
+    // 15% фолд
   }
-
-  // dealer fold
+ 
+  if(strength===1){ // Одна пара
+    if(rand<0.45){ // 45% уравнивает
+      g.dealerBet=g.currentBet;
+      addLog('Дилер: уравнять','dealer');
+      setStatus('Дилер уравнял','info');
+      render();await sleep(250);await nextStreet();return;
+    }
+    // 55% фолд
+  }
+ 
+  if(strength===0){ // High card - редко уравнивает
+    if(rand<0.15){
+      g.dealerBet=g.currentBet;
+      addLog('Дилер: уравнять','dealer');
+      setStatus('Дилер уравнял','info');
+      render();await sleep(250);await nextStreet();return;
+    }
+  }
+ 
+  // Фолд - слабая рука или блеф не прошёл
   g.handOver=true;
   g.pot+=g.playerBet+g.dealerBet;
   g.playerBet=0;g.dealerBet=0;
