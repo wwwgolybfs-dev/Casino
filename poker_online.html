@@ -236,7 +236,7 @@ const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
 const SUITS=['♠','♥','♦','♣'],RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 const PHASE_RU={lobby:'Лобби',deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
-const SB=10,BB=20,START_STACK=1000,MAX_PLAYERS=3;
+const SB=10,BB=20,START_STACK=1000,MAX_BUYIN=1000,MAX_PLAYERS=3;
 const STALE_MS=45000;
 const fmt=n=>Number(n||0).toLocaleString('ru-RU');
 const $=id=>document.getElementById(id);
@@ -286,6 +286,16 @@ async function loadBalance(){
   if(!sb||!player.id||String(player.id).startsWith('g_')){$('balance').textContent='—';return}
   try{const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
     balance=Number(data?.total_score||0);$('balance').textContent=fmt(balance)}catch(e){}
+}
+/** Stack for seat: min(balance, MAX_BUYIN). Guests / no rating → START_STACK. Never more than balance. */
+function seatBuyIn(){
+  if (balance > 0) return Math.max(0, Math.min(balance, MAX_BUYIN));
+  return START_STACK;
+}
+function clampBet(amount, stack){
+  const a = Math.floor(Number(amount) || 0);
+  const s = Math.max(0, Math.floor(Number(stack) || 0));
+  return Math.max(0, Math.min(a, s));
 }
 function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
 function setStatus(t,c){$('status').textContent=t;$('status').className='status-text '+(c||'info')}
@@ -409,8 +419,9 @@ function bestHand(hole, board){
 
 /* ── Rooms / online ── */
 function playerSeat(extra){
+  const buy = seatBuyIn();
   return{
-    id:player.id,name:player.name,stack:START_STACK,bet:0,hole:[],folded:false,allIn:false,handName:'',
+    id:player.id,name:player.name,stack:buy,bet:0,hole:[],folded:false,allIn:false,handName:'',
     totalBet:0,acted:false,
     photo:player.photo||null,hatId:player.hatId||'none',lastSeen:Date.now(),
     ...extra
@@ -419,6 +430,7 @@ function playerSeat(extra){
 async function createRoom(){
   if(!sb){alert('Нет Supabase');return}
   await loadHat();
+  await loadBalance();
   const code=genCode();
   const initial={
     phase:'lobby',dealMsg:'',
@@ -442,6 +454,7 @@ async function createRoom(){
 async function joinRoom(code){
   code=(code||'').trim().toUpperCase();if(!code||!sb)return;
   await loadHat();
+  await loadBalance();
   try{
     const{data,error}=await sb.from('poker_rooms').select('*').eq('code',code).maybeSingle();
     if(error)throw error;if(!data){setStatus('Комната не найдена','loss');return}
@@ -633,8 +646,13 @@ function onState(){
 
   if(isHost&&(state.phase==='lobby'||state.handOver||state.phase==='showdown')){
     $('hostBar').style.display='block';
+    const withChips=(state.players||[]).filter(p=>(p.stack||0)>=BB).length;
     $('startHandBtn').textContent=state.handOver||state.phase==='showdown'?'НАЧАТЬ НОВУЮ РАЗДАЧУ':'Начать раздачу';
-    $('startHandBtn').disabled=(state.players||[]).filter(p=>p.stack>0).length<2;
+    // Always enable: hostStartHand will auto-rebuy zero stacks
+    $('startHandBtn').disabled=(state.players||[]).length<2;
+    if((state.players||[]).length>=2 && withChips<2){
+      $('startHandBtn').textContent='РЕБАЙ И НОВАЯ РАЗДАЧА';
+    }
   }else $('hostBar').style.display='none';
 
   updateActionsUI();
@@ -736,29 +754,44 @@ function renderSeats(){
 
 function updateActionsUI(){
   if(!state||state.handOver||state.phase==='lobby'||state.phase==='deal'||state.phase==='showdown'){
-    $('actions').style.display='none';$('raiseRow').style.display='none';return;
+    $('actions').style.display='none';
+    $('raiseRow').style.display='none';
+    if(state && (state.handOver || state.phase==='showdown')){
+      setStatus(state.dealMsg || 'Раздача окончена', 'info');
+    }
+    return;
   }
   const players=state.players||[];
   const myIdx=players.findIndex(p=>p.id===player.id);
   const me=players[myIdx];
   if(myIdx<0||state.toAct!==myIdx||!me||me.folded||me.allIn){
     $('actions').style.display='none';$('raiseRow').style.display='none';
-    const cur=players[state.toAct];
+    const cur = (typeof state.toAct === 'number') ? players[state.toAct] : null;
     if(cur) setStatus('Ход: '+cur.name,'info');
+    else if(state.dealMsg) setStatus(state.dealMsg,'info');
     return;
   }
   $('actions').style.display='grid';
-  const toCall=(state.currentBet||0)-(me.bet||0);
+  const toCall=Math.max(0,(state.currentBet||0)-(me.bet||0));
   $('checkBtn').style.display=toCall===0?'flex':'none';
   $('callBtn').style.display=toCall>0?'flex':'none';
-  $('callBtn').innerHTML=`<span>→</span>Колл ${fmt(toCall)}`;
+  // Call amount cannot exceed stack
+  const callAmt=Math.min(toCall, me.stack||0);
+  $('callBtn').innerHTML=`<span>→</span>${callAmt>=(me.stack||0)&&toCall>0?'Олл-ин ':'Колл '}${fmt(callAmt)}`;
   const minR=(state.currentBet||0)+(state.minRaise||BB);
   const maxR=(me.bet||0)+(me.stack||0);
-  $('raiseSlider').min=Math.min(minR,maxR);
-  $('raiseSlider').max=Math.max(minR,maxR);
-  $('raiseSlider').value=Math.min(Math.max(minR,Number($('raiseSlider').value)||minR),maxR);
-  $('raiseAmt').textContent=fmt($('raiseSlider').value);
-  $('raiseRow').style.display='flex';
+  if(maxR <= (me.bet||0)){
+    // no chips to raise
+    $('raiseBtn').disabled=true;
+    $('raiseRow').style.display='none';
+  } else {
+    $('raiseBtn').disabled=false;
+    $('raiseSlider').min=Math.min(minR,maxR);
+    $('raiseSlider').max=Math.max(minR,maxR);
+    $('raiseSlider').value=Math.min(Math.max(minR,Number($('raiseSlider').value)||minR),maxR);
+    $('raiseAmt').textContent=fmt($('raiseSlider').value);
+    $('raiseRow').style.display='flex';
+  }
   setStatus('Ваш ход','info');
 }
 
@@ -956,8 +989,26 @@ function advanceStreet(){
 function hostStartHand(){
   if (!isHost || !state) return;
   const allPlayers = state.players || [];
-  const players = allPlayers.filter(p => (p.stack || 0) > 0);
-  if (players.length < 2) { setStatus('Нужно 2+ игрока', 'loss'); return; }
+  if (allPlayers.length < 2) { setStatus('Нужно 2+ игрока за столом', 'loss'); return; }
+
+  // Rebuy: seat with 0 chips gets a fresh buy-in so heads-up doesn't softlock
+  allPlayers.forEach(p => {
+    if ((p.stack || 0) <= 0) {
+      // Only auto-rebuy known amounts; remote players get START_STACK (their client set initial stack on join)
+      if (p.id === player.id) p.stack = seatBuyIn();
+      else if ((p.stack || 0) <= 0) p.stack = START_STACK;
+    }
+  });
+
+  const players = allPlayers.filter(p => (p.stack || 0) >= BB);
+  if (players.length < 2) {
+    setStatus('Нужно 2+ игрока с фишками ≥ BB. Сделайте ребай.', 'loss');
+    return;
+  }
+
+  // Keep full seating list in state, but hand runs on players with chips
+  // For index simplicity we use the filtered active list as state.players for the hand
+  // and merge back any sitting-out later if needed. With MAX 3 this is OK if we rebuy zeros above.
 
   const deck = newDeck();
 
@@ -994,8 +1045,8 @@ function hostStartHand(){
 
   const post = (idx, amt, label) => {
     const p = players[idx];
-    const a = Math.min(amt, p.stack || 0);
-    p.stack -= a;
+    const a = clampBet(amt, p.stack || 0);
+    p.stack = (p.stack || 0) - a;
     p.bet = a;
     p.totalBet = a;
     if (p.stack === 0) p.allIn = true;
@@ -1004,6 +1055,11 @@ function hostStartHand(){
   };
   post(sb, SB, 'SB');
   post(bb, BB, 'BB');
+
+  // If BB couldn't post full blind (short stack), currentBet = actual BB post
+  const bbPosted = players[bb].bet || 0;
+  const sbPosted = players[sb].bet || 0;
+  const streetBet = Math.max(bbPosted, sbPosted, BB);
 
   for (let r = 0; r < 2; r++) {
     for (const p of players) p.hole.push(deck.pop());
@@ -1025,7 +1081,7 @@ function hostStartHand(){
     sbIdx: sb,
     bbIdx: bb,
     phase: 'preflop',
-    currentBet: BB,
+    currentBet: streetBet,
     minRaise: BB,
     toAct,
     actionCount: 0,
@@ -1057,26 +1113,27 @@ function sendAction(type, raiseTo){
     p.acted = true;
     setLastAction(p, 'check', 'Чек');
   } else if (type === 'call') {
-    const a = Math.min(toCall, p.stack || 0);
-    p.stack -= a;
+    const a = clampBet(toCall, p.stack || 0);
+    p.stack = (p.stack || 0) - a;
     p.bet = (p.bet || 0) + a;
     p.totalBet = (p.totalBet || 0) + a;
-    if (p.stack === 0) p.allIn = true;
+    if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
     p.acted = true;
-    setLastAction(p, 'call', a > 0 ? ('Колл ' + fmt(a)) : 'Чек');
+    setLastAction(p, 'call', a > 0 ? ((p.allIn ? 'Олл-ин ' : 'Колл ') + fmt(a)) : 'Чек');
   } else if (type === 'raise') {
-    const minTarget = (state.currentBet || 0) + (state.minRaise || BB);
     const maxTarget = (p.bet || 0) + (p.stack || 0);
+    if (maxTarget <= (p.bet || 0)) return; // nothing to put in
+    const minTarget = Math.min((state.currentBet || 0) + (state.minRaise || BB), maxTarget);
     let target = Math.floor(Number(raiseTo) || minTarget);
-    if (target < minTarget && target < maxTarget) target = Math.min(minTarget, maxTarget);
+    if (target < minTarget) target = minTarget;
     target = Math.min(Math.max(target, p.bet || 0), maxTarget);
 
     const need = Math.max(0, target - (p.bet || 0));
-    const a = Math.min(need, p.stack || 0);
-    p.stack -= a;
+    const a = clampBet(need, p.stack || 0);
+    p.stack = (p.stack || 0) - a;
     p.bet = (p.bet || 0) + a;
     p.totalBet = (p.totalBet || 0) + a;
-    if (p.stack === 0) p.allIn = true;
+    if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
 
     const prevBet = state.currentBet || 0;
     if (p.bet > prevBet) {
