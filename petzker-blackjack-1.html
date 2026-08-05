@@ -116,6 +116,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   transition:transform .1s,border-color .15s,box-shadow .15s,color .15s;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .chip:active{transform:scale(.9)}
 .chip.active{color:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow),0 3px 12px rgba(0,0,0,.4);background:linear-gradient(145deg,#3a3540,#25202a)}
+.chip.allin{
+  flex:0 0 44px;width:44px;font-size:8px;letter-spacing:.3px;
+  border:1.5px solid rgba(232,200,114,.45);
+  background:linear-gradient(145deg,#5a3a10,#3a2508);
+  color:var(--gold);box-shadow:0 2px 10px rgba(232,200,114,.15)
+}
+.chip.allin:active{transform:scale(.9)}
 .total{padding:9px 12px;border:1px solid var(--line);background:var(--panel);border-radius:12px;font-size:10px;font-weight:800;white-space:nowrap}
 .total b{color:var(--gold)}
 .clear,.deal{height:40px;border-radius:12px;padding:0 14px;font-size:11px;font-weight:900;white-space:nowrap}
@@ -184,7 +191,7 @@ const sb = window.supabase?.createClient(SUPABASE_URL, PROJECT_ANON_KEY) || null
 /* ── constants ── */
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-const CHIP_VALUES = [10,25,50,100,250,500,1000];
+const CHIP_VALUES = [10,25,50,100,250,500,1000,5000];
 const fmt = n => Number(n||0).toLocaleString('ru-RU');
 
 /* ── state ── */
@@ -253,9 +260,11 @@ function canDouble(hand){
 
 /* ── render ── */
 function renderChips(){
-  $('chips').innerHTML = CHIP_VALUES.map(v =>
-    `<button class="chip ${v===selectedChip?'active':''}" data-chip="${v}">${v>=1000?v/1000+'k':v}</button>`
+  const chipsHtml = CHIP_VALUES.map(v =>
+    `<button class="chip ${v===selectedChip?'active':''}" data-chip="${v}">${v>=1000?(v/1000)+'k':v}</button>`
   ).join('');
+  const allInHtml = `<button class="chip allin" id="allInBtn" title="Все очки">ALL</button>`;
+  $('chips').innerHTML = chipsHtml + allInHtml;
 }
 
 function renderCard(c, faceDown=false){
@@ -441,6 +450,19 @@ function clearBet(){
   bet = 0;
   setStatus('Поставьте ставку', 'info');
   $('statusDetail').textContent = '—';
+  updateUI();
+}
+
+function allIn(){
+  if(phase !== 'betting' || busy) return;
+  if(balance <= 0){
+    setStatus('Недостаточно очков', 'loss');
+    return;
+  }
+  bet = balance;
+  selectedChip = null;
+  setStatus(`All-in · ${fmt(bet)}`, 'info');
+  $('statusDetail').textContent = '';
   updateUI();
 }
 
@@ -679,6 +701,10 @@ document.addEventListener('click', e => {
   if(chip && phase === 'betting' && !busy){
     selectedChip = Number(chip.dataset.chip);
     addChip(selectedChip);
+    return;
+  }
+  if(e.target.closest('#allInBtn') && phase === 'betting' && !busy){
+    allIn();
     return;
   }
 });
