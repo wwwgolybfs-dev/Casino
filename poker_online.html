@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -107,7 +107,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .seat .bet-pill:empty{display:none}
 .seat .cards{display:flex;justify-content:center;gap:4px;margin-top:5px;min-height:50px}
 .seat .role{position:absolute;top:-4px;right:-8px;font-size:7px;font-weight:900;background:var(--gold);color:#1a1408;border-radius:4px;padding:2px 4px;z-index:2}
-.seat .hand-name{font-size:8px;font-weight:800;color:var(--green);margin-top:2px;min-height:12px}
+.seat .hand-name{font-size:8px;font-weight:800;color:var(--green);margin-top:2px;min-height:12px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}
 
 /* action bubble over seat */
 .seat .action-bubble{
@@ -125,11 +125,18 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .seat .action-bubble.blind{background:linear-gradient(135deg,#2a2a18,#1a1a10);color:rgba(232,200,114,.9);border:1px solid rgba(232,200,114,.3)}
 @keyframes bubbleIn{from{opacity:0;transform:translateX(-50%) translateY(8px) scale(.85)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 
-.card{width:38px;height:54px;border-radius:7px;background:linear-gradient(160deg,#fff,#f0f4f0);box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:11px;font-weight:900;line-height:1;position:relative;animation:dealIn .28s ease-out}
+.card{width:38px;height:54px;border-radius:7px;background:linear-gradient(160deg,#fff,#f0f4f0);box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:11px;font-weight:900;line-height:1;position:relative;animation:dealIn .28s ease-out;border:2px solid transparent;}
 .card .suit{font-size:13px;align-self:center}
 .card .rank.bot{transform:rotate(180deg);align-self:flex-end}
 .card.red{color:#c43b4e}.card.black{color:#1a1e28}
 .card.back{background:linear-gradient(145deg,#1a3a5c,#0d2240);border:1.5px solid rgba(232,200,114,.35);color:transparent}
+/* Подсветка активных карт комбинации */
+.card.active-combo {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px var(--gold-glow), inset 0 0 5px rgba(232,200,114,0.3);
+  transform: translateY(-2px);
+}
+
 .seat.me .card{width:44px;height:62px;font-size:12px}
 .seat.me .card .suit{font-size:15px}
 @keyframes dealIn{from{opacity:0;transform:translateY(-12px) scale(.88)}to{opacity:1;transform:none}}
@@ -149,7 +156,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .raise-amt{font-size:13px;font-weight:900;color:var(--gold);min-width:60px;text-align:right}
 .note{text-align:center;color:#3a4a3a;font-size:9px;margin-top:auto;padding-top:8px;font-weight:600}
 .host-bar{display:none;margin-bottom:8px}
-.host-bar .btn{width:100%}
+.host-bar .btn{width:100%; height: 50px; font-size: 14px; letter-spacing: 1px;}
 </style>
 </head>
 <body>
@@ -185,7 +192,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   </div>
 
   <div class="host-bar" id="hostBar">
-    <button class="btn primary" id="startHandBtn">Начать раздачу</button>
+    <button class="btn primary" id="startHandBtn">НАЧАТЬ НОВУЮ РАЗДАЧУ</button>
   </div>
 
   <div class="table-wrap" id="tableWrap">
@@ -231,7 +238,7 @@ const SUITS=['♠','♥','♦','♣'],RANKS=['2','3','4','5','6','7','8','9','10
 const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 const PHASE_RU={lobby:'Лобби',deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
 const SB=10,BB=20,START_STACK=1000,MAX_PLAYERS=3;
-const STALE_MS=45000; // игрок «ушёл», если нет heartbeat
+const STALE_MS=45000;
 const fmt=n=>Number(n||0).toLocaleString('ru-RU');
 const $=id=>document.getElementById(id);
 
@@ -287,10 +294,16 @@ function newDeck(){
   const d=[];for(const s of SUITS)for(const r of RANKS)d.push({r,s,red:s==='♥'||s==='♦'});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d;
 }
-function cardHTML(c,fd){if(fd||!c)return'<div class="card back"></div>';return`<div class="card ${c.red?'red':'black'}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`}
+
+// Обновленная функция cardHTML для поддержки подсветки
+function cardHTML(c,fd,isActive=false){
+  if(fd||!c)return'<div class="card back"></div>';
+  const activeClass = isActive ? ' active-combo' : '';
+  return`<div class="card ${c.red?'red':'black'}${activeClass}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`
+}
 
 function evalHand(cards){
-  if(cards.length<5)return{rank:0,name:'—',score:0};
+  if(cards.length<5)return{rank:0,name:'—',score:0,usedIndices:[]};
   const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
   const suits=cards.map(c=>c.s);
   const counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);
@@ -300,23 +313,52 @@ function evalHand(cards){
   let sh=0;const u=[...unique];if(u.includes(14))u.push(1);u.sort((a,b)=>b-a);
   for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){sh=u[i];break}}
   if(!sh&&unique.includes(14)&&[5,4,3,2].every(x=>unique.includes(x)))sh=5;
-  let rank=0,name='Старшая карта',kickers=[];
-  if(isFlush&&sh){rank=8;name='Стрит-флеш';kickers=[sh]}
-  else if(byCount[0].c===4){rank=7;name='Каре';kickers=[byCount[0].v,byCount[1]?.v||0]}
-  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус';kickers=[byCount[0].v,byCount[1].v]}
-  else if(isFlush){rank=5;name='Флеш';kickers=unique.slice(0,5)}
-  else if(sh){rank=4;name='Стрит';kickers=[sh]}
-  else if(byCount[0].c===3){rank=3;name='Сет';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
-  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары';kickers=[byCount[0].v,byCount[1].v,byCount[2]?.v||0]}
-  else if(byCount[0].c===2){rank=1;name='Пара';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  
+  let rank=0,name='Старшая карта',kickers=[], usedIndices=[];
+  
+  // Логика определения комбинаций и используемых карт (упрощенная для индексов)
+  // Для точной подсветки нужно возвращать индексы из исходного массива cards
+  // Здесь мы возвращаем просто ранг и имя, а подсветку сделаем в bestHand
+  
+  if(isFlush&&sh){rank=8;name='Стрит-флеш'}
+  else if(byCount[0].c===4){rank=7;name='Каре'}
+  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус'}
+  else if(isFlush){rank=5;name='Флеш'}
+  else if(sh){rank=4;name='Стрит'}
+  else if(byCount[0].c===3){rank=3;name='Сет'}
+  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары'}
+  else if(byCount[0].c===2){rank=1;name='Пара'}
   else kickers=unique.slice(0,5);
+  
   let score=rank*1e10;kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
   return{rank,name,score};
 }
+
 function bestHand(hole,board){
-  const all=[...(hole||[]),...(board||[])];if(all.length<5)return evalHand(all);
-  let best={score:-1};const n=all.length;
-  (function comb(s,ch){if(ch.length===5){const h=evalHand(ch.map(i=>all[i]));if(h.score>best.score)best=h;return}for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}})(0,[]);
+  const all=[...(hole||[]),...(board||[])];
+  if(all.length<5) return {score:-1, name:'—', usedHole:[], usedBoard:[]};
+  
+  let best={score:-1, name:'', usedHole:[], usedBoard:[]};
+  const n=all.length;
+  
+  // Перебор всех комбинаций по 5 карт
+  (function comb(s,ch){
+    if(ch.length===5){
+      const subset = ch.map(i=>all[i]);
+      const h=evalHand(subset);
+      if(h.score>best.score){
+        best={...h, usedHole:[], usedBoard:[]};
+        // Определяем, какие индексы из hole и board вошли в эту комбинацию
+        ch.forEach(idx => {
+          if(idx < (hole?.length||0)) best.usedHole.push(idx);
+          else best.usedBoard.push(idx - (hole?.length||0));
+        });
+      }
+      return;
+    }
+    for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}
+  })(0,[]);
+  
   return best;
 }
 
@@ -362,14 +404,12 @@ async function joinRoom(code){
     const players=state.players||[];
     if(!players.some(p=>p.id===player.id)){
       if(players.length>=MAX_PLAYERS){setStatus('Комната полная','loss');return}
-      // можно зайти в lobby или между руками (handOver)
       const midHand=data.status==='playing'&&state.phase!=='lobby'&&!state.handOver;
       if(midHand){setStatus('Игра уже идёт','loss');return}
       players.push(playerSeat());
       state.players=players;
       await sb.from('poker_rooms').update({state,status:'lobby',updated_at:new Date().toISOString()}).eq('id',data.id);
     }else{
-      // refresh presence + hat
       const me=players.find(p=>p.id===player.id);
       if(me){me.lastSeen=Date.now();me.hatId=player.hatId||me.hatId;me.photo=player.photo||me.photo;me.name=player.name||me.name}
       state.players=players;
@@ -382,7 +422,6 @@ async function joinRoom(code){
 async function listRooms(){
   if(!sb){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';return}
   try{
-    // показываем lobby + старые playing без игроков почистим позже
     const{data,error}=await sb.from('poker_rooms')
       .select('code,status,state,created_at,updated_at')
       .in('status',['lobby','playing'])
@@ -391,7 +430,6 @@ async function listRooms(){
     const open=(data||[]).filter(r=>{
       const n=(r.state?.players||[]).length;
       if(n===0)return false;
-      // playing только если handOver (между руками) или phase lobby
       if(r.status==='playing'){
         const st=r.state||{};
         return !!st.handOver || st.phase==='lobby' || st.phase==='showdown';
@@ -417,7 +455,6 @@ async function subscribeRoom(){
       if(payload.new?.state){state=payload.new.state;onState()}
     }).subscribe();
 }
-/** status: lobby между руками / playing во время раздачи / closed если пусто */
 function roomStatusFromState(st,forced){
   if(forced)return forced;
   if(!st)return'lobby';
@@ -428,7 +465,6 @@ function roomStatusFromState(st,forced){
 }
 async function pushState(extraStatus){
   if(!state)return;
-  // обновить свой lastSeen
   const me=(state.players||[]).find(p=>p.id===player.id);
   if(me)me.lastSeen=Date.now();
   if(!sb||!roomId||String(roomId).startsWith('local')){onState();return}
@@ -454,7 +490,6 @@ async function leaveRoom(opts={}){
         await sb.from('poker_rooms').update({state,status:'closed',updated_at:new Date().toISOString()}).eq('id',roomId);
         try{await sb.from('poker_rooms').delete().eq('id',roomId)}catch(e){}
       }else{
-        // если ушёл хост — передать
         if(state.hostId===player.id||isHost){
           state.hostId=players[0].id;
           await sb.from('poker_rooms').update({state,host_id:players[0].id,status:roomStatusFromState(state),updated_at:new Date().toISOString()}).eq('id',roomId);
@@ -485,7 +520,6 @@ function pruneStalePlayers(){
   state.players=(state.players||[]).filter(p=>{
     if(p.id===player.id)return true;
     const ls=p.lastSeen||0;
-    // если lastSeen никогда не писался — даём шанс (старые комнаты)
     if(!ls)return true;
     return(now-ls)<STALE_MS;
   });
@@ -504,14 +538,12 @@ function startHeartbeat(){
     if(!roomId||!state||leaving)return;
     const me=(state.players||[]).find(p=>p.id===player.id);
     if(me)me.lastSeen=Date.now();
-    // хост чистит AFK
     let changed=false;
     if(isHost)changed=pruneStalePlayers();
     if(changed){
       await pushState(roomStatusFromState(state));
       if(!(state.players||[]).length){await leaveRoom({silent:true});return}
     }else if(sb&&roomId&&!String(roomId).startsWith('local')){
-      // лёгкий heartbeat без смены status
       try{
         await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',roomId);
       }catch(e){}
@@ -531,14 +563,12 @@ function showTable(){
 
 function onState(){
   if(!state)return;
-  // синхронизация хоста (если предыдущий ушёл)
   const hostStillHere=(state.players||[]).some(p=>p.id===state.hostId);
   if(!hostStillHere&&(state.players||[]).length){
     state.hostId=state.players[0].id;
   }
   isHost=state.hostId===player.id;
 
-  // если меня выкинули из списка — вернуться в лобби
   if(roomId&&!(state.players||[]).some(p=>p.id===player.id)){
     stopHeartbeat();roomId=null;roomCode=null;isHost=false;state=null;
     $('lobby').style.display='flex';$('tableWrap').style.display='none';
@@ -548,7 +578,7 @@ function onState(){
   }
 
   renderSeats();
-  $('board').innerHTML=(state.board||[]).map(c=>cardHTML(c)).join('');
+  renderBoard(); // Изменено для подсветки
   const pot=(state.pot||0)+(state.players||[]).reduce((s,p)=>s+(p.bet||0),0);
   $('pot').textContent='Банк: '+fmt(pot);
   $('phaseLabel').textContent=PHASE_RU[state.phase]||state.phase||'—';
@@ -557,11 +587,48 @@ function onState(){
 
   if(isHost&&(state.phase==='lobby'||state.handOver||state.phase==='showdown')){
     $('hostBar').style.display='block';
-    $('startHandBtn').textContent=state.handOver||state.phase==='showdown'?'Следующая раздача':'Начать раздачу';
+    $('startHandBtn').textContent=state.handOver||state.phase==='showdown'?'НАЧАТЬ НОВУЮ РАЗДАЧУ':'Начать раздачу';
     $('startHandBtn').disabled=(state.players||[]).filter(p=>p.stack>0).length<2;
   }else $('hostBar').style.display='none';
 
   updateActionsUI();
+}
+
+// Функция отрисовки стола с подсветкой комбинаций
+function renderBoard(){
+  const boardEl = $('board');
+  boardEl.innerHTML = '';
+  
+  // Получаем данные о лучшей руке текущего игрока для подсветки
+  let myBestHand = null;
+  const me = (state.players||[]).find(p => p.id === player.id);
+  const isShowdown = state.phase === 'showdown' || state.handOver;
+  
+  if(me && !me.folded && state.board.length > 0) {
+     // Если шоуран или это я (карты открыты)
+     if(isShowdown || me.hole.length === 2) {
+        myBestHand = bestHand(me.hole, state.board);
+     }
+  }
+
+  // Рисуем карты стола
+  state.board.forEach((c, idx) => {
+    let isActive = false;
+    if(myBestHand && myBestHand.usedBoard.includes(idx)) {
+      isActive = true;
+    }
+    boardEl.innerHTML += cardHTML(c, false, isActive);
+  });
+  
+  // Заполнители
+  for(let i=state.board.length; i<5; i++) {
+    let placeholder = document.createElement('div');
+    placeholder.style.width = '38px';
+    placeholder.style.height = '54px';
+    placeholder.style.border = '2px dashed rgba(255,255,255,0.1)';
+    placeholder.style.borderRadius = '7px';
+    boardEl.appendChild(placeholder);
+  }
 }
 
 function renderSeats(){
@@ -579,7 +646,21 @@ function renderSeats(){
       div.innerHTML=`<div class="avatar-wrap"><div class="avatar">+</div></div><div class="name">Пусто</div><div class="stack">—</div><div class="cards"></div>`;
     }else{
       const show=isMe||state.phase==='showdown'||state.handOver;
-      const cards=(p.hole||[]).map(c=>cardHTML(c,!show)).join('');
+      
+      // Логика подсветки карт игрока
+      let myBestHand = null;
+      if(isMe && !p.folded && state.board.length > 0 && (state.phase==='showdown'||state.handOver||p.hole.length===2)) {
+         myBestHand = bestHand(p.hole, state.board);
+      }
+      
+      const cardsHtml = (p.hole||[]).map((c, idx) => {
+        let isActive = false;
+        if(myBestHand && myBestHand.usedHole.includes(idx)) {
+          isActive = true;
+        }
+        return cardHTML(c, !show, isActive);
+      }).join('');
+      
       let role='';
       if(realIdx===state.dealerIdx)role='D';
       else if(realIdx===state.sbIdx)role='SB';
@@ -589,6 +670,15 @@ function renderSeats(){
       const face=p.photo
         ?`<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
         :(isMe?'😎':'👤');
+      
+      // Отображение названия комбинации
+      let handNameDisplay = '';
+      if(isMe && myBestHand && myBestHand.name !== '—') {
+        handNameDisplay = `<div class="hand-name">${myBestHand.name}</div>`;
+      } else if ((state.phase==='showdown'||state.handOver) && !p.folded && p.handName) {
+         handNameDisplay = `<div class="hand-name">${p.handName}</div>`;
+      }
+
       div.innerHTML=`
         <div class="avatar-wrap">
           ${bubble}
@@ -598,8 +688,8 @@ function renderSeats(){
         <div class="name">${p.name}${isMe?' (вы)':''}</div>
         <div class="stack">💎 ${fmt(p.stack)}</div>
         <div class="bet-pill">${p.bet?'💎 '+fmt(p.bet):''}</div>
-        <div class="cards">${cards}</div>
-        <div class="hand-name">${p.handName||''}</div>`;
+        <div class="cards">${cardsHtml}</div>
+        ${handNameDisplay}`;
     }
     seats.appendChild(div);
   });
@@ -633,18 +723,16 @@ function updateActionsUI(){
   setStatus('Ваш ход','info');
 }
 
-/* ── Host: start hand with deal animation flags ── */
 function hostStartHand(){
   if(!isHost||!state)return;
   const players=(state.players||[]).filter(p=>p.stack>0);
   if(players.length<2){setStatus('Нужно 2+ игрока','loss');return}
 
   const deck=newDeck();
-  // rotate dealer
   let d=((state.dealerIdx??-1)+1)%players.length;
   let sb=(d+1)%players.length;
   let bb=(d+2)%players.length;
-  if(players.length===2){sb=d;bb=(d+1)%players.length} // heads-up rule
+  if(players.length===2){sb=d;bb=(d+1)%players.length}
 
   players.forEach(p=>{p.hole=[];p.bet=0;p.folded=false;p.allIn=false;p.handName='';p.totalBet=0;p.lastAction=null;p.lastSeen=Date.now()});
 
@@ -658,7 +746,6 @@ function hostStartHand(){
   pot+=post(sb,SB,'SB');
   pot+=post(bb,BB,'BB');
 
-  // deal 2 each
   for(let r=0;r<2;r++) for(const p of players) p.hole.push(deck.pop());
 
   let toAct=(bb+1)%players.length;
@@ -669,7 +756,7 @@ function hostStartHand(){
     players,
     deck,
     board:[],
-    pot:0, // bets sit in front until collected
+    pot:0,
     dealerIdx:d,sbIdx:sb,bbIdx:bb,
     phase:'preflop',
     currentBet:BB,
@@ -679,7 +766,6 @@ function hostStartHand(){
     handOver:false,
     dealMsg:'Дилер раздал карты'
   };
-  // store bets already on players; pot accumulates on street end
   pushState('playing');
   setStatus('Префлоп','info');
 }
@@ -729,7 +815,6 @@ function sendAction(type,raiseTo){
 
   const alive=pl.filter(x=>!x.folded);
   if(alive.length===1){
-    // award pot
     pl.forEach(x=>{state.pot+=x.bet;x.bet=0});
     alive[0].stack+=state.pot;
     state.dealMsg=alive[0].name+' забирает банк';
@@ -737,7 +822,6 @@ function sendAction(type,raiseTo){
     pushState('lobby');return;
   }
 
-  // street done?
   if(allMatched()&&state.actionCount>0){
     advanceStreet();
   }else{
@@ -750,7 +834,7 @@ function sendAction(type,raiseTo){
 
 function advanceStreet(){
   const pl=state.players;
-  pl.forEach(x=>{state.pot+=x.bet;x.bet=0; /* keep lastAction visible a moment */});
+  pl.forEach(x=>{state.pot+=x.bet;x.bet=0;});
   state.currentBet=0;state.minRaise=BB;state.actionCount=0;
 
   if(state.phase==='preflop'){
@@ -766,7 +850,6 @@ function advanceStreet(){
     state.board.push(state.deck.pop());
     state.dealMsg='Дилер открыл ривер';
   }else if(state.phase==='river'){
-    // showdown
     state.phase='showdown';state.handOver=true;state.toAct=null;
     const cont=pl.filter(p=>!p.folded);
     let best=null,winners=[];
@@ -782,7 +865,6 @@ function advanceStreet(){
     pushState('lobby');return;
   }
 
-  // first to act: left of dealer
   let first=(state.dealerIdx+1)%pl.length;
   for(let i=0;i<pl.length;i++){if(canAct(pl[first]))break;first=(first+1)%pl.length}
   state.toAct=first;
@@ -805,12 +887,10 @@ $('backBtn').onclick=async()=>{
 };
 $('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom($('codeInput').value)});
 
-// уход со страницы → выйти из комнаты
 window.addEventListener('pagehide',()=>{leaveRoom({silent:true})});
 window.addEventListener('beforeunload',()=>{leaveRoom({silent:true})});
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'&&roomId){
-    // обновить lastSeen последний раз; полный leave — на pagehide
     const me=(state?.players||[]).find(p=>p.id===player.id);
     if(me)me.lastSeen=Date.now();
   }
