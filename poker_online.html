@@ -1,693 +1,570 @@
 <!DOCTYPE html>
-<html lang="en-US" class="hide-scroll">
-<head> 
-    <title>Break for delicious coffee HTML Template Live Demo</title>
-    <meta name="Keywords">
-    <meta name="Description">
-    
-
-    <link rel="shortcut icon" href="https://csite.nicepage.com/favicon.ico" type="image/x-icon">
-
-    
-    
-
-
-    <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no,width=device-width">
-
-<link rel="preconnect" href="https://csite.nicepage.com" />
-<link rel="preconnect" href="https://capp.nicepage.com" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://www.googletagmanager.com" />
-<link rel="preconnect" href="https://images01.nicepagecdn.com" />
-<link rel="preconnect" href="https://images03.nicepagecdn.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-
-
-<script src="//capp.nicepage.com/ffb52f5be14da7b8ac7beed64bb96e92996b70ae/main-libs.js" ></script>
-<link href="//capp.nicepage.com/ffb52f5be14da7b8ac7beed64bb96e92996b70ae/main-libs.css" rel="stylesheet" />
-
-
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200..900&family=Roboto:wght@200..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200..900&family=Roboto:wght@200..900&display=swap">
-    </noscript>
-
-
-
-
-
-<script>
-    window.isAuthenticated = 0;
-    window.useExternalGtmCode = 0;
-    window.clientUserId = 0;
-    window.clientUserName = '';
-    window.userCountryCode = '';
-    window.logPageEvent = 1;
-    window.userHasAdsParams = 1;
-    window.utmSourceFromReferrer = 0;
-    window.currentLang = '';
-    window.baseUrl = 'html-templates';
-    window.currentUrl = 'html-templates';
-    window.np_userId = '';
-    window.isAmplitudeInitialized = false;
-    window.sha256Email = '';
-    window.skipSetCountryCode = 0;
-
-    function getCookieOrLocalStorage(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) {
-                return c.substring(nameEQ.length, c.length);
-            }
-        }
-        var lsValue = localStorage.getItem(name);
-        return !!lsValue;
-    }
-
-    function sendAnalyticsData(eventType, props, cb) {
-        var json = { data: {} };
-        json.userToken = np_userId;
-        json.data.adsParams = $.cookie('AdsParameters');
-        json.data.ga = $.cookie('_ga');
-        json.data.gac = $.cookie('_gac_UA-88868916-2');
-        json.data.userAgent = navigator.userAgent;
-        json.data.eventType = eventType;
-        json.data.props = props;
-        $.ajax({
-            'type': 'POST',
-            'url': '/Feedback/SendAdsLog',
-            'contentType': 'application/json; charset=utf-8',
-            'data': JSON.stringify(json),
-            'dataType': 'json',
-            'complete': cb || function() {}
-        });
-    }
-
-    function initializeAmplitudeUser() {
-        if (isAmplitudeInitialized) {
-            return;
-        }
-        isAmplitudeInitialized = true;
-
-        if (clientUserId > 0)
-        {
-            identifyAmplitudeUser(clientUserId, clientUserName);
-        }
-        else
-        {
-            identifyAmplitudeUser(null);
-        }
-    }
-
-    function sendAmplitudeAnalyticsData(eventName, eventProperties, userProperties, callback_function) {
-        initializeAmplitudeUser();
-
-        if (userProperties) {
-            if(userProperties.utm_source || userProperties.utm_campaign) {
-                var identify = new amplitude.Identify();
-                identify.setOnce("utm_campaign", userProperties.utm_campaign);
-                identify.setOnce("utm_source", userProperties.utm_source);
-                identify.setOnce("utm_content", userProperties.utm_content);
-                identify.setOnce("utm_group", userProperties.utm_group);
-                identify.setOnce("utm_term", userProperties.utm_term);
-                identify.setOnce("utm_page", userProperties.utm_page);
-                identify.setOnce("utm_page2", userProperties.utm_page);
-                identify.setOnce("referrer", userProperties.referrer);
-
-                amplitude.getInstance().identify(identify);
-
-                userProperties.utm_source_last = userProperties.utm_source;
-                userProperties.utm_campaign_last = userProperties.utm_campaign;
-                userProperties.utm_content_last = userProperties.utm_content;
-                userProperties.utm_group_last = userProperties.utm_group;
-                userProperties.utm_term_last = userProperties.utm_term;
-                userProperties.utm_page_last = userProperties.utm_page;
-            }
-
-            var userProps = objectWithoutProperties(userProperties, ["utm_campaign", "utm_source","utm_content", "utm_term", "utm_page", "utm_group", "referrer"]);
-            amplitude.getInstance().setUserProperties(userProps);
-        }
-
-        if (!eventProperties) {
-            eventProperties = {};
-        }
-
-        eventProperties.WebSite = 'true';
-        eventProperties.IsAuthenticated = window.isAuthenticated;
-        eventProperties.country_code = getCountryCode();
-        eventProperties.lang = window.currentLang || '';
-
-        var fullPageUrl = window.location.pathname.split('?')[0];
-        eventProperties.full_page_url = fullPageUrl;
-        eventProperties.page_url = clearPageUrl(fullPageUrl);
-
-        if (typeof callback_function === 'function') {
-            amplitude.getInstance().logEvent(eventName, eventProperties, callback_function);
-        } else {
-            amplitude.getInstance().logEvent(eventName, eventProperties);
-        }
-    }
-
-    function identifyAmplitudeUser(userId, token) {
-        if (userId) {
-            amplitude.getInstance().setUserProperties({
-                "Token": token,
-                "UserId": userId
-            });
-        }
-
-        var identify = new amplitude.Identify();
-        amplitude.getInstance().identify(identify);
-        if (userId) {
-            amplitude.getInstance().setUserId(userId);
-        }
-    }
-
-    function getUtmParamsFromUrl() {
-        var hash = window.location.hash;
-        var url = new URL(window.location.href);
-        if (hash && hash.indexOf('utm_') >= 0) {
-            url = new URL(window.location.origin + window.location.pathname + hash.replace('#', '?'));
-        }
-
-        if (!url.searchParams) {
-            return '';
-        }
-        return getUtmParams(url);
-    }
-
-    function hasGoogleIdFromUrl() {
-        var url = new URL(window.location.href);
-        if (!url.searchParams) {
-            return false;
-        }
-        return !!url.searchParams.get('gclid');
-    }
-
-    function waitForDOMAndAmplitude(callback) {
-        var domReady = false;
-        var ampReady = false;
-        let hasRun = false;
-
-        function tryRun() {
-            if (domReady && ampReady && !hasRun) {
-                hasRun = true;
-                callback();
-            }
-        }
-
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", function () {
-                domReady = true;
-                tryRun();
-            });
-        } else {
-            domReady = true;
-            tryRun();
-        }
-
-        window._onAmplitudeReady = function () {
-            var urlParams = new URLSearchParams(window.location.search);
-            var passedDeviceId = urlParams.get('amp_device_id');
-            var amplitudeConfig = passedDeviceId ? { deviceId: passedDeviceId } : {};
-            amplitude.getInstance().init("878f4709123a5451aff838c1f870b849", null, amplitudeConfig, function() {
-                ampReady = true;
-                tryRun();
-            });
-        };
-    }
-
-    function sendAnalyticsFromUrl(referrer, pageType) {
-        var urlIsAvailable = typeof URL === "function" || (navigator.userAgent.indexOf('MSIE') !== -1 && typeof URL === 'object');
-        if (!urlIsAvailable) {
-            return;
-        }
-
-        var utmParams = getUtmParamsFromUrl();
-        if (!utmParams) {
-            return;
-        }
-
-        var gclidFromUrl = utmParams.gclid;
-        var utmParamsFromUrl = !!utmParams.utmSource || !!utmParams.utmCampaign || !!utmParams.gclid;
-        if (!utmParamsFromUrl && userHasAdsParams)
-        {
-            utmParams = getUtmParamsFromCookie();
-        }
-
-        var canLog = canLogToAmplitude(pageType);
-        if (utmParamsFromUrl || utmSourceFromReferrer) {
-            var fullPageUrl = window.location.pathname.split('?')[0];
-            var pageUrl = clearPageUrl(fullPageUrl);
-            var userProps = {
-                "utm_source": utmParams.utmSource,
-                "utm_campaign": utmParams.utmCampaign,
-                "utm_content": utmParams.utmContent,
-                "utm_group": utmParams.utmGroup,
-                "utm_term": utmParams.utmTerm,
-                "utm_page": getUtmPageValue(pageUrl),
-                "utm_lang": window.currentLang || '',
-                "referrer": referrer
-            };
-
-            if (gclidFromUrl) {
-                var landingUrl = pageUrl.startsWith('/') && pageUrl !== '/' ? pageUrl.substr(1) : pageUrl;
-                userProps.landing_page = landingUrl;
-
-                var event = {
-                    'Page': landingUrl,
-                    'Url': window.location.href,
-                    'utm_campaign_event': utmParams.utmCampaign,
-                    'utm_group_event': utmParams.utmGroup
-
-                }
-                sendAmplitudeAnalyticsData('Landing Page', event, userProps);
-            } else {
-                var eventProps = {
-                    "utm_source": utmParams.utmSource,
-                    "utm_campaign": utmParams.utmCampaign,
-                    "utm_content": utmParams.utmContent,
-                    "utm_group": utmParams.utmGroup,
-                    "utm_term": utmParams.utmTerm
-                };
-
-                if (utmParams.utmSource === "elastic") {
-                    sendAmplitudeAnalyticsData('Email Click', eventProps);
-                }
-
-                if (canLog) {
-                    sendAmplitudeAnalyticsData('Campaign', eventProps, userProps);
-                }
-            }
-        }
-
-        if (logPageEvent && canLog || (pageType === 'Pricing Page' && window.isValidCountry(true))) {
-            var pageEventProps = {
-                'type': pageType,
-                'accepted_country': isValidCountry(),
-                'force_log': !canLog
-            };
-
-            if (utmParams.gclid) {
-                pageEventProps.googleClickId = utmParams.gclid;
-            }
-
-            sendAmplitudeAnalyticsData('Page View', pageEventProps);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.skipInitCookieConsent !== 1 && location.href.indexOf('/frame/') === -1 && window.location.href.indexOf('skipCookie') === -1) {
-            PureCookie.initCookieConsent();
-        }
-        if(!skipSetCountryCode) {
-            setCountryCode('https://location.nicepagesrv.com/country');
-        }
-        setUserIdCookie();
-    });
-</script>
-
-    <!-- Google Tag Manager -->
-    <script>
-        // Define dataLayer and the gtag function.
-        window.dataLayer = window.dataLayer || [];
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-
-        var consentDefaultValue = 'granted';
-        gtag('consent', 'default', {
-            'ad_storage': consentDefaultValue,
-            'ad_user_data': consentDefaultValue,
-            'ad_personalization': consentDefaultValue,
-            'analytics_storage': consentDefaultValue
-        });
-        
-        if (hasGoogleIdFromUrl()) {
-            useExternalGtmCode = 1;
-        }
-        
-        function loadGTM() {
-            var w = window, d = document, s = 'script', l = 'dataLayer';
-            var i = useExternalGtmCode ? 'W76XGFR' : 'GTM-W76XGFR';
-            var src = useExternalGtmCode
-                ? 'https://load.api9.nicepage.com/nldlswob.js?st=' + i
-                : 'https://www.googletagmanager.com/gtm.js?id=' + i;
-
-            w[l] = w[l] || [];
-            w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-
-            var f = d.getElementsByTagName(s)[0];
-            var j = d.createElement(s);
-            var dl = l !== 'dataLayer' ? '&l=' + l : '';
-            j.async = true;
-            j.src = src + dl;
-            f.parentNode.insertBefore(j, f);
-        }
-
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadGTM);
-        } else {
-            setTimeout(loadGTM, 2000);
-        }
-    </script>
-    <!-- End Google Tag Manager -->
-    <script>
-        (function() {
-            var hasRefParam = window.location.search.includes('fpr=');
-            var hasFromCookie = document.cookie.includes('_fprom_ref') || document.cookie.includes('_fprom_tid');
-
-            if (hasRefParam || hasFromCookie) {
-                window.fpr = window.fpr || function() {
-                    window.fpr.q = window.fpr.q || [];
-                    window.fpr.q[arguments[0] == 'set' ? 'unshift' : 'push'](arguments);
-                };
-                fpr("init", {cid: "yek6q14u"}); 
-                fpr("click");
-
-                const script = document.createElement('script');
-                script.src = "https://cdn.firstpromoter.com/fpr.js";
-                script.async = true;
-                document.head.appendChild(script);
-            }
-        })();
-    </script>
-    <!-- Facebook Pixel Code -->
-        <script>
-            if(window.hideFacebookPixelCode !== true) {
-                !function (f, b, e, v, n, t, s) {
-                    if (f.fbq) return; n = f.fbq = function () {
-                        n.callMethod ?
-                            n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-                    };
-                    if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-                    n.queue = []; t = b.createElement(e); t.async = !0;
-                    t.src = v; s = b.getElementsByTagName(e)[0];
-                    s.parentNode.insertBefore(t, s)
-                }(window, document, 'script',
-                    'https://connect.facebook.net/en_US/fbevents.js');
-
-                var fbInitOptions = { em: '' };
-                if (clientUserId > 0) {
-                    fbInitOptions.external_id = clientUserId;
-                }
-
-                fbq('init', '251025992170426', fbInitOptions);
-                fbq('track', 'PageView');
-            }
-        </script>
-        <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=251025992170426&ev=PageView&noscript=1" /></noscript>
-    <!-- End Facebook Pixel Code -->
-<!-- Amplitude & ShareASale -->
-<script>
-    function loadAmplitude() {
-        (function(e,t){
-            var n=e.amplitude||{_q:[],_iq:{}};
-            var r=t.createElement("script");
-            r.type="text/javascript";
-            r.integrity="sha384-d/yhnowERvm+7eCU79T/bYjOiMmq4F11ElWYLmt0ktvYEVgqLDazh4+gW9CKMpYW";
-            r.crossOrigin="anonymous";
-            r.async=true;
-            r.src="https://cdn.amplitude.com/libs/amplitude-5.2.2-min.gz.js";
-            r.onload=function(){
-                if (!e.amplitude.runQueuedFunctions) {
-                    console.log("[Amplitude] Error: could not load SDK");
-                }
-                if (typeof window._onAmplitudeReady === 'function') {
-                    window._onAmplitudeReady();
-                }
-            };
-            var i=t.getElementsByTagName("script")[0];
-            i.parentNode.insertBefore(r,i);
-
-            function s(e,t){e.prototype[t]=function(){this._q.push([t].concat(Array.prototype.slice.call(arguments,0)));return this;}}
-            var o=function(){this._q=[];return this;}
-            var a=["add","append","clearAll","prepend","set","setOnce","unset"];
-            for(var u=0;u<a.length;u++){s(o,a[u]);}
-            n.Identify=o;
-            var c=function(){this._q=[];return this;}
-            var l=["setProductId","setQuantity","setPrice","setRevenueType","setEventProperties"];
-            for(var p=0;p<l.length;p++){s(c,l[p]);}
-            n.Revenue=c;
-            var d=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties","identify","clearUserProperties","setGroup","logRevenueV2","regenerateDeviceId","groupIdentify","onInit","logEventWithTimestamp","logEventWithGroups","setSessionId","resetSessionId"];
-            function v(e){for(var t=0;t<d.length;t++){(function(t){e[d[t]]=function(){e._q.push([d[t]].concat(Array.prototype.slice.call(arguments,0)));};})(t);}}
-            v(n);
-            n.getInstance=function(e){e=(!e||0===e.length?"$default_instance":e).toLowerCase();if(!n._iq.hasOwnProperty(e)){n._iq[e]={_q:[]};v(n._iq[e]);}return n._iq[e];};
-            e.amplitude=n;
-        })(window,document);
-
-        waitForDOMAndAmplitude(function() {
-            var referrer = '';
-            var pageType = 'Template Page Preview';
-            sendAnalyticsFromUrl(referrer, pageType);
-        });
-    }
-
-    if ('requestIdleCallback' in window) {
-        requestIdleCallback(loadAmplitude);
-    } else {
-        setTimeout(loadAmplitude, 2000);
-    }
-
-    var shareasaleSSCID=shareasaleGetParameterByName("sscid");function shareasaleSetCookie(e,a,r,s,t){if(e&&a){var o,n=s?"; path="+s:"",i=t?"; domain="+t:"",S="";r&&((o=new Date).setTime(o.getTime()+r),S="; expires="+o.toUTCString()),document.cookie=e+"="+a+S+n+i+"; SameSite=None;Secure"}}function shareasaleGetParameterByName(e,a){a||(a=window.location.href),e=e.replace(/[\[\]]/g,"\\$&");var r=new RegExp("[?&]"+e+"(=([^&#]*)|&|#|$)").exec(a);return r?r[2]?decodeURIComponent(r[2].replace(/\+/g," ")):"":null}shareasaleSSCID&&shareasaleSetCookie("shareasaleSSCID",shareasaleSSCID,94670778e4,"/");
-</script>
-
-
-
-
-
-<!--[if lt IE 9]>
-    <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-
-
-
-
-
-
-
-    <script src="https://accounts.google.com/gsi/client?hl=en" defer></script>
-    <script>
-        window.newAuthUri = 'https://auth.nicepage.com/authorize';
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof google === 'undefined') {
-                return;
-            }
-            try {
-                google.accounts.id.initialize({
-                    context: 'signin',
-                    client_id: '13150095650-mo8psu2colep6uv90a2mu6r87u87s35a.apps.googleusercontent.com',
-                    callback: window.handleCredentialResponse,
-                    use_fedcm_for_prompt: true,
-                });
-
-                if (window.renderGoogleSignIdButton) {
-                    google.accounts.id.renderButton(
-                        document.getElementById('google-signin-button'),
-                        {
-                            theme: 'filled_blue',
-                            size: 'large',
-                            text: window.renderSignUpGoogleButton ? 'signup_with' : 'signin_with',
-                            width: '250',
-                            locale: 'en',
-                        }
-                    );
-                }
-
-                // display the One Tap dialog
-                if (!window.hideGoogleSignIdPromt) {
-                    google.accounts.id.prompt();
-                }
-            } catch (e) {
-                console.error(e);
-                if (typeof sendMessageOnServer === 'function') {
-                    sendMessageOnServer('auth.js google.accounts.id.initialize error', { error: JSON.stringify(e, Object.getOwnPropertyNames(e)) });
-                }
-            }
-        });
-</script>
-
-
-    
-    <meta name="robots" content="noindex,nofollow">
-    <script type="text/javascript">
-        var device = '';
-        function init($) {
-            $('#previewDesktopBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-
-            $('#previewLaptopBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewTabletBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewPhoneHorizontalBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewPhoneBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-
-            detectActiveResponsiveButton();
-        }
-
-        if (jQuery.isReady) {
-            init(jQuery);
-        } else {
-            jQuery(function ($) {
-                init($);
-            });
-        }
-
-        function setActiveResponsiveButton(btn) {
-            $(".page-preview-header > a").removeClass("active");
-            $(btn).addClass("active");
-        }
-
-        function detectActiveResponsiveButton() {
-            var d = device;
-            if (!d) {
-                d = 'desktop';
-            }
-            $("#preview" + d.charAt(0).toUpperCase() + d.substr(1) + "Btn").click();
-        }
-
-        function getDataPreviewSizeAttr(el) {
-            return el.closest("[data-preview-size]").attr("data-preview-size");
-        }
-
-        function setLivePreviewFrameSize(srcEl) {
-            var getScrollbarWidth = function () {
-                var s = $('<div style="width:100px;height:100px;overflow:scroll;visibility:hidden;position:absolute;top:-99999px"><div style="height:200px;"></div></div>')
-                    .appendTo("body");
-                var res = s.width() - s.find("div").last().width();
-                s.remove();
-                return res;
-            };
-            var attr = getDataPreviewSizeAttr(srcEl);
-            $('#livePreviewFrame').width(attr.indexOf("%") !== -1 ? attr : parseInt(attr, 10) + getScrollbarWidth());
-        }
-
-    </script>
-    <style>
-        .dialog-wrapper {
-            display: none !important;
-        }
-
-        .wrap,
-        #main {
-            height: 100vh;
-            margin: 0 !important;
-        }
-
-        iframe {
-            display: none;
-        }
-
-
-        html,
-        body {
-            height: 100%;
-        }
-
-        .page-preview {
-            border-radius: 0;
-            height: 100%;
-        }
-
-        .page-preview-header {
-            background: #f2f2f2;
-            border: none;
-            height: 70px;
-            position: relative;
-            text-align: center;
-        }
-
-        .page-preview-header > a {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 4px;
-        }
-
-        .page-preview-header > a:hover {
-            background: #e2f0fc;
-            text-decoration: none;
-        }
-
-        .page-preview-header > a.active {
-            background: #c9e4f9;
-        }
-
-        .page-preview-header > .close {
-            float: right;
-            margin-right: 10px;
-        }
-
-        .page-preview-body {
-            height: calc(100% - 70px);
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .page-preview-body iframe {
-            border: none;
-            display: inline-block;
-            height: 100%;
-        }
-    </style>
-
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker Bet — Poker Online</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#07080c;--panel:#0e1118;--panel2:#131820;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);--text:#f4f6fb;--muted:#7a8496;--gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.18);--green:#12b88a;--red:#c43b4e;--win:#3dd68c;--loss:#ff6b7a;--blue:#2a6fd6}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{overflow-x:hidden;background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(42,111,214,.06),transparent 50%),var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.app{width:min(100%,440px);margin:auto;padding:8px 10px 18px}
+.top{height:42px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.back{width:36px;height:36px;border:1px solid var(--line);background:var(--panel);border-radius:11px;display:grid;place-items:center;font-size:16px}
+.title{font-size:14px;font-weight:800}.title span{color:var(--gold)}
+.balance{margin-left:auto;background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:6px 12px;font-size:11px;font-weight:800}
+.balance b{color:var(--gold)}
+.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,#12161f,#0c0f16);border-radius:12px;margin-bottom:8px}
+.status-text{font-size:11px;font-weight:800;color:var(--muted)}
+.status-text.info{color:var(--gold)}.status-text.win{color:var(--win)}.status-text.loss{color:var(--loss)}
+.status-detail{margin-left:auto;color:var(--muted);font-size:10px;font-weight:700}
+
+/* LOBBY */
+.lobby{display:flex;flex-direction:column;gap:12px}
+.card-box{border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,var(--panel),var(--panel2));padding:16px}
+.card-box h3{font-size:14px;font-weight:800;margin-bottom:8px}
+.card-box p{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4}
+.row{display:flex;gap:8px}
+.input{flex:1;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 12px;font-size:13px;font-weight:700;text-transform:uppercase}
+.btn{height:42px;border-radius:12px;padding:0 16px;font-size:12px;font-weight:900;white-space:nowrap}
+.btn.primary{background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;box-shadow:0 4px 14px rgba(18,184,138,.25)}
+.btn.secondary{background:linear-gradient(135deg,#3a82f0,#1a4a9a);color:#fff}
+.btn.ghost{border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.btn:disabled{opacity:.4}
+.rooms{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto}
+.room{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer}
+.room:active{border-color:var(--gold)}
+.room .code{font-weight:900;color:var(--gold);font-size:13px;min-width:56px}
+.room .meta{flex:1;font-size:11px;color:var(--muted)}
+.room .join{font-size:11px;font-weight:800;color:var(--green)}
+
+/* TABLE */
+.table-wrap{display:none;position:relative;margin-bottom:10px}
+.table{
+  position:relative;border-radius:28px;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(18,184,138,.14),transparent 55%),linear-gradient(180deg,#0c3d2e 0%,#072a1f 100%);
+  border:3px solid #1a5c45;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.45);
+  min-height:400px;padding:12px;overflow:hidden;
+}
+.table-rim{position:absolute;inset:-5px;border-radius:32px;border:3px solid #2a6b52;pointer-events:none;box-shadow:0 0 0 2px #0a1f18}
+
+.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:4px}
+.dealer-avatar{
+  width:48px;height:48px;border-radius:50%;margin:0 auto;
+  background:linear-gradient(145deg,#3a3540,#1a1520);
+  border:2px solid var(--gold);box-shadow:0 0 0 3px var(--gold-glow);
+  display:grid;place-items:center;font-size:24px;position:relative;
+}
+.dealer-avatar .badge{position:absolute;bottom:-3px;right:-6px;background:var(--gold);color:#1a1408;font-size:7px;font-weight:900;border-radius:5px;padding:1px 4px}
+.dealer-name{font-size:10px;font-weight:800;color:var(--gold);margin-top:4px}
+.deal-msg{font-size:11px;font-weight:800;color:rgba(255,255,255,.4);min-height:16px;margin-top:2px}
+
+.board-zone{position:relative;z-index:2;text-align:center;margin:6px 0}
+.board-label{font-size:9px;font-weight:800;color:rgba(255,255,255,.28);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.board{display:flex;justify-content:center;gap:5px;min-height:56px;align-items:center}
+.pot{display:inline-block;margin-top:6px;font-size:12px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.4);border:1px solid rgba(232,200,114,.3);border-radius:10px;padding:4px 12px}
+
+.seats-row{display:flex;justify-content:space-around;align-items:flex-end;gap:6px;margin-top:8px;position:relative;z-index:2;min-height:120px}
+.seat{width:110px;text-align:center}
+.seat .avatar{
+  width:40px;height:40px;border-radius:50%;margin:0 auto 3px;
+  background:linear-gradient(145deg,#2a3140,#1a1f2a);border:2px solid var(--line2);
+  display:grid;place-items:center;font-size:16px;position:relative;
+}
+.seat.me .avatar{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+.seat.active .avatar{border-color:#3dd68c;box-shadow:0 0 0 3px rgba(61,214,140,.25)}
+.seat.folded{opacity:.4}
+.seat.empty .avatar{opacity:.25;border-style:dashed}
+.seat .name{font-size:9px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat .stack{font-size:10px;font-weight:900;color:var(--gold)}
+.seat .bet-pill{font-size:9px;font-weight:900;color:#fff;background:rgba(0,0,0,.5);border-radius:8px;padding:2px 6px;margin-top:2px;display:inline-block}
+.seat .bet-pill:empty{display:none}
+.seat .cards{display:flex;justify-content:center;gap:3px;margin-top:4px;min-height:48px}
+.seat .role{position:absolute;top:-3px;right:-6px;font-size:7px;font-weight:900;background:var(--gold);color:#1a1408;border-radius:4px;padding:1px 3px}
+.seat .hand-name{font-size:8px;font-weight:800;color:var(--muted);margin-top:2px;min-height:12px}
+
+.card{width:36px;height:52px;border-radius:6px;background:linear-gradient(160deg,#fff,#f0f2f5);box-shadow:0 3px 8px rgba(0,0,0,.4);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:10px;font-weight:900;line-height:1;position:relative;animation:dealIn .25s ease-out}
+.card .suit{font-size:12px;align-self:center}
+.card .rank.bot{transform:rotate(180deg);align-self:flex-end}
+.card.red{color:#c43b4e}.card.black{color:#1a1e28}
+.card.back{background:linear-gradient(145deg,#1a3a5c,#0d2240);border:1.5px solid rgba(232,200,114,.35);color:transparent}
+.seat.me .card{width:42px;height:60px;font-size:12px}
+.seat.me .card .suit{font-size:14px}
+@keyframes dealIn{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+
+.bottom-info{display:none;justify-content:space-between;align-items:center;margin-bottom:6px}
+.phase{font-size:12px;font-weight:800;color:var(--gold)}
+.blinds{font-size:10px;color:var(--muted);font-weight:700}
+.actions{display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.act{height:46px;border-radius:12px;font-size:10px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid var(--line);background:var(--panel)}
+.act:disabled{opacity:.3}.act.fold{background:linear-gradient(145deg,#4a2030,#2a1018)}
+.act.check{background:linear-gradient(145deg,#2a3140,#1a1f2a)}
+.act.call{background:linear-gradient(145deg,#1a4a9a,#123570)}
+.act.raise{background:linear-gradient(145deg,#8a5a20,#5a3a10);color:var(--gold)}
+.raise-row{display:none;gap:6px;align-items:center;margin-bottom:8px}
+.raise-row input{flex:1;accent-color:var(--gold)}
+.raise-amt{font-size:12px;font-weight:900;color:var(--gold);min-width:56px;text-align:right}
+.note{text-align:center;color:#4a5363;font-size:9px;margin-top:6px;font-weight:600}
+.host-bar{display:none;margin-bottom:8px}
+.host-bar .btn{width:100%}
+</style>
 </head>
-    <body>
-        
+<body>
+<div class="app">
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Poker</span> · Online</div>
+    <div class="balance">💎 <b id="balance">—</b></div>
+  </header>
+  <div class="status">
+    <div class="status-text" id="status">Лобби</div>
+    <div class="status-detail" id="statusDetail">Онлайн</div>
+  </div>
 
+  <div class="lobby" id="lobby">
+    <div class="card-box">
+      <h3>Создать комнату</h3>
+      <p>Вы — хост. Дилер раздаёт карты. 2–3 игрока за столом.</p>
+      <button class="btn primary" id="createBtn" style="width:100%">Создать комнату</button>
+    </div>
+    <div class="card-box">
+      <h3>Войти по коду</h3>
+      <div class="row">
+        <input class="input" id="codeInput" placeholder="Код" maxlength="6">
+        <button class="btn secondary" id="joinBtn">Войти</button>
+      </div>
+    </div>
+    <div class="card-box">
+      <h3>Открытые комнаты</h3>
+      <div class="rooms" id="roomsList"><div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Загрузка…</div></div>
+      <button class="btn ghost" id="refreshBtn" style="width:100%;margin-top:10px">Обновить</button>
+    </div>
+  </div>
 
-<div class="page-preview">
-    <div class="page-preview-header">
-        <a class="hidden-sm hidden-xs" href="#" id="previewDesktopBtn" data-preview-size="100%"><img alt="Responsive Desktop Mode" src="//csite.nicepage.com/Images/Site/responsive-desktop.png"></a>
-        <a class="hidden-sm hidden-xs" href="#" id="previewLaptopBtn" data-preview-size="1040px"><img alt="Responsive Laptop Mode" src="//csite.nicepage.com/Images/Site/responsive-laptop.png"></a>
-        <a class="hidden-xs" href="#" id="previewTabletBtn" data-preview-size="820px"><img alt="Responsive Tablet Mode" src="//csite.nicepage.com/Images/Site/responsive-tablet.png"></a>
-        <a class="hidden-xs" href="#" id="previewPhoneHorizontalBtn" data-preview-size="640px"><img alt="Responsive Phone Horizontal Mode" src="//csite.nicepage.com/Images/Site/responsive-phone-horizontal.png"></a>
-        <a class="hidden-xs" href="#" id="previewPhoneBtn" data-preview-size="440px"><img alt="Responsive Phone Mode" src="//csite.nicepage.com/Images/Site/responsive-phone.png"></a>
-        <a class="close" href="/ht/317922/break-for-delicious-coffee-html-template"><img alt="Close" src="//csite.nicepage.com/Images/Site/icon-close.png"></a>
+  <div class="host-bar" id="hostBar">
+    <button class="btn primary" id="startHandBtn">Начать раздачу</button>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <div class="table">
+      <div class="table-rim"></div>
+      <div class="dealer-zone">
+        <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
+        <div class="dealer-name">Дилер</div>
+        <div class="deal-msg" id="dealMsg"></div>
+      </div>
+      <div class="board-zone">
+        <div class="board-label">Общие карты</div>
+        <div class="board" id="board"></div>
+        <div class="pot" id="pot">Банк: 0</div>
+      </div>
+      <div class="seats-row" id="seats"></div>
     </div>
-    <div class="page-preview-body">
-        <iframe id="livePreviewFrame" src="https://website317910.nicepage.io/Home.html?version=8a5bc63a-b3ae-4e43-8764-3d941e7a1180" width="1057" height="640" style="width:100%;"></iframe>
-    </div>
+  </div>
+
+  <div class="bottom-info" id="bottomInfo">
+    <div class="phase" id="phaseLabel">—</div>
+    <div class="blinds" id="blindsLabel">Блайнды 10 / 20</div>
+  </div>
+  <div class="raise-row" id="raiseRow">
+    <input type="range" id="raiseSlider" min="20" max="1000" step="10" value="40">
+    <div class="raise-amt" id="raiseAmt">40</div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="act fold" id="foldBtn"><span>✕</span>Фолд</button>
+    <button class="act check" id="checkBtn"><span>✓</span>Чек</button>
+    <button class="act call" id="callBtn"><span>→</span>Колл</button>
+    <button class="act raise" id="raiseBtn"><span>↑</span>Рейз</button>
+  </div>
+  <div class="note">Дилер раздаёт · 2–3 игрока · Texas Hold'em · Supabase</div>
 </div>
-<a style="position:absolute;top:17px;left:10px;" href="/"><img alt="NicePage.com" src="//csite.nicepage.com/Images/logo-w.png"></a>
 
-        <script>
-            if (window.parent) {
-                var _w = 0, _h = 0;
-                var updateFormSize = function () {
-                    var form = $('form.shaped-form-extended,form.shaped-form');
-                    var w = form.outerWidth(true);
-                    var h = form.outerHeight(true);
-                    if (Math.abs(_w - w) > 5 || Math.abs(_h - h) > 5) {
-                        _w = w;
-                        _h = h;
-                        var msg = { key: 'login-frame-size', width: w, height: h };
-                        window.parent.postMessage(msg, "*");
-                    }
-                    setTimeout(updateFormSize, 300);
-                }
-                updateFormSize();
-            }
-        </script>
-    </body>
+<script>
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
+
+const SUITS=['♠','♥','♦','♣'],RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const PHASE_RU={lobby:'Лобби',deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
+const SB=10,BB=20,START_STACK=1000,MAX_PLAYERS=3;
+const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+const $=id=>document.getElementById(id);
+
+const params=new URLSearchParams(location.search);
+let player={id:params.get('uid'),name:params.get('name')||'Игрок'};
+let balance=0,roomId=null,roomCode=null,isHost=false,channel=null,state=null;
+
+function resolvePlayer(){
+  try{const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();
+    const u=tg.initDataUnsafe?.user;
+    if(u?.id)player={id:String(u.id),name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Игрок'};
+  }}catch(e){}
+  if(!player.id)player.id='g_'+Math.random().toString(36).slice(2,9);
+}
+async function loadBalance(){
+  if(!sb||!player.id||String(player.id).startsWith('g_')){$('balance').textContent='—';return}
+  try{const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    balance=Number(data?.total_score||0);$('balance').textContent=fmt(balance)}catch(e){}
+}
+function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
+function setStatus(t,c){$('status').textContent=t;$('status').className='status-text '+(c||'info')}
+function newDeck(){
+  const d=[];for(const s of SUITS)for(const r of RANKS)d.push({r,s,red:s==='♥'||s==='♦'});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d;
+}
+function cardHTML(c,fd){if(fd||!c)return'<div class="card back"></div>';return`<div class="card ${c.red?'red':'black'}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`}
+
+function evalHand(cards){
+  if(cards.length<5)return{rank:0,name:'—',score:0};
+  const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
+  const suits=cards.map(c=>c.s);
+  const counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const byCount=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
+  const unique=[...new Set(vals)];
+  const isFlush=SUITS.some(s=>suits.filter(x=>x===s).length>=5);
+  let sh=0;const u=[...unique];if(u.includes(14))u.push(1);u.sort((a,b)=>b-a);
+  for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){sh=u[i];break}}
+  if(!sh&&unique.includes(14)&&[5,4,3,2].every(x=>unique.includes(x)))sh=5;
+  let rank=0,name='Старшая карта',kickers=[];
+  if(isFlush&&sh){rank=8;name='Стрит-флеш';kickers=[sh]}
+  else if(byCount[0].c===4){rank=7;name='Каре';kickers=[byCount[0].v,byCount[1]?.v||0]}
+  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус';kickers=[byCount[0].v,byCount[1].v]}
+  else if(isFlush){rank=5;name='Флеш';kickers=unique.slice(0,5)}
+  else if(sh){rank=4;name='Стрит';kickers=[sh]}
+  else if(byCount[0].c===3){rank=3;name='Сет';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары';kickers=[byCount[0].v,byCount[1].v,byCount[2]?.v||0]}
+  else if(byCount[0].c===2){rank=1;name='Пара';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else kickers=unique.slice(0,5);
+  let score=rank*1e10;kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
+  return{rank,name,score};
+}
+function bestHand(hole,board){
+  const all=[...(hole||[]),...(board||[])];if(all.length<5)return evalHand(all);
+  let best={score:-1};const n=all.length;
+  (function comb(s,ch){if(ch.length===5){const h=evalHand(ch.map(i=>all[i]));if(h.score>best.score)best=h;return}for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}})(0,[]);
+  return best;
+}
+
+/* ── Rooms ── */
+async function createRoom(){
+  if(!sb){alert('Нет Supabase');return}
+  const code=genCode();
+  const initial={
+    phase:'lobby',dealMsg:'',
+    players:[{id:player.id,name:player.name,stack:START_STACK,bet:0,hole:[],folded:false,allIn:false,handName:''}],
+    hostId:player.id,board:[],pot:0,deck:[],
+    dealerIdx:0,sbIdx:0,bbIdx:0,toAct:null,
+    currentBet:0,minRaise:BB,actionCount:0,handOver:false
+  };
+  try{
+    const{data,error}=await sb.from('poker_rooms').insert([{code,host_id:player.id,status:'lobby',max_players:MAX_PLAYERS,state:initial}]).select().single();
+    if(error)throw error;
+    roomId=data.id;roomCode=code;isHost=true;state=initial;
+    await subscribeRoom();showTable();setStatus('Комната '+code,'info');
+  }catch(e){
+    console.error(e);
+    roomId='local_'+code;roomCode=code;isHost=true;state=initial;
+    showTable();setStatus('Локально '+code+' (нет таблицы poker_rooms)','info');
+    $('dealMsg').textContent='Создайте таблицу poker_rooms в Supabase';
+  }
+}
+async function joinRoom(code){
+  code=(code||'').trim().toUpperCase();if(!code||!sb)return;
+  try{
+    const{data,error}=await sb.from('poker_rooms').select('*').eq('code',code).maybeSingle();
+    if(error)throw error;if(!data){setStatus('Комната не найдена','loss');return}
+    state=data.state||{};
+    const players=state.players||[];
+    if(!players.some(p=>p.id===player.id)){
+      if(players.length>=MAX_PLAYERS){setStatus('Комната полная','loss');return}
+      if(data.status==='playing'&&state.phase!=='lobby'){setStatus('Игра уже идёт','loss');return}
+      players.push({id:player.id,name:player.name,stack:START_STACK,bet:0,hole:[],folded:false,allIn:false,handName:''});
+      state.players=players;
+      await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',data.id);
+    }
+    roomId=data.id;roomCode=code;isHost=data.host_id===player.id;
+    await subscribeRoom();showTable();setStatus('В комнате '+code,'info');
+  }catch(e){console.error(e);setStatus('Ошибка: '+e.message,'loss')}
+}
+async function listRooms(){
+  if(!sb){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';return}
+  try{
+    const{data,error}=await sb.from('poker_rooms').select('code,status,state,created_at').eq('status','lobby').order('created_at',{ascending:false}).limit(10);
+    if(error)throw error;
+    if(!data?.length){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет открытых комнат</div>';return}
+    $('roomsList').innerHTML=data.map(r=>{
+      const n=(r.state?.players||[]).length;
+      return`<div class="room" data-code="${r.code}"><div class="code">${r.code}</div><div class="meta">${n}/${MAX_PLAYERS}</div><div class="join">Войти →</div></div>`;
+    }).join('');
+    $('roomsList').querySelectorAll('.room').forEach(el=>el.onclick=()=>joinRoom(el.dataset.code));
+  }catch(e){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нужна таблица poker_rooms</div>'}
+}
+async function subscribeRoom(){
+  if(!sb||!roomId||String(roomId).startsWith('local'))return;
+  if(channel)sb.removeChannel(channel);
+  channel=sb.channel('poker:'+roomId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'poker_rooms',filter:`id=eq.${roomId}`},payload=>{
+      if(payload.new?.state){state=payload.new.state;onState()}
+    }).subscribe();
+}
+async function pushState(extraStatus){
+  if(!state)return;
+  if(!sb||!roomId||String(roomId).startsWith('local')){onState();return}
+  try{
+    const status=extraStatus||(state.phase==='lobby'?'lobby':'playing');
+    await sb.from('poker_rooms').update({state,status,updated_at:new Date().toISOString()}).eq('id',roomId);
+  }catch(e){console.error(e);onState()}
+}
+
+function showTable(){
+  $('lobby').style.display='none';
+  $('tableWrap').style.display='block';
+  $('bottomInfo').style.display='flex';
+  onState();
+}
+
+function onState(){
+  if(!state)return;
+  renderSeats();
+  $('board').innerHTML=(state.board||[]).map(c=>cardHTML(c)).join('');
+  const pot=(state.pot||0)+(state.players||[]).reduce((s,p)=>s+(p.bet||0),0);
+  $('pot').textContent='Банк: '+fmt(pot);
+  $('phaseLabel').textContent=PHASE_RU[state.phase]||state.phase||'—';
+  $('dealMsg').textContent=state.dealMsg||'';
+  $('statusDetail').textContent=roomCode?('Код '+roomCode):'Онлайн';
+
+  // host start button
+  if(isHost&&(state.phase==='lobby'||state.handOver)){
+    $('hostBar').style.display='block';
+    $('startHandBtn').textContent=state.handOver?'Следующая раздача':'Начать раздачу';
+    $('startHandBtn').disabled=(state.players||[]).length<2;
+  }else $('hostBar').style.display='none';
+
+  updateActionsUI();
+}
+
+function renderSeats(){
+  const seats=$('seats');seats.innerHTML='';
+  const players=state.players||[];
+  // order: me first visually in center-ish — put me in middle seat if 3
+  let ordered=[...players];
+  while(ordered.length<MAX_PLAYERS) ordered.push(null);
+
+  ordered.forEach((p,i)=>{
+    const div=document.createElement('div');
+    const isMe=p&&p.id===player.id;
+    const realIdx=p?players.indexOf(p):-1;
+    div.className=`seat ${isMe?'me':''} ${p&&p.folded?'folded':''} ${!p?'empty':''} ${state.toAct===realIdx?'active':''}`;
+    if(!p){
+      div.innerHTML=`<div class="avatar">+</div><div class="name">Пусто</div><div class="stack">—</div><div class="cards"></div>`;
+    }else{
+      const show=isMe||state.phase==='showdown'||state.handOver;
+      const cards=(p.hole||[]).map(c=>cardHTML(c,!show)).join('');
+      let role='';
+      if(realIdx===state.dealerIdx)role='D';
+      else if(realIdx===state.sbIdx)role='SB';
+      else if(realIdx===state.bbIdx)role='BB';
+      div.innerHTML=`
+        <div class="avatar">${isMe?'😎':'👤'}${role?`<span class="role">${role}</span>`:''}</div>
+        <div class="name">${p.name}${isMe?' (вы)':''}</div>
+        <div class="stack">${fmt(p.stack)}</div>
+        <div class="bet-pill">${p.bet?fmt(p.bet):''}</div>
+        <div class="cards">${cards}</div>
+        <div class="hand-name">${p.handName||''}</div>`;
+    }
+    seats.appendChild(div);
+  });
+}
+
+function updateActionsUI(){
+  if(!state||state.handOver||state.phase==='lobby'||state.phase==='deal'||state.phase==='showdown'){
+    $('actions').style.display='none';$('raiseRow').style.display='none';return;
+  }
+  const players=state.players||[];
+  const myIdx=players.findIndex(p=>p.id===player.id);
+  const me=players[myIdx];
+  if(myIdx<0||state.toAct!==myIdx||!me||me.folded||me.allIn){
+    $('actions').style.display='none';$('raiseRow').style.display='none';
+    const cur=players[state.toAct];
+    if(cur) setStatus('Ход: '+cur.name,'info');
+    return;
+  }
+  $('actions').style.display='grid';
+  const toCall=(state.currentBet||0)-(me.bet||0);
+  $('checkBtn').style.display=toCall===0?'flex':'none';
+  $('callBtn').style.display=toCall>0?'flex':'none';
+  $('callBtn').innerHTML=`<span>→</span>Колл ${fmt(toCall)}`;
+  const minR=(state.currentBet||0)+(state.minRaise||BB);
+  const maxR=(me.bet||0)+(me.stack||0);
+  $('raiseSlider').min=Math.min(minR,maxR);
+  $('raiseSlider').max=Math.max(minR,maxR);
+  $('raiseSlider').value=Math.min(Math.max(minR,Number($('raiseSlider').value)||minR),maxR);
+  $('raiseAmt').textContent=fmt($('raiseSlider').value);
+  $('raiseRow').style.display='flex';
+  setStatus('Ваш ход','info');
+}
+
+/* ── Host: start hand with deal animation flags ── */
+function hostStartHand(){
+  if(!isHost||!state)return;
+  const players=(state.players||[]).filter(p=>p.stack>0);
+  if(players.length<2){setStatus('Нужно 2+ игрока','loss');return}
+
+  const deck=newDeck();
+  // rotate dealer
+  let d=((state.dealerIdx??-1)+1)%players.length;
+  let sb=(d+1)%players.length;
+  let bb=(d+2)%players.length;
+  if(players.length===2){sb=d;bb=(d+1)%players.length} // heads-up rule
+
+  players.forEach(p=>{p.hole=[];p.bet=0;p.folded=false;p.allIn=false;p.handName='';p.totalBet=0});
+
+  const post=(idx,amt)=>{const p=players[idx];const a=Math.min(amt,p.stack);p.stack-=a;p.bet=a;p.totalBet=a;if(p.stack===0)p.allIn=true;return a};
+  let pot=0;
+  pot+=post(sb,SB);
+  pot+=post(bb,BB);
+
+  // deal 2 each
+  for(let r=0;r<2;r++) for(const p of players) p.hole.push(deck.pop());
+
+  let toAct=(bb+1)%players.length;
+  while(players[toAct].folded||players[toAct].stack<=0){toAct=(toAct+1)%players.length}
+
+  state={
+    ...state,
+    players,
+    deck,
+    board:[],
+    pot:0, // bets sit in front until collected
+    dealerIdx:d,sbIdx:sb,bbIdx:bb,
+    phase:'preflop',
+    currentBet:BB,
+    minRaise:BB,
+    toAct,
+    actionCount:0,
+    handOver:false,
+    dealMsg:'Дилер раздал карты'
+  };
+  // store bets already on players; pot accumulates on street end
+  pushState('playing');
+  setStatus('Префлоп','info');
+}
+
+function canAct(p){return p&&!p.folded&&!p.allIn&&p.stack>0}
+function nextActor(from){
+  const pl=state.players;const n=pl.length;
+  for(let i=1;i<=n;i++){const idx=(from+i)%n;if(canAct(pl[idx]))return idx}
+  return null;
+}
+function allMatched(){
+  const need=state.currentBet;
+  return state.players.every(p=>p.folded||p.allIn||p.bet===need);
+}
+
+function sendAction(type,raiseTo){
+  if(!state||state.handOver)return;
+  const pl=state.players;
+  const idx=pl.findIndex(p=>p.id===player.id);
+  if(idx!==state.toAct||idx<0)return;
+  const p=pl[idx];
+  if(!canAct(p))return;
+  const toCall=state.currentBet-p.bet;
+
+  if(type==='fold') p.folded=true;
+  else if(type==='check'){if(toCall>0)return}
+  else if(type==='call'){
+    const a=Math.min(toCall,p.stack);p.stack-=a;p.bet+=a;if(p.stack===0)p.allIn=true;
+  }else if(type==='raise'){
+    const target=raiseTo||(state.currentBet+state.minRaise);
+    const need=Math.max(0,target-p.bet);
+    const a=Math.min(need,p.stack);p.stack-=a;p.bet+=a;
+    if(p.bet>state.currentBet){state.minRaise=p.bet-state.currentBet;state.currentBet=p.bet}
+    if(p.stack===0)p.allIn=true;
+  }
+  state.actionCount=(state.actionCount||0)+1;
+
+  const alive=pl.filter(x=>!x.folded);
+  if(alive.length===1){
+    // award pot
+    pl.forEach(x=>{state.pot+=x.bet;x.bet=0});
+    alive[0].stack+=state.pot;
+    state.dealMsg=alive[0].name+' забирает банк';
+    state.pot=0;state.handOver=true;state.phase='showdown';state.toAct=null;
+    pushState();return;
+  }
+
+  // street done?
+  if(allMatched()&&state.actionCount>0){
+    advanceStreet();
+  }else{
+    const n=nextActor(idx);
+    state.toAct=n;
+    state.dealMsg='';
+    pushState();
+  }
+}
+
+function advanceStreet(){
+  const pl=state.players;
+  pl.forEach(x=>{state.pot+=x.bet;x.bet=0});
+  state.currentBet=0;state.minRaise=BB;state.actionCount=0;
+
+  if(state.phase==='preflop'){
+    state.phase='flop';
+    state.board.push(state.deck.pop(),state.deck.pop(),state.deck.pop());
+    state.dealMsg='Дилер открыл флоп';
+  }else if(state.phase==='flop'){
+    state.phase='turn';
+    state.board.push(state.deck.pop());
+    state.dealMsg='Дилер открыл тёрн';
+  }else if(state.phase==='turn'){
+    state.phase='river';
+    state.board.push(state.deck.pop());
+    state.dealMsg='Дилер открыл ривер';
+  }else if(state.phase==='river'){
+    // showdown
+    state.phase='showdown';state.handOver=true;state.toAct=null;
+    const cont=pl.filter(p=>!p.folded);
+    let best=null,winners=[];
+    cont.forEach(p=>{
+      const h=bestHand(p.hole,state.board);p.handName=h.name;
+      if(!best||h.score>best.score){best=h;winners=[p]}
+      else if(h.score===best.score)winners.push(p);
+    });
+    const share=Math.floor(state.pot/winners.length);
+    winners.forEach(w=>w.stack+=share);
+    state.dealMsg='Победа: '+winners.map(w=>w.name).join(', ')+' · '+(best?.name||'');
+    state.pot=0;
+    pushState();return;
+  }
+
+  // first to act: left of dealer
+  let first=(state.dealerIdx+1)%pl.length;
+  for(let i=0;i<pl.length;i++){if(canAct(pl[first]))break;first=(first+1)%pl.length}
+  state.toAct=first;
+  pushState();
+}
+
+$('createBtn').onclick=createRoom;
+$('joinBtn').onclick=()=>joinRoom($('codeInput').value);
+$('refreshBtn').onclick=listRooms;
+$('startHandBtn').onclick=hostStartHand;
+$('foldBtn').onclick=()=>sendAction('fold');
+$('checkBtn').onclick=()=>sendAction('check');
+$('callBtn').onclick=()=>sendAction('call');
+$('raiseBtn').onclick=()=>sendAction('raise',Number($('raiseSlider').value));
+$('raiseSlider').oninput=()=>$('raiseAmt').textContent=fmt($('raiseSlider').value);
+$('backBtn').onclick=()=>{if(channel&&sb)sb.removeChannel(channel);if(history.length>1)history.back();else location.href='poker.html'+location.search};
+$('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom($('codeInput').value)});
+
+resolvePlayer();loadBalance();listRooms();
+</script>
+</body>
 </html>
