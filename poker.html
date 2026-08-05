@@ -131,6 +131,62 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 }
 .shop-banner-arrow{color:var(--gold2);font-size:20px;font-weight:300;flex-shrink:0}
 
+/* ── hands reference ── */
+.hands-ref{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.hands-title{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--muted2);
+  margin-bottom:12px;
+}
+.hands-table{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+.hand-row{
+  display:grid;
+  grid-template-columns:28px 1fr auto;
+  align-items:center;
+  gap:10px;
+  padding:9px 4px;
+  border-bottom:1px solid var(--line);
+}
+.hand-row:last-child{border-bottom:none}
+.hand-rank{
+  width:24px;height:24px;
+  border-radius:7px;
+  background:var(--panel3);
+  border:1px solid var(--line2);
+  display:grid;place-items:center;
+  font-size:10px;font-weight:900;color:var(--muted);
+}
+.hand-row.top .hand-rank{
+  background:linear-gradient(145deg,#3a2e10,#1e1808);
+  border-color:rgba(232,200,114,.35);
+  color:var(--gold);
+}
+.hand-info{min-width:0}
+.hand-name{font-size:12px;font-weight:800;margin-bottom:2px}
+.hand-desc{font-size:10px;color:var(--muted);line-height:1.3}
+.hand-example{
+  font-size:11px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:.3px;
+  white-space:nowrap;
+}
+.hand-example .r{color:#e07080}
+.hand-example .b{color:#a0b0c8}
+
 /* ── rules strip ── */
 .rules{
   background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -202,6 +258,104 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
       <span class="shop-banner-tag">💎 За кристаллы</span>
     </div>
     <div class="shop-banner-arrow">›</div>
+  </div>
+
+  <!-- hands reference (от слабой к сильной) -->
+  <div class="hands-ref">
+    <div class="hands-title">Комбинации · от слабой к сильной</div>
+    <div class="hands-table">
+
+      <div class="hand-row">
+        <div class="hand-rank">1</div>
+        <div class="hand-info">
+          <div class="hand-name">Старшая карта</div>
+          <div class="hand-desc">Нет комбинации, побеждает старшая карта</div>
+        </div>
+        <div class="hand-example"><span class="b">A♠</span> <span class="r">K♥</span> <span class="b">9♣</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">2</div>
+        <div class="hand-info">
+          <div class="hand-name">Пара</div>
+          <div class="hand-desc">Две карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">Q♥</span> <span class="b">Q♠</span> <span class="b">7♣</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">3</div>
+        <div class="hand-info">
+          <div class="hand-name">Две пары</div>
+          <div class="hand-desc">Две разные пары</div>
+        </div>
+        <div class="hand-example"><span class="b">J♠</span> <span class="r">J♥</span> <span class="b">8♣</span> <span class="r">8♦</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">4</div>
+        <div class="hand-info">
+          <div class="hand-name">Сет</div>
+          <div class="hand-desc">Три карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">9♥</span> <span class="b">9♠</span> <span class="r">9♦</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">5</div>
+        <div class="hand-info">
+          <div class="hand-name">Стрит</div>
+          <div class="hand-desc">Пять карт подряд, разной масти</div>
+        </div>
+        <div class="hand-example"><span class="b">5♠</span> <span class="r">6♥</span> <span class="b">7♣</span> <span class="r">8♦</span> <span class="b">9♠</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">6</div>
+        <div class="hand-info">
+          <div class="hand-name">Флеш</div>
+          <div class="hand-desc">Пять карт одной масти</div>
+        </div>
+        <div class="hand-example"><span class="r">A♥</span> <span class="r">J♥</span> <span class="r">8♥</span> <span class="r">4♥</span> <span class="r">2♥</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">7</div>
+        <div class="hand-info">
+          <div class="hand-name">Фулл-хаус</div>
+          <div class="hand-desc">Тройка + пара</div>
+        </div>
+        <div class="hand-example"><span class="b">K♠</span> <span class="r">K♥</span> <span class="b">K♣</span> <span class="r">3♦</span> <span class="b">3♠</span></div>
+      </div>
+
+      <div class="hand-row">
+        <div class="hand-rank">8</div>
+        <div class="hand-info">
+          <div class="hand-name">Каре</div>
+          <div class="hand-desc">Четыре карты одного достоинства</div>
+        </div>
+        <div class="hand-example"><span class="r">7♥</span> <span class="b">7♠</span> <span class="r">7♦</span> <span class="b">7♣</span></div>
+      </div>
+
+      <div class="hand-row top">
+        <div class="hand-rank">9</div>
+        <div class="hand-info">
+          <div class="hand-name">Стрит-флеш</div>
+          <div class="hand-desc">Пять карт подряд одной масти</div>
+        </div>
+        <div class="hand-example"><span class="b">9♠</span> <span class="b">10♠</span> <span class="b">J♠</span> <span class="b">Q♠</span> <span class="b">K♠</span></div>
+      </div>
+
+      <div class="hand-row top">
+        <div class="hand-rank">10</div>
+        <div class="hand-info">
+          <div class="hand-name">Рояль-флеш</div>
+          <div class="hand-desc">A-K-Q-J-10 одной масти — сильнейшая</div>
+        </div>
+        <div class="hand-example"><span class="r">10♥</span> <span class="r">J♥</span> <span class="r">Q♥</span> <span class="r">K♥</span> <span class="r">A♥</span></div>
+      </div>
+
+    </div>
   </div>
 
   <!-- mini rules -->
