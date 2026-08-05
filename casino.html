@@ -936,6 +936,106 @@
     }
 
     /* ═══════════════════════════════════════════
+       LEADERBOARD — Общий рейтинг
+       ═══════════════════════════════════════════ */
+    .leaderboard-section {
+      padding: 14px 0 0;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.8s ease-out 0.65s forwards;
+    }
+
+    .leaderboard-card {
+      background: rgba(24, 24, 32, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-gold-light);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .leaderboard-card:hover {
+      border-color: var(--border-gold);
+      box-shadow: 0 4px 32px rgba(212, 175, 55, 0.04), 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .lb-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-gold-light);
+    }
+    .lb-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .lb-row:first-of-type {
+      padding-top: 0;
+    }
+    .lb-row.me {
+      color: var(--gold-light);
+      font-weight: 700;
+    }
+    .lb-row.me .lb-rank {
+      color: var(--gold);
+    }
+
+    .lb-rank {
+      width: 22px;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .lb-rank.top1 { color: #f3d97a; }
+    .lb-rank.top2 { color: #c0c0c0; }
+    .lb-rank.top3 { color: #cd7f32; }
+
+    .lb-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .lb-row.me .lb-name {
+      color: var(--gold-light);
+    }
+
+    .lb-score {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--gold-light);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .lb-empty {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 6px 0;
+      text-align: center;
+    }
+
+    /* ═══════════════════════════════════════════
        TOAST — Glass + Glow
        ═══════════════════════════════════════════ */
     .toast {
@@ -1123,6 +1223,7 @@
   .balance-chip,
   .info-card,
   .user-card,
+  .leaderboard-card,
   .game-badge,
   .modal,
   .bottom-sheet {
@@ -1422,6 +1523,16 @@
       </div>
     </div>
 
+    <!-- ═══ LEADERBOARD ═══ -->
+    <div class="leaderboard-section">
+      <div class="leaderboard-card">
+        <div class="lb-title">🏆 Общий рейтинг Petzker</div>
+        <div id="lb-list">
+          <div class="lb-empty">Загрузка…</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ TOAST ═══ -->
     <div class="toast" id="toast"></div>
 
@@ -1521,6 +1632,52 @@
         return Number(n).toLocaleString('ru-RU');
       }
 
+      function escHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // ── Leaderboard ──
+      async function refreshLeaderboard() {
+        const listEl = document.getElementById('lb-list');
+        if (!listEl) return;
+        if (!supabaseClient) {
+          listEl.innerHTML = '<div class="lb-empty">Локальный режим</div>';
+          return;
+        }
+        try {
+          const { data, error } = await supabaseClient
+            .from('player_ratings')
+            .select('telegram_user_id, name, total_score')
+            .order('total_score', { ascending: false })
+            .limit(8);
+
+          if (error) throw error;
+          if (!data || !data.length) {
+            listEl.innerHTML = '<div class="lb-empty">Пока пусто ✨</div>';
+            return;
+          }
+
+          listEl.innerHTML = data.map((row, i) => {
+            const isMe = currentUser && String(row.telegram_user_id) === String(currentUser.id);
+            const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+            return (
+              `<div class="lb-row${isMe ? ' me' : ''}">` +
+              `<span class="lb-rank ${rankClass}">${i + 1}</span>` +
+              `<span class="lb-name">${escHtml(row.name || 'Игрок')}</span>` +
+              `<span class="lb-score">${formatNumber(row.total_score || 0)}</span>` +
+              `</div>`
+            );
+          }).join('');
+        } catch (e) {
+          console.error('refreshLeaderboard error:', e);
+          listEl.innerHTML = '<div class="lb-empty">Ошибка загрузки</div>';
+        }
+      }
+
       // ── UI ──
       function updateUserUI() {
         const nameEl = document.getElementById('user-name');
@@ -1600,9 +1757,11 @@
         currentUser = getUser();
         updateUserUI();
         await loadBalance();
+        await refreshLeaderboard();
 
-        // Периодически обновляем баланс
+        // Периодически обновляем баланс и рейтинг
         setInterval(loadBalance, 15000);
+        setInterval(refreshLeaderboard, 30000);
       }
 
       // Export for onclick
