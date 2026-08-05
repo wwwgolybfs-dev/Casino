@@ -302,69 +302,116 @@ function cardHTML(c,fd,isActive=false){
 }
 
 function evalHand(cards){
-  if(cards.length<5)return{rank:0,name:'—',score:0,usedIndices:[]};
-  const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
-  const suits=cards.map(c=>c.s);
-  const counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);
-  const byCount=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
-  const unique=[...new Set(vals)];
-  const isFlush=SUITS.some(s=>suits.filter(x=>x===s).length>=5);
-  let sh=0;const u=[...unique];if(u.includes(14))u.push(1);u.sort((a,b)=>b-a);
-  for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){sh=u[i];break}}
-  if(!sh&&unique.includes(14)&&[5,4,3,2].every(x=>unique.includes(x)))sh=5;
-  
-  let rank=0,name='Старшая карта',kickers=[], usedIndices=[];
-  
-  // Логика определения комбинаций и используемых карт (упрощенная для индексов)
-  // Для точной подсветки нужно возвращать индексы из исходного массива cards
-  // Здесь мы возвращаем просто ранг и имя, а подсветку сделаем в bestHand
-  
-  if(isFlush&&sh){rank=8;name='Стрит-флеш'}
-  else if(byCount[0].c===4){rank=7;name='Каре'}
-  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус'}
-  else if(isFlush){rank=5;name='Флеш'}
-  else if(sh){rank=4;name='Стрит'}
-  else if(byCount[0].c===3){rank=3;name='Сет'}
-  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары'}
-  else if(byCount[0].c===2){rank=1;name='Пара'}
-  else kickers=unique.slice(0,5);
-  
-  let score=rank*1e10;kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
-  return{rank,name,score};
+  if(!cards || cards.length < 5) return {rank:0, name:'—', score:0, kickers:[]};
+  const vals = cards.map(c => RANK_VAL[c.r]).sort((a,b) => b - a);
+  const suits = cards.map(c => c.s);
+  const counts = {};
+  vals.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+  const byCount = Object.entries(counts)
+    .map(([v,c]) => ({v:+v, c}))
+    .sort((a,b) => b.c - a.c || b.v - a.v);
+  const unique = [...new Set(vals)];
+
+  let flushSuit = null;
+  for (const s of SUITS) {
+    if (suits.filter(x => x === s).length >= 5) { flushSuit = s; break; }
+  }
+  const isFlush = !!flushSuit;
+
+  function straightHigh(rankList) {
+    const u = [...new Set(rankList)].sort((a,b) => b - a);
+    if (u.includes(14)) u.push(1);
+    u.sort((a,b) => b - a);
+    for (let i = 0; i <= u.length - 5; i++) {
+      if (u[i] - u[i+4] === 4) return u[i] === 1 ? 5 : u[i];
+    }
+    return 0;
+  }
+  let sh = straightHigh(vals);
+  let sfHigh = 0;
+  if (isFlush) {
+    const fvals = cards.filter(c => c.s === flushSuit).map(c => RANK_VAL[c.r]);
+    sfHigh = straightHigh(fvals);
+  }
+
+  let rank = 0, name = 'Старшая карта', kickers = [];
+
+  if (sfHigh) {
+    rank = 8; name = sfHigh === 14 ? 'Рояль-флеш' : 'Стрит-флеш';
+    kickers = [sfHigh];
+  } else if (byCount[0].c === 4) {
+    rank = 7; name = 'Каре';
+    const quad = byCount[0].v;
+    const kicker = unique.find(v => v !== quad) || 0;
+    kickers = [quad, kicker];
+  } else if (byCount[0].c === 3 && byCount[1] && byCount[1].c >= 2) {
+    rank = 6; name = 'Фулл-хаус';
+    kickers = [byCount[0].v, byCount[1].v];
+  } else if (isFlush) {
+    rank = 5; name = 'Флеш';
+    kickers = cards.filter(c => c.s === flushSuit)
+      .map(c => RANK_VAL[c.r]).sort((a,b) => b - a).slice(0, 5);
+  } else if (sh) {
+    rank = 4; name = 'Стрит';
+    kickers = [sh];
+  } else if (byCount[0].c === 3) {
+    rank = 3; name = 'Сет';
+    const trip = byCount[0].v;
+    kickers = [trip, ...unique.filter(v => v !== trip).slice(0, 2)];
+  } else if (byCount[0].c === 2 && byCount[1] && byCount[1].c === 2) {
+    rank = 2; name = 'Две пары';
+    const hi = Math.max(byCount[0].v, byCount[1].v);
+    const lo = Math.min(byCount[0].v, byCount[1].v);
+    const kicker = unique.find(v => v !== hi && v !== lo) || 0;
+    kickers = [hi, lo, kicker];
+  } else if (byCount[0].c === 2) {
+    rank = 1; name = 'Пара';
+    const pair = byCount[0].v;
+    kickers = [pair, ...unique.filter(v => v !== pair).slice(0, 3)];
+  } else {
+    rank = 0; name = 'Старшая карта';
+    kickers = unique.slice(0, 5);
+  }
+
+  let score = rank;
+  const ks = kickers.slice(0, 5);
+  while (ks.length < 5) ks.push(0);
+  ks.forEach(k => { score = score * 15 + k; });
+  return {rank, name, score, kickers};
 }
 
-function bestHand(hole,board){
-  const all=[...(hole||[]),...(board||[])];
-  if(all.length<5) return {score:-1, name:'—', usedHole:[], usedBoard:[]};
-  
-  let best={score:-1, name:'', usedHole:[], usedBoard:[]};
-  const n=all.length;
-  
-  // Перебор всех комбинаций по 5 карт
-  (function comb(s,ch){
-    if(ch.length===5){
-      const subset = ch.map(i=>all[i]);
-      const h=evalHand(subset);
-      if(h.score>best.score){
-        best={...h, usedHole:[], usedBoard:[]};
-        // Определяем, какие индексы из hole и board вошли в эту комбинацию
+function bestHand(hole, board){
+  const all = [...(hole || []), ...(board || [])];
+  if (all.length < 5) return {score:-1, name:'—', usedHole:[], usedBoard:[]};
+
+  let best = {score:-1, name:'', usedHole:[], usedBoard:[]};
+  const n = all.length;
+  const holeLen = hole?.length || 0;
+
+  (function comb(s, ch){
+    if (ch.length === 5) {
+      const subset = ch.map(i => all[i]);
+      const h = evalHand(subset);
+      if (h.score > best.score) {
+        best = {...h, usedHole:[], usedBoard:[]};
         ch.forEach(idx => {
-          if(idx < (hole?.length||0)) best.usedHole.push(idx);
-          else best.usedBoard.push(idx - (hole?.length||0));
+          if (idx < holeLen) best.usedHole.push(idx);
+          else best.usedBoard.push(idx - holeLen);
         });
       }
       return;
     }
-    for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}
-  })(0,[]);
-  
+    for (let i = s; i < n; i++) { ch.push(i); comb(i + 1, ch); ch.pop(); }
+  })(0, []);
+
   return best;
 }
 
-/* ── Rooms ── */
+/* ── Rooms / online ── */
 function playerSeat(extra){
   return{
     id:player.id,name:player.name,stack:START_STACK,bet:0,hole:[],folded:false,allIn:false,handName:'',
+    totalBet:0,acted:false,
     photo:player.photo||null,hatId:player.hatId||'none',lastSeen:Date.now(),
     ...extra
   };
@@ -577,7 +624,7 @@ function onState(){
   }
 
   renderSeats();
-  renderBoard(); // Изменено для подсветки
+  renderBoard();
   const pot=(state.pot||0)+(state.players||[]).reduce((s,p)=>s+(p.bet||0),0);
   $('pot').textContent='Банк: '+fmt(pot);
   $('phaseLabel').textContent=PHASE_RU[state.phase]||state.phase||'—';
@@ -593,34 +640,29 @@ function onState(){
   updateActionsUI();
 }
 
-// Функция отрисовки стола с подсветкой комбинаций
 function renderBoard(){
   const boardEl = $('board');
   boardEl.innerHTML = '';
-  
-  // Получаем данные о лучшей руке текущего игрока для подсветки
+
   let myBestHand = null;
   const me = (state.players||[]).find(p => p.id === player.id);
   const isShowdown = state.phase === 'showdown' || state.handOver;
-  
-  if(me && !me.folded && state.board.length > 0) {
-     // Если шоуран или это я (карты открыты)
-     if(isShowdown || me.hole.length === 2) {
+
+  if(me && !me.folded && state.board && state.board.length > 0) {
+     if(isShowdown || (me.hole && me.hole.length === 2)) {
         myBestHand = bestHand(me.hole, state.board);
      }
   }
 
-  // Рисуем карты стола
-  state.board.forEach((c, idx) => {
+  (state.board||[]).forEach((c, idx) => {
     let isActive = false;
-    if(myBestHand && myBestHand.usedBoard.includes(idx)) {
+    if(myBestHand && myBestHand.usedBoard && myBestHand.usedBoard.includes(idx)) {
       isActive = true;
     }
     boardEl.innerHTML += cardHTML(c, false, isActive);
   });
-  
-  // Заполнители
-  for(let i=state.board.length; i<5; i++) {
+
+  for(let i=(state.board||[]).length; i<5; i++) {
     let placeholder = document.createElement('div');
     placeholder.style.width = '38px';
     placeholder.style.height = '54px';
@@ -645,21 +687,20 @@ function renderSeats(){
       div.innerHTML=`<div class="avatar-wrap"><div class="avatar">+</div></div><div class="name">Пусто</div><div class="stack">—</div><div class="cards"></div>`;
     }else{
       const show=isMe||state.phase==='showdown'||state.handOver;
-      
-      // Логика подсветки карт игрока
+
       let myBestHand = null;
-      if(isMe && !p.folded && state.board.length > 0 && (state.phase==='showdown'||state.handOver||p.hole.length===2)) {
+      if(isMe && !p.folded && state.board && state.board.length > 0 && (state.phase==='showdown'||state.handOver||(p.hole&&p.hole.length===2))) {
          myBestHand = bestHand(p.hole, state.board);
       }
-      
+
       const cardsHtml = (p.hole||[]).map((c, idx) => {
         let isActive = false;
-        if(myBestHand && myBestHand.usedHole.includes(idx)) {
+        if(myBestHand && myBestHand.usedHole && myBestHand.usedHole.includes(idx)) {
           isActive = true;
         }
         return cardHTML(c, !show, isActive);
       }).join('');
-      
+
       let role='';
       if(realIdx===state.dealerIdx)role='D';
       else if(realIdx===state.sbIdx)role='SB';
@@ -669,8 +710,7 @@ function renderSeats(){
       const face=p.photo
         ?`<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
         :(isMe?'😎':'👤');
-      
-      // Отображение названия комбинации
+
       let handNameDisplay = '';
       if(isMe && myBestHand && myBestHand.name !== '—') {
         handNameDisplay = `<div class="hand-name">${myBestHand.name}</div>`;
@@ -722,153 +762,364 @@ function updateActionsUI(){
   setStatus('Ваш ход','info');
 }
 
-function hostStartHand(){
-  if(!isHost||!state)return;
-  const players=(state.players||[]).filter(p=>p.stack>0);
-  if(players.length<2){setStatus('Нужно 2+ игрока','loss');return}
-
-  const deck=newDeck();
-  let d=((state.dealerIdx??-1)+1)%players.length;
-  let sb=(d+1)%players.length;
-  let bb=(d+2)%players.length;
-  if(players.length===2){sb=d;bb=(d+1)%players.length}
-
-  players.forEach(p=>{p.hole=[];p.bet=0;p.folded=false;p.allIn=false;p.handName='';p.totalBet=0;p.lastAction=null;p.lastSeen=Date.now()});
-
-  const post=(idx,amt,label)=>{
-    const p=players[idx];const a=Math.min(amt,p.stack);p.stack-=a;p.bet=a;p.totalBet=a;
-    if(p.stack===0)p.allIn=true;
-    setLastAction(p,'blind',label+' '+fmt(a));
-    return a;
-  };
-  let pot=0;
-  pot+=post(sb,SB,'SB');
-  pot+=post(bb,BB,'BB');
-
-  for(let r=0;r<2;r++) for(const p of players) p.hole.push(deck.pop());
-
-  let toAct=(bb+1)%players.length;
-  while(players[toAct].folded||players[toAct].stack<=0){toAct=(toAct+1)%players.length}
-
-  state={
-    ...state,
-    players,
-    deck,
-    board:[],
-    pot:0,
-    dealerIdx:d,sbIdx:sb,bbIdx:bb,
-    phase:'preflop',
-    currentBet:BB,
-    minRaise:BB,
-    toAct,
-    actionCount:0,
-    handOver:false,
-    dealMsg:'Дилер раздал карты'
-  };
-  pushState('playing');
-  setStatus('Префлоп','info');
+/* ── Core betting / streets (rewritten) ── */
+function canAct(p){
+  return !!(p && !p.folded && !p.allIn && (p.stack || 0) > 0);
 }
 
-function canAct(p){return p&&!p.folded&&!p.allIn&&p.stack>0}
 function nextActor(from){
-  const pl=state.players;const n=pl.length;
-  for(let i=1;i<=n;i++){const idx=(from+i)%n;if(canAct(pl[idx]))return idx}
+  const pl = state.players || [];
+  const n = pl.length;
+  if (!n) return null;
+  for (let i = 1; i <= n; i++) {
+    const idx = (from + i) % n;
+    if (canAct(pl[idx])) return idx;
+  }
   return null;
 }
-function allMatched(){
-  const need=state.currentBet;
-  return state.players.every(p=>p.folded||p.allIn||p.bet===need);
+
+/** Round complete: each non-folded player is all-in OR (acted && bet matched). */
+function isRoundComplete(){
+  const pl = state.players || [];
+  const need = state.currentBet || 0;
+  return pl.every(p => {
+    if (p.folded) return true;
+    if (p.allIn) return true;
+    return !!p.acted && (p.bet || 0) === need;
+  });
 }
 
-function setLastAction(p,type,label){
-  if(!p)return;
-  p.lastAction={type,label,ts:Date.now()};
+function setLastAction(p, type, label){
+  if (!p) return;
+  p.lastAction = {type, label, ts: Date.now()};
 }
-function sendAction(type,raiseTo){
-  if(!state||state.handOver)return;
-  const pl=state.players;
-  const idx=pl.findIndex(p=>p.id===player.id);
-  if(idx!==state.toAct||idx<0)return;
-  const p=pl[idx];
-  if(!canAct(p))return;
-  const toCall=state.currentBet-p.bet;
 
-  if(type==='fold'){
-    p.folded=true;
-    setLastAction(p,'fold','Сброс');
-  }else if(type==='check'){
-    if(toCall>0)return;
-    setLastAction(p,'check','Чек');
-  }else if(type==='call'){
-    const a=Math.min(toCall,p.stack);p.stack-=a;p.bet+=a;if(p.stack===0)p.allIn=true;
-    setLastAction(p,'call',a>0?`Колл ${fmt(a)}`:'Чек');
-  }else if(type==='raise'){
-    const target=raiseTo||(state.currentBet+state.minRaise);
-    const need=Math.max(0,target-p.bet);
-    const a=Math.min(need,p.stack);p.stack-=a;p.bet+=a;
-    if(p.bet>state.currentBet){state.minRaise=p.bet-state.currentBet;state.currentBet=p.bet}
-    if(p.stack===0)p.allIn=true;
-    setLastAction(p,'raise',`Рейз ${fmt(p.bet)}`);
-  }
-  state.actionCount=(state.actionCount||0)+1;
+function resetStreetFlags(){
+  (state.players || []).forEach(p => { p.acted = false; });
+}
 
-  const alive=pl.filter(x=>!x.folded);
-  if(alive.length===1){
-    pl.forEach(x=>{state.pot+=x.bet;x.bet=0});
-    alive[0].stack+=state.pot;
-    state.dealMsg=alive[0].name+' забирает банк';
-    state.pot=0;state.handOver=true;state.phase='showdown';state.toAct=null;
-    pushState('lobby');return;
-  }
+function collectBetsIntoPot(){
+  const pl = state.players || [];
+  pl.forEach(p => {
+    state.pot = (state.pot || 0) + (p.bet || 0);
+    p.bet = 0;
+  });
+  state.currentBet = 0;
+  state.minRaise = BB;
+}
 
-  if(allMatched()&&state.actionCount>0){
-    advanceStreet();
-  }else{
-    const n=nextActor(idx);
-    state.toAct=n;
-    state.dealMsg='';
-    pushState();
+function buildSidePots(players){
+  const levels = [...new Set(players.map(p => p.totalBet || 0).filter(x => x > 0))].sort((a,b) => a - b);
+  let prev = 0;
+  const pots = [];
+  for (const level of levels) {
+    const inLayer = players.filter(p => (p.totalBet || 0) >= level);
+    const amount = (level - prev) * inLayer.length;
+    if (amount > 0) {
+      pots.push({ amount, eligible: inLayer.filter(p => !p.folded) });
+    }
+    prev = level;
   }
+  return pots;
+}
+
+function awardSidePots(players, board){
+  const pots = buildSidePots(players);
+  players.forEach(p => {
+    if (!p.folded) {
+      const h = bestHand(p.hole, board);
+      p.handName = h.name;
+      p._handScore = h.score;
+      p._hand = h;
+    } else {
+      p.handName = '';
+      p._handScore = -1;
+      p._hand = null;
+    }
+  });
+
+  const winnerNames = new Set();
+  let topHandName = '';
+  let topScore = -1;
+
+  pots.forEach(pot => {
+    if (!pot.eligible.length || pot.amount <= 0) return;
+    let bestScore = -1;
+    pot.eligible.forEach(p => {
+      if ((p._handScore || 0) > bestScore) bestScore = p._handScore || 0;
+    });
+    const winners = pot.eligible.filter(p => (p._handScore || 0) === bestScore);
+    if (!winners.length) return;
+    const share = Math.floor(pot.amount / winners.length);
+    let rem = pot.amount - share * winners.length;
+    winners.forEach((w, i) => {
+      w.stack = (w.stack || 0) + share + (i === 0 ? rem : 0);
+      winnerNames.add(w.name);
+    });
+    if (bestScore > topScore) {
+      topScore = bestScore;
+      topHandName = winners[0]._hand?.name || winners[0].handName || '';
+    }
+  });
+
+  players.forEach(p => { delete p._handScore; delete p._hand; });
+  return { names: [...winnerNames], handName: topHandName };
+}
+
+function awardToSingleWinner(winner){
+  collectBetsIntoPot();
+  winner.stack = (winner.stack || 0) + (state.pot || 0);
+  state.pot = 0;
+  state.dealMsg = winner.name + ' забирает банк';
+  state.handOver = true;
+  state.phase = 'showdown';
+  state.toAct = null;
+}
+
+function firstToActPostflop(){
+  const pl = state.players || [];
+  const n = pl.length;
+  if (!n) return null;
+  // HU: dealer/button first; 3+: left of dealer
+  let start = (n === 2) ? state.dealerIdx : ((state.dealerIdx + 1) % n);
+  for (let i = 0; i < n; i++) {
+    const idx = (start + i) % n;
+    if (canAct(pl[idx])) return idx;
+  }
+  return null;
+}
+
+function finishShowdown(){
+  collectBetsIntoPot();
+  state.phase = 'showdown';
+  state.handOver = true;
+  state.toAct = null;
+  const result = awardSidePots(state.players || [], state.board || []);
+  state.dealMsg = 'Победа: ' + (result.names.join(', ') || '—') + (result.handName ? ' · ' + result.handName : '');
+  state.pot = 0;
+  pushState('lobby');
 }
 
 function advanceStreet(){
-  const pl=state.players;
-  pl.forEach(x=>{state.pot+=x.bet;x.bet=0;});
-  state.currentBet=0;state.minRaise=BB;state.actionCount=0;
+  collectBetsIntoPot();
+  resetStreetFlags();
+  state.actionCount = 0;
 
-  if(state.phase==='preflop'){
-    state.phase='flop';
-    state.board.push(state.deck.pop(),state.deck.pop(),state.deck.pop());
-    state.dealMsg='Дилер открыл флоп';
-  }else if(state.phase==='flop'){
-    state.phase='turn';
-    state.board.push(state.deck.pop());
-    state.dealMsg='Дилер открыл тёрн';
-  }else if(state.phase==='turn'){
-    state.phase='river';
-    state.board.push(state.deck.pop());
-    state.dealMsg='Дилер открыл ривер';
-  }else if(state.phase==='river'){
-    state.phase='showdown';state.handOver=true;state.toAct=null;
-    const cont=pl.filter(p=>!p.folded);
-    let best=null,winners=[];
-    cont.forEach(p=>{
-      const h=bestHand(p.hole,state.board);p.handName=h.name;
-      if(!best||h.score>best.score){best=h;winners=[p]}
-      else if(h.score===best.score)winners.push(p);
-    });
-    const share=Math.floor(state.pot/winners.length);
-    winners.forEach(w=>w.stack+=share);
-    state.dealMsg='Победа: '+winners.map(w=>w.name).join(', ')+' · '+(best?.name||'');
-    state.pot=0;
-    pushState('lobby');return;
+  const pl = state.players || [];
+
+  if (state.phase === 'preflop') {
+    state.phase = 'flop';
+    if (state.deck && state.deck.length >= 3) {
+      state.board.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
+    }
+    state.dealMsg = 'Дилер открыл флоп';
+  } else if (state.phase === 'flop') {
+    state.phase = 'turn';
+    if (state.deck && state.deck.length >= 1) state.board.push(state.deck.pop());
+    state.dealMsg = 'Дилер открыл тёрн';
+  } else if (state.phase === 'turn') {
+    state.phase = 'river';
+    if (state.deck && state.deck.length >= 1) state.board.push(state.deck.pop());
+    state.dealMsg = 'Дилер открыл ривер';
+  } else if (state.phase === 'river') {
+    finishShowdown();
+    return;
   }
 
-  let first=(state.dealerIdx+1)%pl.length;
-  for(let i=0;i<pl.length;i++){if(canAct(pl[first]))break;first=(first+1)%pl.length}
-  state.toAct=first;
+  const actorsLeft = pl.filter(canAct).length;
+  const alive = pl.filter(p => !p.folded);
+  if (alive.length <= 1) {
+    if (alive.length === 1) awardToSingleWinner(alive[0]);
+    else finishShowdown();
+    pushState('lobby');
+    return;
+  }
+  if (actorsLeft === 0) {
+    while (state.phase !== 'river' && state.phase !== 'showdown') {
+      if (state.phase === 'flop') {
+        state.phase = 'turn';
+        if (state.deck && state.deck.length) state.board.push(state.deck.pop());
+      } else if (state.phase === 'turn') {
+        state.phase = 'river';
+        if (state.deck && state.deck.length) state.board.push(state.deck.pop());
+      } else break;
+    }
+    state.dealMsg = 'All-in — карты до ривера';
+    finishShowdown();
+    return;
+  }
+
+  state.toAct = firstToActPostflop();
   pushState();
 }
+
+function hostStartHand(){
+  if (!isHost || !state) return;
+  const allPlayers = state.players || [];
+  const players = allPlayers.filter(p => (p.stack || 0) > 0);
+  if (players.length < 2) { setStatus('Нужно 2+ игрока', 'loss'); return; }
+
+  const deck = newDeck();
+
+  let prevDealerId = null;
+  if (typeof state.dealerIdx === 'number' && allPlayers[state.dealerIdx]) {
+    prevDealerId = allPlayers[state.dealerIdx].id;
+  }
+  let d = 0;
+  if (prevDealerId) {
+    const prevInHand = players.findIndex(p => p.id === prevDealerId);
+    d = prevInHand >= 0 ? (prevInHand + 1) % players.length : 0;
+  }
+
+  let sb, bb;
+  if (players.length === 2) {
+    sb = d;
+    bb = (d + 1) % 2;
+  } else {
+    sb = (d + 1) % players.length;
+    bb = (d + 2) % players.length;
+  }
+
+  players.forEach(p => {
+    p.hole = [];
+    p.bet = 0;
+    p.folded = false;
+    p.allIn = false;
+    p.handName = '';
+    p.totalBet = 0;
+    p.acted = false;
+    p.lastAction = null;
+    p.lastSeen = Date.now();
+  });
+
+  const post = (idx, amt, label) => {
+    const p = players[idx];
+    const a = Math.min(amt, p.stack || 0);
+    p.stack -= a;
+    p.bet = a;
+    p.totalBet = a;
+    if (p.stack === 0) p.allIn = true;
+    setLastAction(p, 'blind', label + ' ' + fmt(a));
+    return a;
+  };
+  post(sb, SB, 'SB');
+  post(bb, BB, 'BB');
+
+  for (let r = 0; r < 2; r++) {
+    for (const p of players) p.hole.push(deck.pop());
+  }
+
+  let toAct = (bb + 1) % players.length;
+  for (let i = 0; i < players.length; i++) {
+    if (canAct(players[toAct])) break;
+    toAct = (toAct + 1) % players.length;
+  }
+
+  state = {
+    ...state,
+    players,
+    deck,
+    board: [],
+    pot: 0,
+    dealerIdx: d,
+    sbIdx: sb,
+    bbIdx: bb,
+    phase: 'preflop',
+    currentBet: BB,
+    minRaise: BB,
+    toAct,
+    actionCount: 0,
+    handOver: false,
+    dealMsg: 'Дилер раздал карты'
+  };
+  pushState('playing');
+  setStatus('Префлоп', 'info');
+}
+
+function sendAction(type, raiseTo){
+  if (!state || state.handOver) return;
+  if (state.phase === 'lobby' || state.phase === 'deal' || state.phase === 'showdown') return;
+
+  const pl = state.players || [];
+  const idx = pl.findIndex(p => p.id === player.id);
+  if (idx < 0 || idx !== state.toAct) return;
+  const p = pl[idx];
+  if (!canAct(p)) return;
+
+  const toCall = Math.max(0, (state.currentBet || 0) - (p.bet || 0));
+
+  if (type === 'fold') {
+    p.folded = true;
+    p.acted = true;
+    setLastAction(p, 'fold', 'Сброс');
+  } else if (type === 'check') {
+    if (toCall > 0) return;
+    p.acted = true;
+    setLastAction(p, 'check', 'Чек');
+  } else if (type === 'call') {
+    const a = Math.min(toCall, p.stack || 0);
+    p.stack -= a;
+    p.bet = (p.bet || 0) + a;
+    p.totalBet = (p.totalBet || 0) + a;
+    if (p.stack === 0) p.allIn = true;
+    p.acted = true;
+    setLastAction(p, 'call', a > 0 ? ('Колл ' + fmt(a)) : 'Чек');
+  } else if (type === 'raise') {
+    const minTarget = (state.currentBet || 0) + (state.minRaise || BB);
+    const maxTarget = (p.bet || 0) + (p.stack || 0);
+    let target = Math.floor(Number(raiseTo) || minTarget);
+    if (target < minTarget && target < maxTarget) target = Math.min(minTarget, maxTarget);
+    target = Math.min(Math.max(target, p.bet || 0), maxTarget);
+
+    const need = Math.max(0, target - (p.bet || 0));
+    const a = Math.min(need, p.stack || 0);
+    p.stack -= a;
+    p.bet = (p.bet || 0) + a;
+    p.totalBet = (p.totalBet || 0) + a;
+    if (p.stack === 0) p.allIn = true;
+
+    const prevBet = state.currentBet || 0;
+    if (p.bet > prevBet) {
+      const raiseSize = p.bet - prevBet;
+      state.currentBet = p.bet;
+      const isFullRaise = raiseSize >= (state.minRaise || BB);
+      if (isFullRaise) {
+        state.minRaise = raiseSize;
+        pl.forEach((x, i) => {
+          if (i !== idx && !x.folded && !x.allIn) x.acted = false;
+        });
+      }
+    }
+    p.acted = true;
+    setLastAction(p, 'raise', p.allIn ? ('Олл-ин ' + fmt(p.bet)) : ('Рейз ' + fmt(p.bet)));
+  } else {
+    return;
+  }
+
+  state.actionCount = (state.actionCount || 0) + 1;
+
+  const alive = pl.filter(x => !x.folded);
+  if (alive.length === 1) {
+    awardToSingleWinner(alive[0]);
+    pushState('lobby');
+    return;
+  }
+
+  if (isRoundComplete()) {
+    advanceStreet();
+    return;
+  }
+
+  const n = nextActor(idx);
+  state.toAct = n;
+  state.dealMsg = '';
+  if (n === null) {
+    advanceStreet();
+    return;
+  }
+  pushState();
+}
+
 
 $('createBtn').onclick=createRoom;
 $('joinBtn').onclick=()=>joinRoom($('codeInput').value);
