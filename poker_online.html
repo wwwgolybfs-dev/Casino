@@ -229,132 +229,232 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 </div>
 
 <script>
-const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
-const PROJECT_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
-const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
+const SUPABASE_URL = 'https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
 
-const SUITS=['♠','♥','♦','♣'],RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
-const PHASE_RU={lobby:'Лобби',deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
-const SB=10,BB=20,START_STACK=1000,MAX_BUYIN=1000,MAX_PLAYERS=3;
-const STALE_MS=45000;
-const fmt=n=>Number(n||0).toLocaleString('ru-RU');
-const $=id=>document.getElementById(id);
+const sb = window.supabase?.createClient(SUPABASE_URL, PROJECT_ANON_KEY) || null;
 
-const HAT_IMAGES={
-  none:null,cowboy:'hats/hat_cowboy.svg',tophat:'hats/hat_tophat.svg',crown:'hats/hat_crown.svg',
-  wizard:'hats/hat_wizard.svg',party:'hats/hat_party.svg',pirate:'hats/hat_pirate.svg',
-  viking:'hats/hat_viking.svg',chef:'hats/hat_chef.svg',detective:'hats/hat_detective.svg'
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const PHASE_RU = {
+  lobby:'Лобби',
+  deal:'Раздача',
+  preflop:'Префлоп',
+  flop:'Флоп',
+  turn:'Тёрн',
+  river:'Ривер',
+  showdown:'Шоудаун'
 };
-const HAT_EMOJIS={none:'',cowboy:'🤠',tophat:'🎩',crown:'👑',wizard:'🧙',party:'🥳',pirate:'🏴‍☠️',viking:'🪖',chef:'👨‍🍳',detective:'🕵️'};
 
-const params=new URLSearchParams(location.search);
-let player={id:params.get('uid'),name:params.get('name')||'Игрок',photo:null,hatId:'none'};
-let balance=0,roomId=null,roomCode=null,isHost=false,channel=null,state=null;
-let heartbeatTimer=null,leaving=false;
+const SB = 10;
+const BB = 20;
+const START_STACK = 1000;
+const TABLE_LIMIT = Infinity; // больше не ограничиваем buy-in константой MAX_BUYIN
+const MAX_PLAYERS = 3;
+const STALE_MS = 45000;
 
-function resolvePlayer(){
-  try{const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();
-    const u=tg.initDataUnsafe?.user;
-    if(u?.id)player={
-      id:String(u.id),
-      name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Игрок',
-      photo:u.photo_url||null,
-      hatId:player.hatId||'none'
-    };
-  }}catch(e){}
-  if(!player.id)player.id='g_'+Math.random().toString(36).slice(2,9);
+const fmt = n => Number(n || 0).toLocaleString('ru-RU');
+const $ = id => document.getElementById(id);
+const isGuestId = id => !id || String(id).startsWith('g_');
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[c]));
 }
-async function loadHat(){
-  let hatId=localStorage.getItem('petzker_active_hat')||'none';
-  if(sb&&player.id&&!String(player.id).startsWith('g_')){
-    try{
-      const{data}=await sb.from('player_active_hat').select('hat_id').eq('telegram_user_id',player.id).maybeSingle();
-      if(data?.hat_id)hatId=data.hat_id;
-    }catch(e){}
+
+const HAT_IMAGES = {
+  none:null,
+  cowboy:'hats/hat_cowboy.svg',
+  tophat:'hats/hat_tophat.svg',
+  crown:'hats/hat_crown.svg',
+  wizard:'hats/hat_wizard.svg',
+  party:'hats/hat_party.svg',
+  pirate:'hats/hat_pirate.svg',
+  viking:'hats/hat_viking.svg',
+  chef:'hats/hat_chef.svg',
+  detective:'hats/hat_detective.svg'
+};
+
+const HAT_EMOJIS = {
+  none:'',
+  cowboy:'🤠',
+  tophat:'🎩',
+  crown:'👑',
+  wizard:'🧙',
+  party:'🥳',
+  pirate:'🏴‍☠️',
+  viking:'🪖',
+  chef:'👨‍🍳',
+  detective:'🕵️'
+};
+
+const params = new URLSearchParams(location.search);
+
+let player = {
+  id: params.get('uid'),
+  name: params.get('name') || 'Игрок',
+  photo: null,
+  hatId: 'none'
+};
+
+let balance = 0;
+let roomId = null;
+let roomCode = null;
+let isHost = false;
+let channel = null;
+let state = null;
+let heartbeatTimer = null;
+let leaving = false;
+let advancing = false;
+
+// Private host-only card data
+let privateDeck = [];
+let privateHoles = {};
+let lastSecretHandId = null;
+
+// Local my hole cache
+let myHole = [];
+let lastHandId = null;
+
+function resolvePlayer() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      const u = tg.initDataUnsafe?.user;
+      if (u?.id) {
+        player = {
+          id: String(u.id),
+          name: [u.first_name, u.last_name].filter(Boolean).join(' ').trim() || u.username || 'Игрок',
+          photo: u.photo_url || null,
+          hatId: player.hatId || 'none'
+        };
+      }
+    }
+  } catch(e) {}
+
+  if (!player.id) player.id = 'g_' + Math.random().toString(36).slice(2, 9);
+}
+
+async function loadHat() {
+  let hatId = localStorage.getItem('petzker_active_hat') || 'none';
+
+  if (sb && player.id && !isGuestId(player.id)) {
+    try {
+      const { data } = await sb
+        .from('player_active_hat')
+        .select('hat_id')
+        .eq('telegram_user_id', player.id)
+        .maybeSingle();
+
+      if (data?.hat_id) hatId = data.hat_id;
+    } catch(e) {}
   }
-  player.hatId=hatId||'none';
+
+  player.hatId = hatId || 'none';
 }
-function hatHTML(hatId){
-  const src=HAT_IMAGES[hatId];
-  if(src)return`<div class="hat"><img src="${src}" alt="" draggable="false"></div>`;
-  const em=HAT_EMOJIS[hatId];
-  if(em)return`<div class="hat"><span class="hat-emoji">${em}</span></div>`;
-  return`<div class="hat"></div>`;
+
+function hatHTML(hatId) {
+  const src = HAT_IMAGES[hatId];
+  if (src) return `<div class="hat"><img src="${src}" alt="" draggable="false"></div>`;
+
+  const em = HAT_EMOJIS[hatId];
+  if (em) return `<div class="hat"><span class="hat-emoji">${em}</span></div>`;
+
+  return `<div class="hat"></div>`;
 }
-async function loadBalance(){
-  if(!sb||!player.id||String(player.id).startsWith('g_')){$('balance').textContent='—';return}
-  try{const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
-    balance=Number(data?.total_score||0);$('balance').textContent=fmt(balance)}catch(e){}
+
+async function loadBalance() {
+  if (!sb || !player.id || isGuestId(player.id)) {
+    $('balance').textContent = '—';
+    return;
+  }
+
+  try {
+    const { data } = await sb
+      .from('player_ratings')
+      .select('total_score')
+      .eq('telegram_user_id', player.id)
+      .maybeSingle();
+
+    balance = Number(data?.total_score || 0);
+    $('balance').textContent = fmt(balance);
+  } catch(e) {}
 }
-/** Stack for seat: min(balance, MAX_BUYIN). Guests / no rating → START_STACK. Never more than balance. */
-function seatBuyIn(){
-  // Guests (no telegram id) get practice chips; real users only what they have
-  if (!player.id || String(player.id).startsWith('g_')) return START_STACK;
-  return Math.max(0, Math.min(Number(balance) || 0, MAX_BUYIN));
+
+function seatBuyIn() {
+  if (isGuestId(player.id)) return START_STACK;
+  const val = Math.floor(Number(balance) || 0);
+  return Math.max(0, Math.min(val, Number.isFinite(TABLE_LIMIT) ? TABLE_LIMIT : val));
 }
-function clampBet(amount, stack){
+
+function clampBet(amount, stack) {
   const a = Math.floor(Number(amount) || 0);
   const s = Math.max(0, Math.floor(Number(stack) || 0));
   return Math.max(0, Math.min(a, s));
 }
 
-/** last handId we already wrote to player_ratings (avoid double sync) */
 let lastScoreSyncHandId = null;
 
-/**
- * Apply delta to total_score for the local player only.
- * delta = stack_now - stack_at_hand_start
- */
-async function applyScoreDelta(delta, handId){
-  if (!sb || !player.id || String(player.id).startsWith('g_')) return;
-  if (!delta) return;
-  if (handId && handId === lastScoreSyncHandId) return;
+async function applyScoreDelta(delta, handId) {
+  if (!sb || !player.id || isGuestId(player.id)) return;
+  if (!delta || !handId) return;
+  if (handId === lastScoreSyncHandId) return;
+
   try {
-    await loadBalance();
-    const next = Math.max(0, Math.floor(balance + delta));
-    const { error } = await sb.from('player_ratings')
-      .update({ total_score: next })
-      .eq('telegram_user_id', player.id);
+    const { data, error } = await sb.rpc('settle_hand', {
+      p_hand_id: handId,
+      p_user_id: player.id,
+      p_delta: Math.floor(delta)
+    });
+
     if (error) throw error;
-    balance = next;
-    $('balance').textContent = fmt(balance);
-    if (handId) lastScoreSyncHandId = handId;
-    console.log('[score] delta', delta, '→', next);
-  } catch (e) {
+
+    if (data?.applied) {
+      balance = Number(data.total_score || 0);
+      $('balance').textContent = fmt(balance);
+      lastScoreSyncHandId = handId;
+    } else {
+      await loadBalance();
+      lastScoreSyncHandId = handId;
+    }
+  } catch(e) {
     console.error('[score] sync failed', e);
   }
 }
 
-/**
- * After hand ends: settle local player's total_score from stack delta.
- * Safe to call from onState on every client — each updates only themselves.
- */
-async function settleMyScoreIfNeeded(){
+async function settleMyScoreIfNeeded() {
   if (!state || !state.handOver) return;
-  if (!sb || !player.id || String(player.id).startsWith('g_')) return;
+  if (!sb || !player.id || isGuestId(player.id)) return;
+
   const me = (state.players || []).find(p => p.id === player.id);
   if (!me) return;
+
   if (me.stackAtHandStart == null || me.stackAtHandStart === undefined) return;
+
   const handId = state.handId || null;
-  if (handId && handId === lastScoreSyncHandId) return;
+  if (!handId) return;
+  if (handId === lastScoreSyncHandId) return;
+
   const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
-  // Clear local marker so we don't re-apply if onState fires again before push
   me.stackAtHandStart = null;
+
   await applyScoreDelta(delta, handId);
 }
 
-/**
- * On leave mid-session: settle open hand delta if any, otherwise no-op.
- * Chips left on table are already reflected in stack; if hand in progress,
- * settle vs stackAtHandStart; if between hands, stack is "house money" still
- * counted in total_score via previous settles — no extra write needed
- * (buy-in never deducted separately).
- */
-async function settleOnLeave(){
+async function settleOnLeave() {
   if (!state) return;
+
   const me = (state.players || []).find(p => p.id === player.id);
   if (!me) return;
+
   if (me.stackAtHandStart != null && me.stackAtHandStart !== undefined) {
     const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
     me.stackAtHandStart = null;
@@ -362,89 +462,133 @@ async function settleOnLeave(){
   }
 }
 
-function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
-function setStatus(t,c){$('status').textContent=t;$('status').className='status-text '+(c||'info')}
-function newDeck(){
-  const d=[];for(const s of SUITS)for(const r of RANKS)d.push({r,s,red:s==='♥'||s==='♦'});
-  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d;
+function genCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-// Обновленная функция cardHTML для поддержки подсветки
-function cardHTML(c,fd,isActive=false){
-  if(fd||!c)return'<div class="card back"></div>';
+function setStatus(t, c) {
+  $('status').textContent = t;
+  $('status').className = 'status-text ' + (c || 'info');
+}
+
+function newDeck() {
+  const d = [];
+  for (const s of SUITS) {
+    for (const r of RANKS) {
+      d.push({ r, s, red: s === '♥' || s === '♦' });
+    }
+  }
+
+  for (let i = d.length - 1; i > 0; i--) {
+    const rnd = crypto?.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * (i + 1));
+    const j = rnd % (i + 1);
+    [d[i], d[j]] = [d[j], d[i]];
+  }
+
+  return d;
+}
+
+function cardHTML(c, fd, isActive = false) {
+  if (fd || !c || !c.r || !c.s) return '<div class="card back"></div>';
   const activeClass = isActive ? ' active-combo' : '';
-  return`<div class="card ${c.red?'red':'black'}${activeClass}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`
+  return `<div class="card ${c.red ? 'red' : 'black'}${activeClass}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`;
 }
 
-function evalHand(cards){
-  if(!cards || cards.length < 5) return {rank:0, name:'—', score:0, kickers:[]};
-  const vals = cards.map(c => RANK_VAL[c.r]).sort((a,b) => b - a);
+function evalHand(cards) {
+  if (!cards || cards.length < 5) return { rank: 0, name: '—', score: 0, kickers: [] };
+
+  const vals = cards.map(c => RANK_VAL[c.r]).sort((a, b) => b - a);
   const suits = cards.map(c => c.s);
+
   const counts = {};
   vals.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+
   const byCount = Object.entries(counts)
-    .map(([v,c]) => ({v:+v, c}))
-    .sort((a,b) => b.c - a.c || b.v - a.v);
+    .map(([v, c]) => ({ v: +v, c }))
+    .sort((a, b) => b.c - a.c || b.v - a.v);
+
   const unique = [...new Set(vals)];
 
   let flushSuit = null;
   for (const s of SUITS) {
-    if (suits.filter(x => x === s).length >= 5) { flushSuit = s; break; }
+    if (suits.filter(x => x === s).length >= 5) {
+      flushSuit = s;
+      break;
+    }
   }
+
   const isFlush = !!flushSuit;
 
   function straightHigh(rankList) {
-    const u = [...new Set(rankList)].sort((a,b) => b - a);
+    const u = [...new Set(rankList)].sort((a, b) => b - a);
     if (u.includes(14)) u.push(1);
-    u.sort((a,b) => b - a);
+    u.sort((a, b) => b - a);
+
     for (let i = 0; i <= u.length - 5; i++) {
-      if (u[i] - u[i+4] === 4) return u[i] === 1 ? 5 : u[i];
+      if (u[i] - u[i + 4] === 4) return u[i] === 1 ? 5 : u[i];
     }
+
     return 0;
   }
-  let sh = straightHigh(vals);
+
+  const sh = straightHigh(vals);
+
   let sfHigh = 0;
   if (isFlush) {
     const fvals = cards.filter(c => c.s === flushSuit).map(c => RANK_VAL[c.r]);
     sfHigh = straightHigh(fvals);
   }
 
-  let rank = 0, name = 'Старшая карта', kickers = [];
+  let rank = 0;
+  let name = 'Старшая карта';
+  let kickers = [];
 
   if (sfHigh) {
-    rank = 8; name = sfHigh === 14 ? 'Рояль-флеш' : 'Стрит-флеш';
+    rank = 8;
+    name = sfHigh === 14 ? 'Рояль-флеш' : 'Стрит-флеш';
     kickers = [sfHigh];
   } else if (byCount[0].c === 4) {
-    rank = 7; name = 'Каре';
+    rank = 7;
+    name = 'Каре';
     const quad = byCount[0].v;
     const kicker = unique.find(v => v !== quad) || 0;
     kickers = [quad, kicker];
   } else if (byCount[0].c === 3 && byCount[1] && byCount[1].c >= 2) {
-    rank = 6; name = 'Фулл-хаус';
+    rank = 6;
+    name = 'Фулл-хаус';
     kickers = [byCount[0].v, byCount[1].v];
   } else if (isFlush) {
-    rank = 5; name = 'Флеш';
-    kickers = cards.filter(c => c.s === flushSuit)
-      .map(c => RANK_VAL[c.r]).sort((a,b) => b - a).slice(0, 5);
+    rank = 5;
+    name = 'Флеш';
+    kickers = cards
+      .filter(c => c.s === flushSuit)
+      .map(c => RANK_VAL[c.r])
+      .sort((a, b) => b - a)
+      .slice(0, 5);
   } else if (sh) {
-    rank = 4; name = 'Стрит';
+    rank = 4;
+    name = 'Стрит';
     kickers = [sh];
   } else if (byCount[0].c === 3) {
-    rank = 3; name = 'Сет';
+    rank = 3;
+    name = 'Сет';
     const trip = byCount[0].v;
     kickers = [trip, ...unique.filter(v => v !== trip).slice(0, 2)];
   } else if (byCount[0].c === 2 && byCount[1] && byCount[1].c === 2) {
-    rank = 2; name = 'Две пары';
+    rank = 2;
+    name = 'Две пары';
     const hi = Math.max(byCount[0].v, byCount[1].v);
     const lo = Math.min(byCount[0].v, byCount[1].v);
     const kicker = unique.find(v => v !== hi && v !== lo) || 0;
     kickers = [hi, lo, kicker];
   } else if (byCount[0].c === 2) {
-    rank = 1; name = 'Пара';
+    rank = 1;
+    name = 'Пара';
     const pair = byCount[0].v;
     kickers = [pair, ...unique.filter(v => v !== pair).slice(0, 3)];
   } else {
-    rank = 0; name = 'Старшая карта';
+    rank = 0;
+    name = 'Старшая карта';
     kickers = unique.slice(0, 5);
   }
 
@@ -452,315 +596,822 @@ function evalHand(cards){
   const ks = kickers.slice(0, 5);
   while (ks.length < 5) ks.push(0);
   ks.forEach(k => { score = score * 15 + k; });
-  return {rank, name, score, kickers};
+
+  return { rank, name, score, kickers };
 }
 
-function bestHand(hole, board){
+function bestHand(hole, board) {
   const all = [...(hole || []), ...(board || [])];
-  if (all.length < 5) return {score:-1, name:'—', usedHole:[], usedBoard:[]};
+  if (all.length < 5) return { score: -1, name: '—', usedHole: [], usedBoard: [] };
 
-  let best = {score:-1, name:'', usedHole:[], usedBoard:[]};
+  let best = { score: -1, name: '', usedHole: [], usedBoard: [] };
   const n = all.length;
   const holeLen = hole?.length || 0;
 
-  (function comb(s, ch){
+  (function comb(s, ch) {
     if (ch.length === 5) {
       const subset = ch.map(i => all[i]);
       const h = evalHand(subset);
+
       if (h.score > best.score) {
-        best = {...h, usedHole:[], usedBoard:[]};
+        best = { ...h, usedHole: [], usedBoard: [] };
         ch.forEach(idx => {
           if (idx < holeLen) best.usedHole.push(idx);
           else best.usedBoard.push(idx - holeLen);
         });
       }
+
       return;
     }
-    for (let i = s; i < n; i++) { ch.push(i); comb(i + 1, ch); ch.pop(); }
+
+    for (let i = s; i < n; i++) {
+      ch.push(i);
+      comb(i + 1, ch);
+      ch.pop();
+    }
   })(0, []);
 
   return best;
 }
 
-/* ── Rooms / online ── */
-function playerSeat(extra){
+function allSeated(st = state, includeLeft = false) {
+  if (!st) return [];
+  const arr = [
+    ...(st.players || []),
+    ...(st.sittingOut || [])
+  ];
+  return includeLeft ? arr : arr.filter(p => !p.left);
+}
+
+function activeCap() {
+  const pl = (state?.players || []).filter(p => !p.folded);
+  if (pl.length < 2) return Infinity;
+
+  return Math.min(...pl.map(p => (p.totalBet || 0) + (p.stack || 0)));
+}
+
+function playerSeat(extra) {
   const buy = seatBuyIn();
-  return{
-    id:player.id,name:player.name,stack:buy,bet:0,hole:[],folded:false,allIn:false,handName:'',
-    totalBet:0,acted:false,
-    photo:player.photo||null,hatId:player.hatId||'none',lastSeen:Date.now(),
+
+  return {
+    id: player.id,
+    name: player.name,
+    stack: buy,
+    bet: 0,
+    hole: [],
+    holeRevealed: false,
+    cardsDealt: false,
+    folded: false,
+    allIn: false,
+    handName: '',
+    totalBet: 0,
+    acted: false,
+    sittingOut: false,
+    left: false,
+    photo: player.photo || null,
+    hatId: player.hatId || 'none',
+    lastSeen: Date.now(),
     ...extra
   };
 }
-async function createRoom(){
-  if(!sb){alert('Нет Supabase');return}
+
+async function createRoom() {
+  if (!sb) {
+    alert('Нет Supabase');
+    return;
+  }
+
   await loadHat();
   await loadBalance();
-  const code=genCode();
-  const initial={
-    phase:'lobby',dealMsg:'',
-    players:[playerSeat()],
-    hostId:player.id,board:[],pot:0,deck:[],
-    dealerIdx:0,sbIdx:0,bbIdx:0,toAct:null,
-    currentBet:0,minRaise:BB,actionCount:0,handOver:false
+
+  const code = genCode();
+
+  const initial = {
+    phase: 'lobby',
+    dealMsg: '',
+    players: [playerSeat()],
+    sittingOut: [],
+    hostId: player.id,
+    board: [],
+    pot: 0,
+    lastPot: 0,
+    dealerIdx: 0,
+    sbIdx: 0,
+    bbIdx: 0,
+    toAct: null,
+    currentBet: 0,
+    minRaise: BB,
+    actionCount: 0,
+    handOver: false,
+    handId: null,
+    pendingStreet: false
   };
-  try{
-    const{data,error}=await sb.from('poker_rooms').insert([{code,host_id:player.id,status:'lobby',max_players:MAX_PLAYERS,state:initial}]).select().single();
-    if(error)throw error;
-    roomId=data.id;roomCode=code;isHost=true;state=initial;
-    await subscribeRoom();startHeartbeat();showTable();setStatus('Комната '+code,'info');
-  }catch(e){
+
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .insert([{
+        code,
+        host_id: player.id,
+        status: 'lobby',
+        max_players: MAX_PLAYERS,
+        state: initial
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    roomId = data.id;
+    roomCode = code;
+    isHost = true;
+    state = initial;
+
+    try {
+      await sb.rpc('buy_in', {
+        p_user_id: player.id,
+        p_room_id: roomId,
+        p_amount: seatBuyIn()
+      });
+    } catch(e) {}
+
+    await subscribeRoom();
+    startHeartbeat();
+    showTable();
+    setStatus('Комната ' + code, 'info');
+  } catch(e) {
     console.error(e);
-    roomId='local_'+code;roomCode=code;isHost=true;state=initial;
-    showTable();setStatus('Локально '+code+' (нет таблицы poker_rooms)','info');
-    $('dealMsg').textContent='Создайте таблицу poker_rooms в Supabase';
+    roomId = 'local_' + code;
+    roomCode = code;
+    isHost = true;
+    state = initial;
+    showTable();
+    setStatus('Локально ' + code + ' (нет таблицы poker_rooms)', 'info');
+    $('dealMsg').textContent = 'Создайте таблицу poker_rooms в Supabase';
   }
 }
-async function joinRoom(code){
-  code=(code||'').trim().toUpperCase();if(!code||!sb)return;
+
+async function joinRoom(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code || !sb) return;
+
   await loadHat();
   await loadBalance();
-  try{
-    const{data,error}=await sb.from('poker_rooms').select('*').eq('code',code).maybeSingle();
-    if(error)throw error;if(!data){setStatus('Комната не найдена','loss');return}
-    if(data.status==='closed'){setStatus('Комната закрыта','loss');return}
-    state=data.state||{};
-    const players=state.players||[];
-    if(!players.some(p=>p.id===player.id)){
-      if(players.length>=MAX_PLAYERS){setStatus('Комната полная','loss');return}
-      const midHand=data.status==='playing'&&state.phase!=='lobby'&&!state.handOver;
-      if(midHand){setStatus('Игра уже идёт','loss');return}
-      players.push(playerSeat());
-      state.players=players;
-      await sb.from('poker_rooms').update({state,status:'lobby',updated_at:new Date().toISOString()}).eq('id',data.id);
-    }else{
-      const me=players.find(p=>p.id===player.id);
-      if(me){me.lastSeen=Date.now();me.hatId=player.hatId||me.hatId;me.photo=player.photo||me.photo;me.name=player.name||me.name}
-      state.players=players;
-      await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',data.id);
-    }
-    roomId=data.id;roomCode=code;isHost=data.host_id===player.id||state.hostId===player.id;
-    await subscribeRoom();startHeartbeat();showTable();setStatus('В комнате '+code,'info');
-  }catch(e){console.error(e);setStatus('Ошибка: '+e.message,'loss')}
-}
-async function listRooms(){
-  if(!sb){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';return}
-  try{
-    const{data,error}=await sb.from('poker_rooms')
-      .select('code,status,state,created_at,updated_at')
-      .in('status',['lobby','playing'])
-      .order('created_at',{ascending:false}).limit(20);
-    if(error)throw error;
-    const open=(data||[]).filter(r=>{
-      const n=(r.state?.players||[]).length;
-      if(n===0)return false;
-      if(r.status==='playing'){
-        const st=r.state||{};
-        return !!st.handOver || st.phase==='lobby' || st.phase==='showdown';
-      }
-      return r.status==='lobby';
-    }).slice(0,10);
-    if(!open.length){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет открытых комнат</div>';return}
-    $('roomsList').innerHTML=open.map(r=>{
-      const n=(r.state?.players||[]).length;
-      return`<div class="room" data-code="${r.code}"><div class="code">${r.code}</div><div class="meta">${n}/${MAX_PLAYERS} · ${r.status}</div><div class="join">Войти →</div></div>`;
-    }).join('');
-    $('roomsList').querySelectorAll('.room').forEach(el=>el.onclick=()=>joinRoom(el.dataset.code));
-  }catch(e){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нужна таблица poker_rooms</div>'}
-}
-async function subscribeRoom(){
-  if(!sb||!roomId||String(roomId).startsWith('local'))return;
-  if(channel)sb.removeChannel(channel);
-  channel=sb.channel('poker:'+roomId)
-    .on('postgres_changes',{event:'*',schema:'public',table:'poker_rooms',filter:`id=eq.${roomId}`},payload=>{
-      if(payload.eventType==='DELETE'||payload.new?.status==='closed'){
-        stopHeartbeat();setStatus('Комната закрыта','loss');return;
-      }
-      if(payload.new?.state){state=payload.new.state;onState()}
-    }).subscribe();
-}
-function roomStatusFromState(st,forced){
-  if(forced)return forced;
-  if(!st)return'lobby';
-  if(!(st.players||[]).length)return'closed';
-  if(st.handOver||st.phase==='lobby'||st.phase==='showdown')return'lobby';
-  if(st.phase&&st.phase!=='lobby')return'playing';
-  return'lobby';
-}
-async function pushState(extraStatus){
-  if(!state)return;
-  const me=(state.players||[]).find(p=>p.id===player.id);
-  if(me)me.lastSeen=Date.now();
-  if(!sb||!roomId||String(roomId).startsWith('local')){onState();return}
-  try{
-    const status=roomStatusFromState(state,extraStatus);
-    const patch={state,status,updated_at:new Date().toISOString()};
-    await sb.from('poker_rooms').update(patch).eq('id',roomId);
-    if(status==='closed'){
-      try{await sb.from('poker_rooms').delete().eq('id',roomId)}catch(e){}
-    }
-  }catch(e){console.error(e);onState()}
-}
 
-async function leaveRoom(opts={}){
-  if(leaving||!roomId)return;
-  leaving=true;stopHeartbeat();
-  try{
-    // Settle open hand score before leaving the table
-    try { await settleOnLeave(); } catch (e) { console.error(e); }
-    if(sb&&!String(roomId).startsWith('local')&&state){
-      const players=(state.players||[]).filter(p=>p.id!==player.id);
-      state.players=players;
-      if(!players.length){
-        state.phase='lobby';state.handOver=true;
-        await sb.from('poker_rooms').update({state,status:'closed',updated_at:new Date().toISOString()}).eq('id',roomId);
-        try{await sb.from('poker_rooms').delete().eq('id',roomId)}catch(e){}
-      }else{
-        if(state.hostId===player.id||isHost){
-          state.hostId=players[0].id;
-          await sb.from('poker_rooms').update({state,host_id:players[0].id,status:roomStatusFromState(state),updated_at:new Date().toISOString()}).eq('id',roomId);
-        }else{
-          await sb.from('poker_rooms').update({state,status:roomStatusFromState(state),updated_at:new Date().toISOString()}).eq('id',roomId);
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .select('*')
+      .eq('code', code)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      setStatus('Комната не найдена', 'loss');
+      return;
+    }
+
+    if (data.status === 'closed') {
+      setStatus('Комната закрыта', 'loss');
+      return;
+    }
+
+    state = data.state || {};
+    state.players = state.players || [];
+    state.sittingOut = state.sittingOut || [];
+
+    const seated = allSeated(state);
+
+    if (!seated.some(p => p.id === player.id)) {
+      if (seated.length >= MAX_PLAYERS) {
+        setStatus('Комната полная', 'loss');
+        return;
+      }
+
+      const midHand = data.status === 'playing' && state.phase !== 'lobby' && !state.handOver;
+      if (midHand) {
+        setStatus('Игра уже идёт', 'loss');
+        return;
+      }
+
+      state.players.push(playerSeat());
+    } else {
+      const me = [...state.players, ...state.sittingOut].find(p => p.id === player.id);
+      if (me) {
+        me.lastSeen = Date.now();
+        me.hatId = player.hatId || me.hatId;
+        me.photo = player.photo || me.photo;
+        me.name = player.name || me.name;
+        me.left = false;
+
+        if (!midHandSafe(state) && (me.stack || 0) < balance) {
+          me.stack = balance;
         }
       }
     }
-  }catch(e){console.error(e)}
-  if(channel&&sb){try{sb.removeChannel(channel)}catch(e){}}
-  channel=null;roomId=null;roomCode=null;isHost=false;state=null;leaving=false;
-  if(!opts.silent){
-    $('lobby').style.display='flex';
-    $('tableWrap').style.display='none';
-    $('bottomInfo').style.display='none';
-    $('actions').style.display='none';
-    $('raiseRow').style.display='none';
-    $('hostBar').style.display='none';
-    setStatus('Лобби','info');
+
+    await sb
+      .from('poker_rooms')
+      .update({
+        state,
+        status: roomStatusFromState(state),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.id);
+
+    roomId = data.id;
+    roomCode = code;
+    isHost = data.host_id === player.id || state.hostId === player.id;
+
+    try {
+      await sb.rpc('buy_in', {
+        p_user_id: player.id,
+        p_room_id: roomId,
+        p_amount: seatBuyIn()
+      });
+    } catch(e) {}
+
+    await subscribeRoom();
+    startHeartbeat();
+    showTable();
+    setStatus('В комнате ' + code, 'info');
+  } catch(e) {
+    console.error(e);
+    setStatus('Ошибка: ' + e.message, 'loss');
+  }
+}
+
+function midHandSafe(st) {
+  return !!(st && st.phase && !['lobby', 'showdown'].includes(st.phase) && !st.handOver);
+}
+
+async function listRooms() {
+  if (!sb) {
+    $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';
+    return;
+  }
+
+  try {
+    const { data, error } = await sb
+      .from('poker_rooms')
+      .select('code,status,state,created_at,updated_at')
+      .in('status', ['lobby', 'playing'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+
+    const open = (data || []).filter(r => {
+      const n = allSeated(r.state || {}).length;
+      if (n === 0) return false;
+
+      if (r.status === 'playing') {
+        const st = r.state || {};
+        return !!st.handOver || st.phase === 'lobby' || st.phase === 'showdown';
+      }
+
+      return r.status === 'lobby';
+    }).slice(0, 10);
+
+    if (!open.length) {
+      $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет открытых комнат</div>';
+      return;
+    }
+
+    $('roomsList').innerHTML = open.map(r => {
+      const n = allSeated(r.state || {}).length;
+      return `<div class="room" data-code="${esc(r.code)}"><div class="code">${esc(r.code)}</div><div class="meta">${n}/${MAX_PLAYERS} · ${esc(r.status)}</div><div class="join">Войти →</div></div>`;
+    }).join('');
+
+    $('roomsList').querySelectorAll('.room').forEach(el => {
+      el.onclick = () => joinRoom(el.dataset.code);
+    });
+  } catch(e) {
+    $('roomsList').innerHTML = '<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нужна таблица poker_rooms</div>';
+  }
+}
+
+async function subscribeRoom() {
+  if (!sb || !roomId || String(roomId).startsWith('local')) return;
+
+  if (channel) sb.removeChannel(channel);
+
+  channel = sb.channel('poker:' + roomId)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'poker_rooms',
+      filter: `id=eq.${roomId}`
+    }, payload => {
+      if (payload.eventType === 'DELETE' || payload.new?.status === 'closed') {
+        stopHeartbeat();
+
+        if (!leaving) {
+          roomId = null;
+          roomCode = null;
+          isHost = false;
+          state = null;
+
+          $('lobby').style.display = 'flex';
+          $('tableWrap').style.display = 'none';
+          $('bottomInfo').style.display = 'none';
+          $('actions').style.display = 'none';
+          $('raiseRow').style.display = 'none';
+          $('hostBar').style.display = 'none';
+
+          setStatus('Комната закрыта', 'loss');
+          listRooms();
+        }
+
+        return;
+      }
+
+      if (payload.new?.state) {
+        state = payload.new.state;
+        onState();
+      }
+    })
+    .subscribe();
+}
+
+function roomStatusFromState(st, forced) {
+  if (forced) return forced;
+  if (!st) return 'lobby';
+  if (!allSeated(st).length) return 'closed';
+  if (st.handOver || st.phase === 'lobby' || st.phase === 'showdown') return 'lobby';
+  if (st.phase && st.phase !== 'lobby') return 'playing';
+  return 'lobby';
+}
+
+async function pushState(extraStatus) {
+  if (!state) return;
+
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (me) me.lastSeen = Date.now();
+
+  if (!sb || !roomId || String(roomId).startsWith('local')) {
+    onState();
+    return;
+  }
+
+  try {
+    const status = roomStatusFromState(state, extraStatus);
+
+    // Network-safe copy: не отправляем колоду и чужие/свои hole вне showdown.
+    const netState = JSON.parse(JSON.stringify(state));
+
+    delete netState.deck;
+
+    const reveal = !!(netState.handOver || netState.phase === 'showdown');
+
+    (netState.players || []).forEach(p => {
+      if (!reveal || !p.holeRevealed) {
+        p.hole = [];
+        p.holeRevealed = false;
+      }
+    });
+
+    (netState.sittingOut || []).forEach(p => {
+      p.hole = [];
+      p.holeRevealed = false;
+      p.cardsDealt = false;
+    });
+
+    const patch = {
+      state: netState,
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    await sb.from('poker_rooms').update(patch).eq('id', roomId);
+
+    if (status === 'closed') {
+      try {
+        await sb.from('poker_rooms').delete().eq('id', roomId);
+      } catch(e) {}
+    }
+  } catch(e) {
+    console.error(e);
+    onState();
+  }
+}
+
+async function leaveRoom(opts = {}) {
+  if (leaving || !roomId) return;
+
+  leaving = true;
+  stopHeartbeat();
+
+  try {
+    if (state) {
+      const idx = (state.players || []).findIndex(p => p.id === player.id);
+      const inHand = midHandSafe(state);
+
+      if (inHand && idx >= 0) {
+        const me = state.players[idx];
+
+        if (!me.folded) {
+          me.folded = true;
+          me.acted = true;
+          setLastAction(me, 'fold', 'Выход');
+        }
+
+        me.left = true;
+
+        await settleOnLeave();
+
+        const alive = state.players.filter(p => !p.folded);
+
+        if (alive.length === 1) {
+          awardToSingleWinner(alive[0]);
+        } else if (state.toAct === idx) {
+          const n = nextActor(idx);
+          state.toAct = n;
+          if (n === null) state.pendingStreet = true;
+        }
+
+        if (state.hostId === player.id) {
+          const nextHost = state.players.find(p => p.id !== player.id) || allSeated(state).find(p => p.id !== player.id);
+          if (nextHost) state.hostId = nextHost.id;
+        }
+
+        await pushState();
+
+        if (sb && !String(roomId).startsWith('local') && state.hostId !== player.id) {
+          try {
+            await sb.from('poker_rooms').update({ host_id: state.hostId }).eq('id', roomId);
+          } catch(e) {}
+        }
+      } else {
+        await settleOnLeave();
+
+        const players = (state.players || []).filter(p => p.id !== player.id);
+        const sitting = (state.sittingOut || []).filter(p => p.id !== player.id);
+
+        state.players = players;
+        state.sittingOut = sitting;
+
+        if (!allSeated(state).length) {
+          state.phase = 'lobby';
+          state.handOver = true;
+
+          if (sb && !String(roomId).startsWith('local')) {
+            await sb.from('poker_rooms').update({
+              state,
+              status: 'closed',
+              updated_at: new Date().toISOString()
+            }).eq('id', roomId);
+
+            try {
+              await sb.from('poker_rooms').delete().eq('id', roomId);
+            } catch(e) {}
+          }
+        } else {
+          if (state.hostId === player.id) {
+            state.hostId = allSeated(state)[0].id;
+          }
+
+          if (sb && !String(roomId).startsWith('local')) {
+            await sb.from('poker_rooms').update({
+              state,
+              host_id: state.hostId,
+              status: roomStatusFromState(state),
+              updated_at: new Date().toISOString()
+            }).eq('id', roomId);
+          }
+        }
+
+        try {
+          await sb.rpc('cash_out', {
+            p_user_id: player.id,
+            p_room_id: roomId
+          });
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    console.error(e);
+  }
+
+  if (channel && sb) {
+    try {
+      sb.removeChannel(channel);
+    } catch(e) {}
+  }
+
+  channel = null;
+  roomId = null;
+  roomCode = null;
+  isHost = false;
+  state = null;
+  leaving = false;
+
+  if (!opts.silent) {
+    $('lobby').style.display = 'flex';
+    $('tableWrap').style.display = 'none';
+    $('bottomInfo').style.display = 'none';
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+    $('hostBar').style.display = 'none';
+    setStatus('Лобби', 'info');
     listRooms();
   }
 }
 
-function pruneStalePlayers(){
-  if(!state||!isHost)return false;
-  const now=Date.now();
-  const before=(state.players||[]).length;
-  state.players=(state.players||[]).filter(p=>{
-    if(p.id===player.id)return true;
-    const ls=p.lastSeen||0;
-    if(!ls)return true;
-    return(now-ls)<STALE_MS;
-  });
-  if(state.players.length!==before){
-    if(!state.players.length){state.phase='lobby';state.handOver=true}
-    else if(state.hostId&&!state.players.some(p=>p.id===state.hostId)){
-      state.hostId=state.players[0].id;
+function pruneStalePlayers() {
+  if (!state || !isHost) return false;
+
+  const betweenHands = !midHandSafe(state);
+  if (!betweenHands) return false;
+
+  const now = Date.now();
+  const before = allSeated(state, true).length;
+
+  const keep = p => {
+    if (p.id === player.id) return true;
+    if (p.left) return false;
+
+    const ls = p.lastSeen || 0;
+    if (!ls) return true;
+
+    return (now - ls) < STALE_MS;
+  };
+
+  state.players = (state.players || []).filter(keep);
+  state.sittingOut = (state.sittingOut || []).filter(keep);
+
+  const after = allSeated(state, true).length;
+
+  if (before !== after) {
+    if (!allSeated(state).length) {
+      state.phase = 'lobby';
+      state.handOver = true;
+    } else if (state.hostId && !allSeated(state).some(p => p.id === state.hostId)) {
+      state.hostId = allSeated(state)[0].id;
     }
+
     return true;
   }
+
   return false;
 }
-function startHeartbeat(){
+
+function startHeartbeat() {
   stopHeartbeat();
-  heartbeatTimer=setInterval(async()=>{
-    if(!roomId||!state||leaving)return;
-    const me=(state.players||[]).find(p=>p.id===player.id);
-    if(me)me.lastSeen=Date.now();
-    let changed=false;
-    if(isHost)changed=pruneStalePlayers();
-    if(changed){
-      await pushState(roomStatusFromState(state));
-      if(!(state.players||[]).length){await leaveRoom({silent:true});return}
-    }else if(sb&&roomId&&!String(roomId).startsWith('local')){
-      try{
-        await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',roomId);
-      }catch(e){}
+
+  heartbeatTimer = setInterval(async () => {
+    if (!roomId || !state || leaving) return;
+
+    let changed = false;
+
+    if (isHost) {
+      changed = pruneStalePlayers();
     }
-  },12000);
-}
-function stopHeartbeat(){
-  if(heartbeatTimer){clearInterval(heartbeatTimer);heartbeatTimer=null}
+
+    if (changed) {
+      await pushState(roomStatusFromState(state));
+
+      if (!allSeated(state).length) {
+        await leaveRoom({ silent: true });
+        return;
+      }
+    }
+
+    if (sb && !String(roomId).startsWith('local')) {
+      try {
+        await sb.rpc('touch_room', {
+          p_room_id: roomId,
+          p_user_id: player.id
+        });
+      } catch(e) {}
+    }
+  }, 12000);
 }
 
-function showTable(){
-  $('lobby').style.display='none';
-  $('tableWrap').style.display='block';
-  $('bottomInfo').style.display='flex';
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+function showTable() {
+  $('lobby').style.display = 'none';
+  $('tableWrap').style.display = 'block';
+  $('bottomInfo').style.display = 'flex';
   onState();
 }
 
-function onState(){
-  if(!state)return;
-  const hostStillHere=(state.players||[]).some(p=>p.id===state.hostId);
-  if(!hostStillHere&&(state.players||[]).length){
-    state.hostId=state.players[0].id;
-  }
-  isHost=state.hostId===player.id;
+async function ensurePrivateSecrets() {
+  if (!isHost || !state?.handId) return;
 
-  if(roomId&&!(state.players||[]).some(p=>p.id===player.id)){
-    stopHeartbeat();roomId=null;roomCode=null;isHost=false;state=null;
-    $('lobby').style.display='flex';$('tableWrap').style.display='none';
-    $('bottomInfo').style.display='none';$('actions').style.display='none';
-    $('raiseRow').style.display='none';$('hostBar').style.display='none';
-    setStatus('Вас исключили из комнаты (AFK)','loss');listRooms();return;
+  if (lastSecretHandId === state.handId && (privateDeck.length || Object.keys(privateHoles).length)) {
+    return;
+  }
+
+  try {
+    const { data, error } = await sb.rpc('get_hand_secrets', {
+      p_room_id: roomId,
+      p_hand_id: state.handId
+    });
+
+    if (!error && data) {
+      privateDeck = data.deck || [];
+      privateHoles = data.holes || {};
+      lastSecretHandId = state.handId;
+    }
+  } catch(e) {}
+}
+
+async function persistSecrets() {
+  if (!isHost || !roomId || !state?.handId || String(roomId).startsWith('local')) return;
+
+  try {
+    await sb.rpc('save_hand_secrets', {
+      p_room_id: roomId,
+      p_hand_id: state.handId,
+      p_deck: privateDeck,
+      p_holes: privateHoles
+    });
+
+    lastSecretHandId = state.handId;
+  } catch(e) {}
+}
+
+async function loadMyHoleForCurrentHand() {
+  if (!state?.handId) {
+    myHole = [];
+    lastHandId = null;
+    return;
+  }
+
+  if (lastHandId === state.handId && (myHole.length || state.handOver)) return;
+
+  lastHandId = state.handId;
+  myHole = [];
+
+  if (isHost) {
+    await ensurePrivateSecrets();
+    myHole = privateHoles[player.id] || [];
+    return;
+  }
+
+  if (sb && !String(roomId).startsWith('local')) {
+    try {
+      const { data, error } = await sb.rpc('get_my_hole', {
+        p_room_id: roomId,
+        p_hand_id: state.handId,
+        p_user_id: player.id
+      });
+
+      if (!error && data?.cards) {
+        myHole = data.cards;
+      }
+    } catch(e) {}
+  } else {
+    const me = (state.players || []).find(p => p.id === player.id);
+    if (me?.hole?.length === 2 && me.hole[0]?.r) {
+      myHole = me.hole;
+    }
+  }
+}
+
+function onState() {
+  if (!state) return;
+
+  const seated = allSeated(state);
+
+  if (state.hostId && !seated.some(p => p.id === state.hostId) && seated.length) {
+    state.hostId = seated[0].id;
+  }
+
+  isHost = state.hostId === player.id;
+
+  if (roomId && !seated.some(p => p.id === player.id)) {
+    stopHeartbeat();
+
+    roomId = null;
+    roomCode = null;
+    isHost = false;
+    state = null;
+
+    $('lobby').style.display = 'flex';
+    $('tableWrap').style.display = 'none';
+    $('bottomInfo').style.display = 'none';
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+    $('hostBar').style.display = 'none';
+
+    setStatus('Вас исключили из комнаты (AFK)', 'loss');
+    listRooms();
+    return;
   }
 
   renderSeats();
   renderBoard();
-  const pot=(state.pot||0)+(state.players||[]).reduce((s,p)=>s+(p.bet||0),0);
-  $('pot').textContent='Банк: '+fmt(pot);
-  $('phaseLabel').textContent=PHASE_RU[state.phase]||state.phase||'—';
-  $('dealMsg').textContent=state.dealMsg||'';
-  $('statusDetail').textContent=roomCode?('Код '+roomCode):'Онлайн';
 
-  if(isHost&&(state.phase==='lobby'||state.handOver||state.phase==='showdown')){
-    $('hostBar').style.display='block';
-    const withChips=(state.players||[]).filter(p=>(p.stack||0)>=BB).length;
-    $('startHandBtn').textContent=state.handOver||state.phase==='showdown'?'НАЧАТЬ НОВУЮ РАЗДАЧУ':'Начать раздачу';
-    // Always enable: hostStartHand will auto-rebuy zero stacks
-    $('startHandBtn').disabled=(state.players||[]).length<2;
-    if((state.players||[]).length>=2 && withChips<2){
-      $('startHandBtn').textContent='РЕБАЙ И НОВАЯ РАЗДАЧА';
+  const currentBets = (state.players || []).reduce((s, p) => s + (p.bet || 0), 0);
+  const livePot = (state.pot || 0) + currentBets;
+
+  if ((state.handOver || state.phase === 'showdown') && !livePot) {
+    $('pot').textContent = 'Банк: ' + fmt(state.lastPot || 0);
+  } else {
+    $('pot').textContent = 'Банк: ' + fmt(livePot);
+  }
+
+  $('phaseLabel').textContent = PHASE_RU[state.phase] || state.phase || '—';
+  $('dealMsg').textContent = state.dealMsg || '';
+  $('statusDetail').textContent = roomCode ? ('Код ' + roomCode) : 'Онлайн';
+
+  if (isHost && (state.phase === 'lobby' || state.handOver || state.phase === 'showdown')) {
+    $('hostBar').style.display = 'block';
+
+    const seatedCount = allSeated(state).length;
+    const withChips = allSeated(state).filter(p => (p.stack || 0) >= BB).length;
+
+    $('startHandBtn').textContent = state.handOver || state.phase === 'showdown'
+      ? 'НАЧАТЬ НОВУЮ РАЗДАЧУ'
+      : 'Начать раздачу';
+
+    $('startHandBtn').disabled = seatedCount < 2;
+
+    if (seatedCount >= 2 && withChips < 2) {
+      $('startHandBtn').textContent = 'РЕБАЙ И НОВАЯ РАЗДАЧА';
     }
-  }else $('hostBar').style.display='none';
+  } else {
+    $('hostBar').style.display = 'none';
+  }
 
   updateActionsUI();
 
-  // Write win/loss to player_ratings.total_score (each client updates only self)
   if (state.handOver || state.phase === 'showdown') {
-    settleMyScoreIfNeeded().then(() => {
-      // After settle, if broke, top-up from remaining balance so next hand can start
-      const me = (state.players || []).find(p => p.id === player.id);
-      if (me && (me.stack || 0) <= 0 && balance > 0) {
-        me.stack = seatBuyIn();
-        if (me.stack > 0) pushState(roomStatusFromState(state));
-      }
+    settleMyScoreIfNeeded();
+  }
+
+  if (state.handId && !state.handOver && !['lobby', 'showdown'].includes(state.phase)) {
+    loadMyHoleForCurrentHand().then(() => {
+      renderSeats();
+      renderBoard();
+    });
+  }
+
+  if (isHost && state.pendingStreet && !state.handOver && !['lobby', 'showdown'].includes(state.phase) && !advancing) {
+    advancing = true;
+    advanceStreet().finally(() => {
+      advancing = false;
     });
   }
 }
 
-function renderBoard(){
+function getPlayerCards(p, isMe) {
+  const showdown = state && (state.phase === 'showdown' || state.handOver);
+
+  if (isMe) {
+    if (showdown && p.holeRevealed && Array.isArray(p.hole) && p.hole.length === 2) {
+      return p.hole;
+    }
+
+    if (Array.isArray(myHole) && myHole.length === 2) {
+      return myHole;
+    }
+
+    return [];
+  }
+
+  if (showdown && !p.folded && p.holeRevealed && Array.isArray(p.hole) && p.hole.length === 2) {
+    return p.hole;
+  }
+
+  return [];
+}
+
+function renderBoard() {
   const boardEl = $('board');
   boardEl.innerHTML = '';
 
   let myBestHand = null;
-  const me = (state.players||[]).find(p => p.id === player.id);
-  const isShowdown = state.phase === 'showdown' || state.handOver;
+  const me = (state.players || []).find(p => p.id === player.id);
 
-  if(me && !me.folded && state.board && state.board.length > 0) {
-     if(isShowdown || (me.hole && me.hole.length === 2)) {
-        myBestHand = bestHand(me.hole, state.board);
-     }
+  if (me && !me.folded && state.board && state.board.length > 0) {
+    const cards = getPlayerCards(me, true);
+    if (cards.length === 2) {
+      myBestHand = bestHand(cards, state.board);
+    }
   }
 
-  (state.board||[]).forEach((c, idx) => {
+  (state.board || []).forEach((c, idx) => {
     let isActive = false;
-    if(myBestHand && myBestHand.usedBoard && myBestHand.usedBoard.includes(idx)) {
+
+    if (myBestHand && myBestHand.usedBoard && myBestHand.usedBoard.includes(idx)) {
       isActive = true;
     }
+
     boardEl.innerHTML += cardHTML(c, false, isActive);
   });
 
-  for(let i=(state.board||[]).length; i<5; i++) {
-    let placeholder = document.createElement('div');
+  for (let i = (state.board || []).length; i < 5; i++) {
+    const placeholder = document.createElement('div');
     placeholder.style.width = '38px';
     placeholder.style.height = '54px';
     placeholder.style.border = '2px dashed rgba(255,255,255,0.1)';
@@ -769,131 +1420,219 @@ function renderBoard(){
   }
 }
 
-function renderSeats(){
-  const seats=$('seats');seats.innerHTML='';
-  const players=state.players||[];
-  let ordered=[...players];
-  while(ordered.length<MAX_PLAYERS) ordered.push(null);
+function renderSeats() {
+  const seats = $('seats');
+  seats.innerHTML = '';
 
-  ordered.forEach((p)=>{
-    const div=document.createElement('div');
-    const isMe=p&&p.id===player.id;
-    const realIdx=p?players.indexOf(p):-1;
-    div.className=`seat ${isMe?'me':''} ${p&&p.folded?'folded':''} ${!p?'empty':''} ${state.toAct===realIdx?'active':''}`;
-    if(!p){
-      div.innerHTML=`<div class="avatar-wrap"><div class="avatar">+</div></div><div class="name">Пусто</div><div class="stack">—</div><div class="cards"></div>`;
-    }else{
-      const show=isMe||state.phase==='showdown'||state.handOver;
+  const players = state.players || [];
+  const seated = allSeated(state);
 
-      let myBestHand = null;
-      if(isMe && !p.folded && state.board && state.board.length > 0 && (state.phase==='showdown'||state.handOver||(p.hole&&p.hole.length===2))) {
-         myBestHand = bestHand(p.hole, state.board);
-      }
+  let ordered = [...seated];
+  while (ordered.length < MAX_PLAYERS) ordered.push(null);
 
-      const cardsHtml = (p.hole||[]).map((c, idx) => {
-        let isActive = false;
-        if(myBestHand && myBestHand.usedHole && myBestHand.usedHole.includes(idx)) {
-          isActive = true;
-        }
-        return cardHTML(c, !show, isActive);
-      }).join('');
+  ordered.forEach(p => {
+    const div = document.createElement('div');
 
-      let role='';
-      if(realIdx===state.dealerIdx)role='D';
-      else if(realIdx===state.sbIdx)role='SB';
-      else if(realIdx===state.bbIdx)role='BB';
-      const act=p.lastAction;
-      const bubble=act?`<div class="action-bubble ${act.type}">${act.label}</div>`:'';
-      const face=p.photo
-        ?`<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
-        :(isMe?'😎':'👤');
+    const isMe = p && p.id === player.id;
+    const realIdx = p ? players.indexOf(p) : -1;
 
-      let handNameDisplay = '';
-      if(isMe && myBestHand && myBestHand.name !== '—') {
-        handNameDisplay = `<div class="hand-name">${myBestHand.name}</div>`;
-      } else if ((state.phase==='showdown'||state.handOver) && !p.folded && p.handName) {
-         handNameDisplay = `<div class="hand-name">${p.handName}</div>`;
-      }
+    div.className = [
+      'seat',
+      isMe ? 'me' : '',
+      p && p.folded ? 'folded' : '',
+      !p ? 'empty' : '',
+      state.toAct === realIdx ? 'active' : ''
+    ].filter(Boolean).join(' ');
 
-      div.innerHTML=`
-        <div class="avatar-wrap">
-          ${bubble}
-          ${hatHTML(p.hatId)}
-          <div class="avatar">${face}${role?`<span class="role">${role}</span>`:''}</div>
-        </div>
-        <div class="name">${p.name}${isMe?' (вы)':''}</div>
-        <div class="stack">💎 ${fmt(p.stack)}</div>
-        <div class="bet-pill">${p.bet?'💎 '+fmt(p.bet):''}</div>
-        <div class="cards">${cardsHtml}</div>
-        ${handNameDisplay}`;
+    if (!p) {
+      div.innerHTML = `
+        <div class="avatar-wrap"><div class="avatar">+</div></div>
+        <div class="name">Пусто</div>
+        <div class="stack">—</div>
+        <div class="cards"></div>
+      `;
+      seats.appendChild(div);
+      return;
     }
+
+    const showdown = state.phase === 'showdown' || state.handOver;
+
+    let cards = getPlayerCards(p, isMe);
+    let showFaces = false;
+
+    if (isMe) {
+      if (cards.length === 2 && cards[0]?.r) showFaces = true;
+    } else {
+      if (showdown && !p.folded && p.holeRevealed && cards.length === 2 && cards[0]?.r) {
+        showFaces = true;
+      }
+    }
+
+    if (!cards.length && p.cardsDealt && !p.folded && !showdown) {
+      cards = [null, null];
+    }
+
+    let myBestHand = null;
+
+    if (showFaces && !p.folded && state.board && state.board.length > 0) {
+      myBestHand = bestHand(cards, state.board);
+    }
+
+    const cardsHtml = cards.map((c, idx) => {
+      let isActive = false;
+
+      if (showFaces && myBestHand && myBestHand.usedHole && myBestHand.usedHole.includes(idx)) {
+        isActive = true;
+      }
+
+      return cardHTML(c, !showFaces, isActive);
+    }).join('');
+
+    let role = '';
+    if (realIdx >= 0) {
+      if (realIdx === state.dealerIdx) role = 'D';
+      else if (realIdx === state.sbIdx) role = 'SB';
+      else if (realIdx === state.bbIdx) role = 'BB';
+    }
+
+    const act = p.lastAction;
+    const bubble = act ? `<div class="action-bubble ${act.type}">${esc(act.label)}</div>` : '';
+
+    const face = p.photo
+      ? `<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
+      : (isMe ? '😎' : '👤');
+
+    let handNameDisplay = '';
+
+    if (isMe && myBestHand && myBestHand.name !== '—') {
+      handNameDisplay = `<div class="hand-name">${esc(myBestHand.name)}</div>`;
+    } else if ((state.phase === 'showdown' || state.handOver) && !p.folded && p.handName) {
+      handNameDisplay = `<div class="hand-name">${esc(p.handName)}</div>`;
+    }
+
+    div.innerHTML = `
+      <div class="avatar-wrap">
+        ${bubble}
+        ${hatHTML(p.hatId)}
+        <div class="avatar">${face}${role ? `<span class="role">${role}</span>` : ''}</div>
+      </div>
+      <div class="name">${esc(p.name)}${isMe ? ' (вы)' : ''}</div>
+      <div class="stack">💎 ${fmt(p.stack)}</div>
+      <div class="bet-pill">${p.bet ? '💎 ' + fmt(p.bet) : ''}</div>
+      <div class="cards">${cardsHtml}</div>
+      ${handNameDisplay}
+    `;
+
     seats.appendChild(div);
   });
 }
 
-function updateActionsUI(){
-  if(!state||state.handOver||state.phase==='lobby'||state.phase==='deal'||state.phase==='showdown'){
-    $('actions').style.display='none';
-    $('raiseRow').style.display='none';
-    if(state && (state.handOver || state.phase==='showdown')){
+function updateActionsUI() {
+  if (!state || state.handOver || state.phase === 'lobby' || state.phase === 'deal' || state.phase === 'showdown') {
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+
+    if (state && (state.handOver || state.phase === 'showdown')) {
       setStatus(state.dealMsg || 'Раздача окончена', 'info');
     }
+
     return;
   }
-  const players=state.players||[];
-  const myIdx=players.findIndex(p=>p.id===player.id);
-  const me=players[myIdx];
-  if(myIdx<0||state.toAct!==myIdx||!me||me.folded||me.allIn){
-    $('actions').style.display='none';$('raiseRow').style.display='none';
+
+  const players = state.players || [];
+  const myIdx = players.findIndex(p => p.id === player.id);
+  const me = players[myIdx];
+
+  if (myIdx < 0 || state.toAct !== myIdx || !me || me.folded || me.allIn) {
+    $('actions').style.display = 'none';
+    $('raiseRow').style.display = 'none';
+
     const cur = (typeof state.toAct === 'number') ? players[state.toAct] : null;
-    if(cur) setStatus('Ход: '+cur.name,'info');
-    else if(state.dealMsg) setStatus(state.dealMsg,'info');
+
+    if (state.pendingStreet) {
+      setStatus('Ожидание дилера…', 'info');
+    } else if (cur) {
+      setStatus('Ход: ' + cur.name, 'info');
+    } else if (state.dealMsg) {
+      setStatus(state.dealMsg, 'info');
+    }
+
     return;
   }
-  $('actions').style.display='grid';
-  const toCall=Math.max(0,(state.currentBet||0)-(me.bet||0));
-  $('checkBtn').style.display=toCall===0?'flex':'none';
-  $('callBtn').style.display=toCall>0?'flex':'none';
-  // Call amount cannot exceed stack
-  const callAmt=Math.min(toCall, me.stack||0);
-  $('callBtn').innerHTML=`<span>→</span>${callAmt>=(me.stack||0)&&toCall>0?'Олл-ин ':'Колл '}${fmt(callAmt)}`;
-  const minR=(state.currentBet||0)+(state.minRaise||BB);
-  const maxR=(me.bet||0)+(me.stack||0);
-  if(maxR <= (me.bet||0)){
-    // no chips to raise
-    $('raiseBtn').disabled=true;
-    $('raiseRow').style.display='none';
-  } else {
-    $('raiseBtn').disabled=false;
-    $('raiseSlider').min=Math.min(minR,maxR);
-    $('raiseSlider').max=Math.max(minR,maxR);
-    $('raiseSlider').value=Math.min(Math.max(minR,Number($('raiseSlider').value)||minR),maxR);
-    $('raiseAmt').textContent=fmt($('raiseSlider').value);
-    $('raiseRow').style.display='flex';
+
+  $('actions').style.display = 'grid';
+
+  const toCall = Math.max(0, (state.currentBet || 0) - (me.bet || 0));
+
+  $('checkBtn').style.display = toCall === 0 ? 'flex' : 'none';
+  $('callBtn').style.display = toCall > 0 ? 'flex' : 'none';
+
+  const callAmt = Math.min(toCall, me.stack || 0);
+
+  $('callBtn').innerHTML = `<span>→</span>${callAmt >= (me.stack || 0) && toCall > 0 ? 'Олл-ин ' : 'Колл '}${fmt(callAmt)}`;
+
+  const cap = activeCap();
+
+  let maxR = (me.bet || 0) + (me.stack || 0);
+
+  if (Number.isFinite(cap)) {
+    maxR = Math.min(maxR, cap);
   }
-  setStatus('Ваш ход','info');
+
+  const currentBet = state.currentBet || 0;
+
+  if (maxR <= Math.max(currentBet, me.bet || 0)) {
+    $('raiseBtn').disabled = true;
+    $('raiseRow').style.display = 'none';
+  } else {
+    $('raiseBtn').disabled = false;
+
+    const minR = currentBet + (state.minRaise || BB);
+
+    const sliderMin = Math.min(minR, maxR);
+    const sliderMax = maxR;
+
+    $('raiseSlider').min = sliderMin;
+    $('raiseSlider').max = sliderMax;
+
+    const currentValue = Number($('raiseSlider').value) || sliderMin;
+
+    $('raiseSlider').value = Math.min(
+      Math.max(sliderMin, currentValue),
+      sliderMax
+    );
+
+    $('raiseAmt').textContent = fmt($('raiseSlider').value);
+    $('raiseRow').style.display = 'flex';
+  }
+
+  setStatus('Ваш ход', 'info');
 }
 
-/* ── Core betting / streets (rewritten) ── */
-function canAct(p){
+/* ── Core betting / streets ── */
+
+function canAct(p) {
   return !!(p && !p.folded && !p.allIn && (p.stack || 0) > 0);
 }
 
-function nextActor(from){
+function nextActor(from) {
   const pl = state.players || [];
   const n = pl.length;
+
   if (!n) return null;
+
   for (let i = 1; i <= n; i++) {
     const idx = (from + i) % n;
     if (canAct(pl[idx])) return idx;
   }
+
   return null;
 }
 
-/** Round complete: each non-folded player is all-in OR (acted && bet matched). */
-function isRoundComplete(){
+function isRoundComplete() {
   const pl = state.players || [];
   const need = state.currentBet || 0;
+
   return pl.every(p => {
     if (p.folded) return true;
     if (p.allIn) return true;
@@ -901,42 +1640,56 @@ function isRoundComplete(){
   });
 }
 
-function setLastAction(p, type, label){
+function setLastAction(p, type, label) {
   if (!p) return;
-  p.lastAction = {type, label, ts: Date.now()};
+  p.lastAction = { type, label, ts: Date.now() };
 }
 
-function resetStreetFlags(){
-  (state.players || []).forEach(p => { p.acted = false; });
+function resetStreetFlags() {
+  (state.players || []).forEach(p => {
+    p.acted = false;
+    p.lastAction = null;
+  });
 }
 
-function collectBetsIntoPot(){
+function collectBetsIntoPot() {
   const pl = state.players || [];
+
   pl.forEach(p => {
     state.pot = (state.pot || 0) + (p.bet || 0);
     p.bet = 0;
   });
+
   state.currentBet = 0;
   state.minRaise = BB;
 }
 
-function buildSidePots(players){
-  const levels = [...new Set(players.map(p => p.totalBet || 0).filter(x => x > 0))].sort((a,b) => a - b);
+function buildSidePots(players) {
+  const levels = [...new Set(players.map(p => p.totalBet || 0).filter(x => x > 0))].sort((a, b) => a - b);
+
   let prev = 0;
   const pots = [];
+
   for (const level of levels) {
     const inLayer = players.filter(p => (p.totalBet || 0) >= level);
     const amount = (level - prev) * inLayer.length;
+
     if (amount > 0) {
-      pots.push({ amount, eligible: inLayer.filter(p => !p.folded) });
+      pots.push({
+        amount,
+        eligible: inLayer.filter(p => !p.folded)
+      });
     }
+
     prev = level;
   }
+
   return pots;
 }
 
-function awardSidePots(players, board){
+function awardSidePots(players, board) {
   const pots = buildSidePots(players);
+
   players.forEach(p => {
     if (!p.folded) {
       const h = bestHand(p.hole, board);
@@ -956,108 +1709,199 @@ function awardSidePots(players, board){
 
   pots.forEach(pot => {
     if (!pot.eligible.length || pot.amount <= 0) return;
+
     let bestScore = -1;
+
     pot.eligible.forEach(p => {
       if ((p._handScore || 0) > bestScore) bestScore = p._handScore || 0;
     });
+
     const winners = pot.eligible.filter(p => (p._handScore || 0) === bestScore);
     if (!winners.length) return;
+
     const share = Math.floor(pot.amount / winners.length);
     let rem = pot.amount - share * winners.length;
+
     winners.forEach((w, i) => {
       w.stack = (w.stack || 0) + share + (i === 0 ? rem : 0);
       winnerNames.add(w.name);
     });
+
     if (bestScore > topScore) {
       topScore = bestScore;
       topHandName = winners[0]._hand?.name || winners[0].handName || '';
     }
   });
 
-  players.forEach(p => { delete p._handScore; delete p._hand; });
-  return { names: [...winnerNames], handName: topHandName };
+  players.forEach(p => {
+    delete p._handScore;
+    delete p._hand;
+  });
+
+  return {
+    names: [...winnerNames],
+    handName: topHandName
+  };
 }
 
-function awardToSingleWinner(winner){
+function awardToSingleWinner(winner) {
   collectBetsIntoPot();
+
+  state.lastPot = state.pot || 0;
   winner.stack = (winner.stack || 0) + (state.pot || 0);
+
   state.pot = 0;
   state.dealMsg = winner.name + ' забирает банк';
   state.handOver = true;
   state.phase = 'showdown';
   state.toAct = null;
+  state.pendingStreet = false;
+
+  state.players.forEach(p => {
+    p.hole = [];
+    p.holeRevealed = false;
+  });
 }
 
-function firstToActPostflop(){
+function firstToActPostflop() {
   const pl = state.players || [];
   const n = pl.length;
+
   if (!n) return null;
-  // HU: dealer/button first; 3+: left of dealer
-  let start = (n === 2) ? state.dealerIdx : ((state.dealerIdx + 1) % n);
+
+  const start = (n === 2) ? state.dealerIdx : ((state.dealerIdx + 1) % n);
+
   for (let i = 0; i < n; i++) {
     const idx = (start + i) % n;
     if (canAct(pl[idx])) return idx;
   }
+
   return null;
 }
 
-function finishShowdown(){
+async function finishShowdown() {
+  if (!state) return;
+
   collectBetsIntoPot();
+
+  state.lastPot = state.pot || 0;
+
+  await ensurePrivateSecrets();
+
+  state.players.forEach(p => {
+    if (!p.folded && privateHoles[p.id]) {
+      p.hole = privateHoles[p.id];
+      p.holeRevealed = true;
+    } else {
+      p.hole = [];
+      p.holeRevealed = false;
+    }
+  });
+
   state.phase = 'showdown';
   state.handOver = true;
   state.toAct = null;
+  state.pendingStreet = false;
+
   const result = awardSidePots(state.players || [], state.board || []);
-  state.dealMsg = 'Победа: ' + (result.names.join(', ') || '—') + (result.handName ? ' · ' + result.handName : '');
+
+  state.dealMsg = 'Победа: ' +
+    (result.names.join(', ') || '—') +
+    (result.handName ? ' · ' + result.handName : '');
+
   state.pot = 0;
+
+  try {
+    if (sb && roomId && state.handId && !String(roomId).startsWith('local')) {
+      await sb.rpc('clear_hand_secrets', {
+        p_room_id: roomId,
+        p_hand_id: state.handId
+      });
+    }
+  } catch(e) {}
+
   pushState('lobby');
 }
 
-function advanceStreet(){
+async function runOutAndShowdown() {
+  await ensurePrivateSecrets();
+
+  if (state.phase === 'preflop') {
+    state.phase = 'flop';
+    if (privateDeck.length >= 3) {
+      state.board.push(privateDeck.pop(), privateDeck.pop(), privateDeck.pop());
+    }
+  }
+
+  while (state.phase === 'flop' || state.phase === 'turn') {
+    if (state.phase === 'flop') {
+      state.phase = 'turn';
+      if (privateDeck.length) state.board.push(privateDeck.pop());
+    } else if (state.phase === 'turn') {
+      state.phase = 'river';
+      if (privateDeck.length) state.board.push(privateDeck.pop());
+    }
+  }
+
+  state.dealMsg = 'All-in — карты до ривера';
+
+  await persistSecrets();
+  await finishShowdown();
+}
+
+async function advanceStreet() {
+  if (!isHost || !state || state.handOver) return;
+
+  state.pendingStreet = false;
+
   collectBetsIntoPot();
   resetStreetFlags();
   state.actionCount = 0;
 
-  const pl = state.players || [];
+  await ensurePrivateSecrets();
 
   if (state.phase === 'preflop') {
     state.phase = 'flop';
-    if (state.deck && state.deck.length >= 3) {
-      state.board.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
+
+    if (privateDeck.length >= 3) {
+      state.board.push(privateDeck.pop(), privateDeck.pop(), privateDeck.pop());
     }
+
     state.dealMsg = 'Дилер открыл флоп';
   } else if (state.phase === 'flop') {
     state.phase = 'turn';
-    if (state.deck && state.deck.length >= 1) state.board.push(state.deck.pop());
+
+    if (privateDeck.length >= 1) state.board.push(privateDeck.pop());
+
     state.dealMsg = 'Дилер открыл тёрн';
   } else if (state.phase === 'turn') {
     state.phase = 'river';
-    if (state.deck && state.deck.length >= 1) state.board.push(state.deck.pop());
+
+    if (privateDeck.length >= 1) state.board.push(privateDeck.pop());
+
     state.dealMsg = 'Дилер открыл ривер';
   } else if (state.phase === 'river') {
-    finishShowdown();
+    await finishShowdown();
+    return;
+  }
+
+  await persistSecrets();
+
+  const pl = state.players || [];
+  const alive = pl.filter(p => !p.folded);
+
+  if (alive.length <= 1) {
+    if (alive.length === 1) awardToSingleWinner(alive[0]);
+    else await finishShowdown();
+
+    pushState('lobby');
     return;
   }
 
   const actorsLeft = pl.filter(canAct).length;
-  const alive = pl.filter(p => !p.folded);
-  if (alive.length <= 1) {
-    if (alive.length === 1) awardToSingleWinner(alive[0]);
-    else finishShowdown();
-    pushState('lobby');
-    return;
-  }
-  if (actorsLeft === 0) {
-    while (state.phase !== 'river' && state.phase !== 'showdown') {
-      if (state.phase === 'flop') {
-        state.phase = 'turn';
-        if (state.deck && state.deck.length) state.board.push(state.deck.pop());
-      } else if (state.phase === 'turn') {
-        state.phase = 'river';
-        if (state.deck && state.deck.length) state.board.push(state.deck.pop());
-      } else break;
-    }
-    state.dealMsg = 'All-in — карты до ривера';
-    finishShowdown();
+
+  if (actorsLeft <= 1) {
+    await runOutAndShowdown();
     return;
   }
 
@@ -1065,53 +1909,87 @@ function advanceStreet(){
   pushState();
 }
 
-async function hostStartHand(){
+async function hostStartHand() {
   if (!isHost || !state) return;
-  const allPlayers = state.players || [];
-  if (allPlayers.length < 2) { setStatus('Нужно 2+ игрока за столом', 'loss'); return; }
+
+  const all = allSeated(state).filter(p => !p.left);
+
+  if (all.length < 2) {
+    setStatus('Нужно 2+ игрока за столом', 'loss');
+    return;
+  }
 
   await loadBalance();
 
-  // Local host can top-up own zero stack from balance; others keep 0 until they rebuy on their client.
-  allPlayers.forEach(p => {
-    if ((p.stack || 0) <= 0 && p.id === player.id) {
-      p.stack = seatBuyIn();
+  const realIds = all.filter(p => !isGuestId(p.id)).map(p => p.id);
+  const balMap = {};
+
+  if (sb && realIds.length) {
+    try {
+      const { data } = await sb
+        .from('player_ratings')
+        .select('telegram_user_id,total_score')
+        .in('telegram_user_id', realIds);
+
+      (data || []).forEach(row => {
+        balMap[row.telegram_user_id] = Number(row.total_score || 0);
+      });
+    } catch(e) {}
+  }
+
+  all.forEach(p => {
+    p.left = false;
+    p.sittingOut = false;
+
+    if (isGuestId(p.id)) {
+      if ((p.stack || 0) < BB) p.stack = START_STACK;
+    } else {
+      const bal = balMap[p.id] ?? 0;
+
+      if ((p.stack || 0) < BB && bal >= BB) {
+        p.stack = bal;
+      }
     }
   });
 
-  const players = allPlayers.filter(p => (p.stack || 0) >= BB);
-  if (players.length < 2) {
+  const active = all.filter(p => (p.stack || 0) >= BB);
+  const sitting = all.filter(p => (p.stack || 0) < BB);
+
+  if (active.length < 2) {
     setStatus('Нужно 2+ игрока с фишками ≥ BB. Сделайте ребай.', 'loss');
     return;
   }
 
-  // Keep full seating list in state, but hand runs on players with chips
-  // For index simplicity we use the filtered active list as state.players for the hand
-  // and merge back any sitting-out later if needed. With MAX 3 this is OK if we rebuy zeros above.
-
   const deck = newDeck();
+  const handId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   let prevDealerId = null;
-  if (typeof state.dealerIdx === 'number' && allPlayers[state.dealerIdx]) {
-    prevDealerId = allPlayers[state.dealerIdx].id;
+
+  if (typeof state.dealerIdx === 'number' && active[state.dealerIdx]) {
+    prevDealerId = active[state.dealerIdx].id;
   }
+
   let d = 0;
+
   if (prevDealerId) {
-    const prevInHand = players.findIndex(p => p.id === prevDealerId);
-    d = prevInHand >= 0 ? (prevInHand + 1) % players.length : 0;
+    const prevInHand = active.findIndex(p => p.id === prevDealerId);
+    d = prevInHand >= 0 ? (prevInHand + 1) % active.length : 0;
   }
 
-  let sb, bb;
-  if (players.length === 2) {
-    sb = d;
-    bb = (d + 1) % 2;
+  let sbIdx, bbIdx;
+
+  if (active.length === 2) {
+    sbIdx = d;
+    bbIdx = (d + 1) % 2;
   } else {
-    sb = (d + 1) % players.length;
-    bb = (d + 2) % players.length;
+    sbIdx = (d + 1) % active.length;
+    bbIdx = (d + 2) % active.length;
   }
 
-  players.forEach(p => {
+  active.forEach(p => {
     p.hole = [];
+    p.holeRevealed = false;
+    p.cardsDealt = true;
     p.bet = 0;
     p.folded = false;
     p.allIn = false;
@@ -1120,68 +1998,113 @@ async function hostStartHand(){
     p.acted = false;
     p.lastAction = null;
     p.lastSeen = Date.now();
-    // Snapshot BEFORE blinds — win/loss delta includes blind losses
     p.stackAtHandStart = p.stack || 0;
+    p.sittingOut = false;
   });
 
+  sitting.forEach(p => {
+    p.hole = [];
+    p.holeRevealed = false;
+    p.cardsDealt = false;
+    p.bet = 0;
+    p.folded = false;
+    p.allIn = false;
+    p.handName = '';
+    p.totalBet = 0;
+    p.acted = false;
+    p.lastAction = null;
+    p.lastSeen = Date.now();
+    p.stackAtHandStart = null;
+    p.sittingOut = true;
+  });
+
+  privateDeck = deck;
+  privateHoles = {};
+  lastSecretHandId = handId;
+  lastHandId = handId;
+
+  active.forEach(p => {
+    privateHoles[p.id] = [];
+  });
+
+  for (let r = 0; r < 2; r++) {
+    for (const p of active) {
+      privateHoles[p.id].push(privateDeck.pop());
+    }
+  }
+
+  myHole = privateHoles[player.id] || [];
+
   const post = (idx, amt, label) => {
-    const p = players[idx];
+    const p = active[idx];
     const a = clampBet(amt, p.stack || 0);
+
     p.stack = (p.stack || 0) - a;
     p.bet = a;
     p.totalBet = a;
+
     if (p.stack === 0) p.allIn = true;
+
     setLastAction(p, 'blind', label + ' ' + fmt(a));
+
     return a;
   };
-  post(sb, SB, 'SB');
-  post(bb, BB, 'BB');
 
-  // If BB couldn't post full blind (short stack), currentBet = actual BB post
-  const bbPosted = players[bb].bet || 0;
-  const sbPosted = players[sb].bet || 0;
-  const streetBet = Math.max(bbPosted, sbPosted, BB);
+  post(sbIdx, SB, 'SB');
+  post(bbIdx, BB, 'BB');
 
-  for (let r = 0; r < 2; r++) {
-    for (const p of players) p.hole.push(deck.pop());
-  }
+  const bbPosted = active[bbIdx].bet || 0;
+  const sbPosted = active[sbIdx].bet || 0;
 
-  let toAct = (bb + 1) % players.length;
-  for (let i = 0; i < players.length; i++) {
-    if (canAct(players[toAct])) break;
-    toAct = (toAct + 1) % players.length;
+  const streetBet = Math.max(bbPosted, sbPosted);
+
+  let toAct = (bbIdx + 1) % active.length;
+
+  for (let i = 0; i < active.length; i++) {
+    if (canAct(active[toAct])) break;
+    toAct = (toAct + 1) % active.length;
   }
 
   state = {
     ...state,
-    players,
-    deck,
+    players: active,
+    sittingOut: sitting,
     board: [],
     pot: 0,
+    lastPot: 0,
     dealerIdx: d,
-    sbIdx: sb,
-    bbIdx: bb,
+    sbIdx,
+    bbIdx,
     phase: 'preflop',
     currentBet: streetBet,
     minRaise: BB,
     toAct,
     actionCount: 0,
     handOver: false,
-    handId: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    handId,
+    pendingStreet: false,
     dealMsg: 'Дилер раздал карты'
   };
+
+  delete state.deck;
+
+  await persistSecrets();
+
   pushState('playing');
   setStatus('Префлоп', 'info');
 }
 
-function sendAction(type, raiseTo){
+async function sendAction(type, raiseTo) {
   if (!state || state.handOver) return;
   if (state.phase === 'lobby' || state.phase === 'deal' || state.phase === 'showdown') return;
 
   const pl = state.players || [];
   const idx = pl.findIndex(p => p.id === player.id);
+
   if (idx < 0 || idx !== state.toAct) return;
+
   const p = pl[idx];
+
   if (!canAct(p)) return;
 
   const toCall = Math.max(0, (state.currentBet || 0) - (p.bet || 0));
@@ -1192,45 +2115,85 @@ function sendAction(type, raiseTo){
     setLastAction(p, 'fold', 'Сброс');
   } else if (type === 'check') {
     if (toCall > 0) return;
+
     p.acted = true;
     setLastAction(p, 'check', 'Чек');
   } else if (type === 'call') {
     const a = clampBet(toCall, p.stack || 0);
+
     p.stack = (p.stack || 0) - a;
     p.bet = (p.bet || 0) + a;
     p.totalBet = (p.totalBet || 0) + a;
-    if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
+
+    if (p.stack <= 0) {
+      p.stack = 0;
+      p.allIn = true;
+    }
+
     p.acted = true;
-    setLastAction(p, 'call', a > 0 ? ((p.allIn ? 'Олл-ин ' : 'Колл ') + fmt(a)) : 'Чек');
+
+    setLastAction(
+      p,
+      'call',
+      a > 0 ? ((p.allIn ? 'Олл-ин ' : 'Колл ') + fmt(a)) : 'Чек'
+    );
   } else if (type === 'raise') {
-    const maxTarget = (p.bet || 0) + (p.stack || 0);
-    if (maxTarget <= (p.bet || 0)) return; // nothing to put in
-    const minTarget = Math.min((state.currentBet || 0) + (state.minRaise || BB), maxTarget);
+    const cap = activeCap();
+
+    let maxTarget = (p.bet || 0) + (p.stack || 0);
+
+    if (Number.isFinite(cap)) {
+      maxTarget = Math.min(maxTarget, cap);
+    }
+
+    const currentBet = state.currentBet || 0;
+
+    if (maxTarget <= Math.max(currentBet, p.bet || 0)) return;
+
+    const minTarget = Math.min(currentBet + (state.minRaise || BB), maxTarget);
+
     let target = Math.floor(Number(raiseTo) || minTarget);
+
     if (target < minTarget) target = minTarget;
+
     target = Math.min(Math.max(target, p.bet || 0), maxTarget);
 
     const need = Math.max(0, target - (p.bet || 0));
     const a = clampBet(need, p.stack || 0);
+
     p.stack = (p.stack || 0) - a;
     p.bet = (p.bet || 0) + a;
     p.totalBet = (p.totalBet || 0) + a;
-    if (p.stack <= 0) { p.stack = 0; p.allIn = true; }
+
+    if (p.stack <= 0) {
+      p.stack = 0;
+      p.allIn = true;
+    }
 
     const prevBet = state.currentBet || 0;
+
     if (p.bet > prevBet) {
       const raiseSize = p.bet - prevBet;
       state.currentBet = p.bet;
+
       const isFullRaise = raiseSize >= (state.minRaise || BB);
+
       if (isFullRaise) {
         state.minRaise = raiseSize;
+
         pl.forEach((x, i) => {
           if (i !== idx && !x.folded && !x.allIn) x.acted = false;
         });
       }
     }
+
     p.acted = true;
-    setLastAction(p, 'raise', p.allIn ? ('Олл-ин ' + fmt(p.bet)) : ('Рейз ' + fmt(p.bet)));
+
+    setLastAction(
+      p,
+      'raise',
+      p.allIn ? ('Олл-ин ' + fmt(p.bet)) : ('Рейз ' + fmt(p.bet))
+    );
   } else {
     return;
   }
@@ -1238,54 +2201,102 @@ function sendAction(type, raiseTo){
   state.actionCount = (state.actionCount || 0) + 1;
 
   const alive = pl.filter(x => !x.folded);
+
   if (alive.length === 1) {
     awardToSingleWinner(alive[0]);
+
+    try {
+      if (sb && roomId && state.handId && !String(roomId).startsWith('local')) {
+        await sb.rpc('clear_hand_secrets', {
+          p_room_id: roomId,
+          p_hand_id: state.handId
+        });
+      }
+    } catch(e) {}
+
     pushState('lobby');
     return;
   }
 
   if (isRoundComplete()) {
-    advanceStreet();
+    if (isHost) {
+      await advanceStreet();
+    } else {
+      state.pendingStreet = true;
+      pushState();
+    }
     return;
   }
 
   const n = nextActor(idx);
   state.toAct = n;
   state.dealMsg = '';
+
   if (n === null) {
-    advanceStreet();
+    if (isHost) {
+      await advanceStreet();
+    } else {
+      state.pendingStreet = true;
+      pushState();
+    }
     return;
   }
+
   pushState();
 }
 
+$('createBtn').onclick = createRoom;
+$('joinBtn').onclick = () => joinRoom($('codeInput').value);
+$('refreshBtn').onclick = listRooms;
+$('startHandBtn').onclick = hostStartHand;
+$('foldBtn').onclick = () => sendAction('fold');
+$('checkBtn').onclick = () => sendAction('check');
+$('callBtn').onclick = () => sendAction('call');
+$('raiseBtn').onclick = () => sendAction('raise', Number($('raiseSlider').value));
 
-$('createBtn').onclick=createRoom;
-$('joinBtn').onclick=()=>joinRoom($('codeInput').value);
-$('refreshBtn').onclick=listRooms;
-$('startHandBtn').onclick=hostStartHand;
-$('foldBtn').onclick=()=>sendAction('fold');
-$('checkBtn').onclick=()=>sendAction('check');
-$('callBtn').onclick=()=>sendAction('call');
-$('raiseBtn').onclick=()=>sendAction('raise',Number($('raiseSlider').value));
-$('raiseSlider').oninput=()=>$('raiseAmt').textContent=fmt($('raiseSlider').value);
-$('backBtn').onclick=async()=>{
-  await leaveRoom({silent:true});
-  if(history.length>1)history.back();
-  else location.href='poker.html'+location.search;
+$('raiseSlider').oninput = () => {
+  $('raiseAmt').textContent = fmt($('raiseSlider').value);
 };
-$('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom($('codeInput').value)});
 
-window.addEventListener('pagehide',()=>{leaveRoom({silent:true})});
-window.addEventListener('beforeunload',()=>{leaveRoom({silent:true})});
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden'&&roomId){
-    const me=(state?.players||[]).find(p=>p.id===player.id);
-    if(me)me.lastSeen=Date.now();
+$('backBtn').onclick = async () => {
+  await leaveRoom({ silent: true });
+
+  if (history.length > 1) history.back();
+  else location.href = 'poker.html' + location.search;
+};
+
+$('codeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinRoom($('codeInput').value);
+});
+
+window.addEventListener('pagehide', () => {
+  leaveRoom({ silent: true });
+});
+
+window.addEventListener('beforeunload', () => {
+  leaveRoom({ silent: true });
+});
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'hidden' && roomId && state) {
+    const me = (state.players || []).find(p => p.id === player.id);
+    if (me) me.lastSeen = Date.now();
+
+    try {
+      if (sb && !String(roomId).startsWith('local')) {
+        await sb.rpc('touch_room', {
+          p_room_id: roomId,
+          p_user_id: player.id
+        });
+      }
+    } catch(e) {}
   }
 });
 
-resolvePlayer();loadHat();loadBalance();listRooms();
+resolvePlayer();
+loadHat();
+loadBalance();
+listRooms();
 </script>
 </body>
 </html>
