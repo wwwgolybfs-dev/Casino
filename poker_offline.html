@@ -80,7 +80,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   display:flex;flex-direction:column;align-items:center;
 }
 .dealer-row{display:flex;align-items:center;gap:10px;width:100%}
-.dealer-avatar-wrap{position:relative;flex-shrink:0}
+.dealer-avatar-wrap{position:relative;flex-shrink:0;padding-top:18px}
 .dealer-avatar{
   width:50px;height:50px;border-radius:50%;
   background:linear-gradient(145deg,#1a2840,#0d1620);
@@ -90,10 +90,12 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   position:relative;overflow:hidden;
 }
 .dealer-hat{
-  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
-  font-size:18px;line-height:1;pointer-events:none;z-index:2;
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:42px;height:28px;pointer-events:none;z-index:3;
+  display:flex;align-items:flex-end;justify-content:center;
 }
+.dealer-hat img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.dealer-hat .hat-emoji{font-size:18px;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
 .dealer-badge{
   position:absolute;bottom:-4px;right:-4px;
   background:var(--dealer-blue);color:#fff;
@@ -174,7 +176,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.07);
   border-radius:14px;padding:8px 12px;
 }
-.player-avatar-wrap{position:relative;flex-shrink:0}
+.player-avatar-wrap{position:relative;flex-shrink:0;padding-top:16px}
 .player-avatar{
   width:44px;height:44px;border-radius:50%;
   border:2.5px solid var(--gold);
@@ -185,10 +187,12 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 }
 .player-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .player-hat{
-  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
-  font-size:18px;line-height:1;pointer-events:none;z-index:2;
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:38px;height:26px;pointer-events:none;z-index:3;
+  display:flex;align-items:flex-end;justify-content:center;
 }
+.player-hat img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.player-hat .hat-emoji{font-size:16px;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
 .player-info{flex:1;min-width:0}
 .player-name-row{font-size:12px;font-weight:900;color:rgba(255,255,255,.9);margin-bottom:2px;display:flex;align-items:center;gap:6px}
 .player-tag{font-size:7px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;padding:2px 5px;border-radius:4px;background:rgba(232,200,114,.15);color:var(--gold)}
@@ -348,9 +352,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
       <div class="dealer-section">
         <div class="dealer-row">
           <div class="dealer-avatar-wrap">
-            <div class="dealer-avatar" id="dealerAvatarEl">🎰
-              <div class="dealer-hat" id="dealerHatEl"></div>
-            </div>
+            <div class="dealer-hat" id="dealerHatEl"></div>
+            <div class="dealer-avatar" id="dealerAvatarEl">🎰</div>
             <div class="dealer-badge">Дилер</div>
           </div>
           <div class="dealer-info">
@@ -381,9 +384,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
         <div class="player-cards-row" id="playerCards"></div>
         <div class="player-meta-row">
           <div class="player-avatar-wrap">
-            <div class="player-avatar" id="playerAvatarEl">😎
-              <div class="player-hat" id="playerHatEl"></div>
-            </div>
+            <div class="player-hat" id="playerHatEl"></div>
+            <div class="player-avatar" id="playerAvatarEl">😎</div>
           </div>
           <div class="player-info">
             <div class="player-name-row">
@@ -465,6 +467,22 @@ const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const RANK_VAL = {2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 const PHASE_RU = {deal:'Раздача',preflop:'Пре-флоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Вскрытие'};
 
+/* SVG hats (папка hats/) — лежат над аватаркой, не перекрывают лицо.
+   Для GitHub: залейте папку hats/ и при необходимости замените пути на
+   https://raw.githubusercontent.com/<user>/<repo>/<branch>/hats/hat_xxx.svg */
+const HAT_IMAGES = {
+  none: null,
+  cowboy: 'hats/hat_cowboy.svg',
+  tophat: 'hats/hat_tophat.svg',
+  crown: 'hats/hat_crown.svg',
+  wizard: 'hats/hat_wizard.svg',
+  party: 'hats/hat_party.svg',
+  /* пока эмодзи — позже можно добавить SVG */
+  pirate: null,
+  viking: null,
+  chef: null,
+  detective: null
+};
 const HAT_EMOJIS = {none:'',cowboy:'🤠',tophat:'🎩',crown:'👑',wizard:'🧙',party:'🥳',pirate:'🏴‍☠️',viking:'🪖',chef:'👨‍🍳',detective:'🕵️'};
 
 const fmt = n => Number(n||0).toLocaleString('ru-RU');
@@ -499,7 +517,18 @@ function resolvePlayer() {
   $('playerNameEl').textContent = player.name;
   const av = $('playerAvatarEl');
   if(player.photo) {
-    av.innerHTML = `<img src="${player.photo}" alt="" referrerpolicy="no-referrer"><div class="player-hat" id="playerHatEl"></div>`;
+    av.innerHTML = `<img src="${player.photo}" alt="" referrerpolicy="no-referrer">`;
+  }
+}
+
+function applyHatToEl(hatEl, hatId) {
+  if (!hatEl) return;
+  const src = HAT_IMAGES[hatId];
+  if (src) {
+    hatEl.innerHTML = `<img src="${src}" alt="" draggable="false">`;
+  } else {
+    const emoji = HAT_EMOJIS[hatId] || '';
+    hatEl.innerHTML = emoji ? `<span class="hat-emoji">${emoji}</span>` : '';
   }
 }
 
@@ -512,8 +541,7 @@ async function loadHat() {
     } catch(e){}
   }
   playerHatEmoji = HAT_EMOJIS[hatId] || '';
-  const hatEl = document.getElementById('playerHatEl');
-  if(hatEl) hatEl.textContent = playerHatEmoji;
+  applyHatToEl(document.getElementById('playerHatEl'), hatId);
 }
 
 /* ══ BALANCE ══ */
