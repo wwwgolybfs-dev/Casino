@@ -299,35 +299,64 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 
 /* ── bottom bar ── */
 .bottom{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:4px;
+}
+.bet-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 .chips{
-  display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;
-  scrollbar-width:none;padding:3px 1px 5px
+  display:grid;
+  grid-template-columns:repeat(6, 1fr);
+  gap:8px;
+  width:100%;
+  padding:4px 0 2px;
 }
-.chips::-webkit-scrollbar{display:none}
 .chip{
-  flex:0 0 40px;width:40px;height:40px;border-radius:50%;
+  width:100%;
+  aspect-ratio:1;
+  max-width:56px;
+  max-height:56px;
+  margin:0 auto;
+  border-radius:50%;
   border:1.5px dashed rgba(255,255,255,.3);
   background:linear-gradient(145deg,#2a3140,#1a1f2a);
-  font-size:9px;font-weight:900;display:grid;place-items:center;
+  font-size:11px;
+  font-weight:900;
+  display:grid;
+  place-items:center;
   transition:transform .1s,border-color .15s,box-shadow .15s,color .15s;
-  box-shadow:0 2px 8px rgba(0,0,0,.3)
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
 }
 .chip:active{transform:scale(.9)}
 .chip.active{
-  color:var(--gold);border-color:var(--gold);
+  color:var(--gold);
+  border-color:var(--gold);
   box-shadow:0 0 0 3px var(--gold-glow),0 3px 12px rgba(0,0,0,.4);
-  background:linear-gradient(145deg,#3a3540,#25202a)
+  background:linear-gradient(145deg,#3a3540,#25202a);
 }
+.chip.allin{
+  font-size:10px;
+  letter-spacing:.3px;
+  border:1.5px solid rgba(232,200,114,.45);
+  background:linear-gradient(145deg,#5a3a10,#3a2508);
+  color:var(--gold);
+  box-shadow:0 2px 10px rgba(232,200,114,.15);
+}
+.chip.allin:active{transform:scale(.9)}
 
 .total{
   padding:9px 12px;border:1px solid var(--line);background:var(--panel);
-  border-radius:12px;font-size:10px;font-weight:800;white-space:nowrap
+  border-radius:12px;font-size:10px;font-weight:800;white-space:nowrap;
+  flex:1;text-align:center;
 }
 .total b{color:var(--gold)}
 .clear,.spin{
-  height:38px;border-radius:12px;padding:0 14px;
+  height:40px;border-radius:12px;padding:0 14px;
   font-size:11px;font-weight:900;white-space:nowrap;
   transition:opacity .15s,transform .1s,filter .15s
 }
@@ -354,7 +383,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   .wheel3d{width:min(58vw,260px)}
   .color-bet{height:64px}
   .color-bet .label{font-size:12px}
-  .chip{flex:0 0 36px;width:36px;height:36px;font-size:8px}
+  .chip{font-size:10px}
   .clear,.spin{padding:0 11px;font-size:10px}
 }
 </style>
@@ -423,13 +452,15 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 
   <!-- chips + actions -->
   <div class="bottom">
+    <div class="bet-controls">
+      <div class="total">Ставки: <b id="totalBet">0</b></div>
+      <button class="clear" id="clearBtn">Сброс</button>
+      <button class="spin" id="spinBtn">🎰 Крутить</button>
+    </div>
     <div class="chips" id="chips"></div>
-    <div class="total">Ставки: <b id="totalBet">0</b></div>
-    <button class="clear" id="clearBtn">Сброс</button>
-    <button class="spin" id="spinBtn">🎰 Крутить</button>
   </div>
 
-  <div class="note">Нажмите на цвет, чтобы поставить фишку · повторный клик увеличивает ставку</div>
+  <div class="note">Макс. ставка 500 000 · фишки до 50k · нажмите на цвет, чтобы поставить</div>
 
 </div>
 
@@ -485,10 +516,17 @@ function resolvePlayer(){
 }
 
 /* ── render chips ── */
+const CHIP_VALUES = [10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000];
+const MAX_BET = 500000; // максимальная сумма ставок
+
 function renderChips(){
-  $('chips').innerHTML = [10,25,50,100,250,500,1000].map(v =>
-    `<button class="chip ${v===selectedChip?'active':''}" data-chip="${v}">${v>=1000?v/1000+'k':v}</button>`
-  ).join('');
+  const chipsHtml = CHIP_VALUES.map(v => {
+    let label = v;
+    if(v >= 1000) label = (v/1000) + 'k';
+    return `<button class="chip ${v===selectedChip?'active':''}" data-chip="${v}">${label}</button>`;
+  }).join('');
+  const maxHtml = `<button class="chip allin" id="maxBtn" title="Макс. ставка">MAX</button>`;
+  $('chips').innerHTML = chipsHtml + maxHtml;
 }
 
 /* ── history ── */
@@ -543,6 +581,16 @@ function addBet(color){
   const total = betTotal() - (bets[color]||0) + next;
   if(total > balance){
     $('status').textContent = 'Недостаточно очков';
+    $('status').className = 'status-result loss';
+    return;
+  }
+  if(total > MAX_BET){
+    $('status').textContent = 'Макс. ставка 500 000';
+    $('status').className = 'status-result loss';
+    return;
+  }
+  if(total > MAX_BET){
+    $('status').textContent = 'Макс. ставка 500 000';
     $('status').className = 'status-result loss';
     return;
   }
@@ -649,6 +697,11 @@ async function spin(){
     $('status').className = 'status-result loss';
     return;
   }
+  if(total > MAX_BET){
+    $('status').textContent = 'Макс. ставка 500 000';
+    $('status').className = 'status-result loss';
+    return;
+  }
 
   spinning = true;
   $('spinBtn').disabled = true;
@@ -728,10 +781,26 @@ async function spin(){
 document.addEventListener('click', e => {
   const colorBtn = e.target.closest('[data-color]');
   const chip = e.target.closest('[data-chip]');
+  const maxBtn = e.target.closest('#maxBtn');
   if(colorBtn && !spinning) addBet(colorBtn.dataset.color);
   if(chip && !spinning){
     selectedChip = Number(chip.dataset.chip);
     renderChips();
+  }
+  if(maxBtn && !spinning){
+    // MAX: put remaining up to MAX_BET on last selected color, or red by default
+    const remaining = Math.min(balance, MAX_BET) - betTotal();
+    if(remaining <= 0){
+      $('status').textContent = betTotal() >= MAX_BET ? 'Макс. ставка 500 000' : 'Недостаточно очков';
+      $('status').className = 'status-result loss';
+      return;
+    }
+    // distribute to the color that already has bets, or red
+    let target = COLORS.find(c => bets[c] > 0) || 'red';
+    bets[target] = (bets[target] || 0) + remaining;
+    renderBets();
+    $('status').textContent = `${COLOR_LABEL[target]} · ${fmt(bets[target])}`;
+    $('status').className = 'status-result neutral';
   }
 });
 
@@ -752,4 +821,4 @@ if(window.Telegram?.WebApp){
 }
 </script>
 </body>
-  </html>
+</html>
