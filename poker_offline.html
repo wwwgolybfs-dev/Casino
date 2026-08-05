@@ -19,97 +19,63 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .title{font-size:14px;font-weight:800}.title span{color:var(--gold)}
 .balance{margin-left:auto;background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:6px 12px;font-size:11px;font-weight:800}
 .balance b{color:var(--gold)}
-.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,#12161f,#0c0f16);border-radius:12px;margin-bottom:8px}
+.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,#12161f,#0c0f16);border-radius:12px;margin-bottom:6px}
 .status-text{font-size:11px;font-weight:800;color:var(--muted)}
 .status-text.info{color:var(--gold)}.status-text.win{color:var(--win)}.status-text.loss{color:var(--loss)}
 .status-detail{margin-left:auto;color:var(--muted);font-size:10px;font-weight:700}
 
-/* TABLE */
-.table-wrap{position:relative;margin-bottom:10px}
-.table{
-  position:relative;border-radius:28px;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 40%,rgba(18,184,138,.14),transparent 55%),
-    linear-gradient(180deg,#0c3d2e 0%,#072a1f 100%);
-  border:3px solid #1a5c45;
-  box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.45);
-  min-height:380px;padding:14px 12px 16px;overflow:hidden;
-}
+/* timer */
+.timer-bar{height:4px;background:var(--panel);border-radius:2px;margin-bottom:8px;overflow:hidden;display:none}
+.timer-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));width:100%;transition:width .1s linear}
+.timer-fill.warn{background:linear-gradient(90deg,#e8c872,#c43b4e)}
+.timer-fill.crit{background:var(--red)}
+
+/* log */
+.log{height:28px;overflow:hidden;margin-bottom:6px;display:flex;flex-direction:column;justify-content:flex-end;gap:1px}
+.log-item{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-item.you{color:var(--gold)}.log-item.dealer{color:#8ab4f8}.log-item.sys{color:var(--muted)}
+
+.table-wrap{position:relative;margin-bottom:8px}
+.table{position:relative;border-radius:28px;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(18,184,138,.14),transparent 55%),linear-gradient(180deg,#0c3d2e 0%,#072a1f 100%);border:3px solid #1a5c45;box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.45);min-height:360px;padding:12px;overflow:hidden}
 .table-rim{position:absolute;inset:-5px;border-radius:32px;border:3px solid #2a6b52;pointer-events:none;box-shadow:0 0 0 2px #0a1f18}
 
-/* DEALER zone top */
-.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:8px}
-.dealer-figure{
-  display:inline-flex;flex-direction:column;align-items:center;gap:4px;
-}
-.dealer-avatar{
-  width:52px;height:52px;border-radius:50%;
-  background:linear-gradient(145deg,#3a3540,#1a1520);
-  border:2px solid var(--gold);
-  box-shadow:0 0 0 3px var(--gold-glow),0 4px 14px rgba(0,0,0,.4);
-  display:grid;place-items:center;font-size:26px;position:relative;
-}
-.dealer-avatar .badge{
-  position:absolute;bottom:-4px;right:-4px;
-  background:var(--gold);color:#1a1408;font-size:8px;font-weight:900;
-  border-radius:6px;padding:2px 5px;
-}
-.dealer-name{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.3px}
+.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:6px}
+.dealer-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#3a3540,#1a1520);border:2px solid var(--gold);box-shadow:0 0 0 3px var(--gold-glow);display:grid;place-items:center;font-size:26px;position:relative;margin:0 auto}
+.dealer-avatar .badge{position:absolute;bottom:-4px;right:-4px;background:var(--gold);color:#1a1408;font-size:8px;font-weight:900;border-radius:6px;padding:2px 5px}
+.dealer-name{font-size:11px;font-weight:800;color:var(--gold);margin-top:4px}
 .dealer-cards{display:flex;justify-content:center;gap:4px;margin-top:6px;min-height:58px}
 .dealer-hand-name{font-size:9px;font-weight:800;color:var(--muted);margin-top:3px;min-height:14px}
 
-/* BOARD center */
-.board-zone{position:relative;z-index:2;text-align:center;margin:10px 0 8px}
+.board-zone{position:relative;z-index:2;text-align:center;margin:8px 0}
 .board-label{font-size:9px;font-weight:800;color:rgba(255,255,255,.28);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .board{display:flex;justify-content:center;gap:6px;min-height:60px;align-items:center}
-.pot{
-  display:inline-block;margin-top:8px;
-  font-size:12px;font-weight:900;color:var(--gold);
-  background:rgba(0,0,0,.4);border:1px solid rgba(232,200,114,.3);
-  border-radius:10px;padding:5px 14px;
-}
+.pot{display:inline-block;margin-top:8px;font-size:12px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.4);border:1px solid rgba(232,200,114,.3);border-radius:10px;padding:5px 14px}
 
-/* PLAYER zone bottom */
-.player-zone{position:relative;z-index:2;text-align:center;margin-top:8px}
+.player-zone{position:relative;z-index:2;text-align:center;margin-top:6px}
 .player-cards{display:flex;justify-content:center;gap:6px;min-height:68px}
 .player-meta{margin-top:6px}
-.player-name{font-size:11px;font-weight:800;color:var(--text)}
+.player-avatar{width:40px;height:40px;border-radius:50%;margin:0 auto 4px;border:2px solid var(--gold);box-shadow:0 0 0 2px var(--gold-glow);object-fit:cover;background:linear-gradient(145deg,#2a3140,#1a1f2a);display:grid;place-items:center;font-size:18px;overflow:hidden}
+.player-avatar img{width:100%;height:100%;object-fit:cover}
+.player-name{font-size:11px;font-weight:800}
 .player-stack{font-size:12px;font-weight:900;color:var(--gold);margin-top:2px}
 .player-bet{font-size:10px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 8px;display:inline-block;margin-top:3px}
 .player-bet:empty{display:none}
 .player-hand-name{font-size:9px;font-weight:800;color:var(--muted);margin-top:3px;min-height:14px}
 
-/* cards */
-.card{
-  width:42px;height:60px;border-radius:7px;
-  background:linear-gradient(160deg,#fff,#f0f2f5);
-  box-shadow:0 3px 10px rgba(0,0,0,.4);
-  display:flex;flex-direction:column;justify-content:space-between;
-  padding:4px 5px;font-size:12px;font-weight:900;line-height:1;
-  position:relative;animation:dealIn .28s ease-out;
-}
+.card{width:42px;height:60px;border-radius:7px;background:linear-gradient(160deg,#fff,#f0f2f5);box-shadow:0 3px 10px rgba(0,0,0,.4);display:flex;flex-direction:column;justify-content:space-between;padding:4px 5px;font-size:12px;font-weight:900;line-height:1;position:relative;animation:dealIn .28s ease-out}
 .card .suit{font-size:14px;align-self:center}
 .card .rank.bot{transform:rotate(180deg);align-self:flex-end}
 .card.red{color:#c43b4e}.card.black{color:#1a1e28}
-.card.back{
-  background:linear-gradient(145deg,#1a3a5c,#0d2240);
-  border:1.5px solid rgba(232,200,114,.4);color:transparent;
-}
-.card.back:after{
-  content:"";position:absolute;inset:5px;border-radius:4px;
-  border:1px solid rgba(232,200,114,.2);
-  background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(232,200,114,.08) 3px,rgba(232,200,114,.08) 4px);
-}
+.card.back{background:linear-gradient(145deg,#1a3a5c,#0d2240);border:1.5px solid rgba(232,200,114,.4);color:transparent}
+.card.back:after{content:"";position:absolute;inset:5px;border-radius:4px;border:1px solid rgba(232,200,114,.2);background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(232,200,114,.08) 3px,rgba(232,200,114,.08) 4px)}
 .player-cards .card{width:48px;height:68px;font-size:13px}
 .player-cards .card .suit{font-size:16px}
 @keyframes dealIn{from{opacity:0;transform:translateY(-14px) scale(.85)}to{opacity:1;transform:none}}
 
-/* phase / controls */
 .bottom-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .phase{font-size:12px;font-weight:800;color:var(--gold)}
 .blinds{font-size:10px;color:var(--muted);font-weight:700}
-
-.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.actions{display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
 .act{height:46px;border-radius:12px;font-size:10px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid var(--line);background:var(--panel)}
 .act:active{transform:scale(.96)}.act:disabled{opacity:.3;cursor:not-allowed}
 .act .ico{font-size:14px}
@@ -117,32 +83,16 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .act.check{background:linear-gradient(145deg,#2a3140,#1a1f2a)}
 .act.call{background:linear-gradient(145deg,#1a4a9a,#123570);border-color:rgba(42,111,214,.35)}
 .act.raise{background:linear-gradient(145deg,#8a5a20,#5a3a10);border-color:rgba(232,200,114,.3);color:var(--gold)}
-
-.raise-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.raise-row{display:none;gap:6px;align-items:center;margin-bottom:8px}
 .raise-row input[type=range]{flex:1;accent-color:var(--gold)}
 .raise-amt{font-size:12px;font-weight:900;color:var(--gold);min-width:56px;text-align:right}
-
 .note{text-align:center;color:#4a5363;font-size:9px;margin-top:6px;font-weight:600}
-
-.start-overlay{
-  position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;
-  background:rgba(7,8,12,.88);border-radius:28px;backdrop-filter:blur(5px);
-}
+.start-overlay{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(7,8,12,.88);border-radius:28px;backdrop-filter:blur(5px)}
 .start-overlay h2{font-size:17px;font-weight:900}
-.start-overlay p{font-size:12px;color:var(--muted);text-align:center;max-width:240px;line-height:1.4}
-.btn-start{
-  padding:12px 28px;border-radius:14px;font-size:13px;font-weight:900;
-  background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;
-  box-shadow:0 6px 18px rgba(18,184,138,.3);
-}
-.btn-start:active{transform:scale(.97)}
-
-.deal-hint{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  font-size:12px;font-weight:800;color:rgba(255,255,255,.35);z-index:1;
-  pointer-events:none;text-align:center;line-height:1.4;
-}
+.start-overlay p{font-size:12px;color:var(--muted);text-align:center;max-width:260px;line-height:1.4}
+.btn-start{padding:12px 28px;border-radius:14px;font-size:13px;font-weight:900;background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;box-shadow:0 6px 18px rgba(18,184,138,.3)}
+.btn-start:disabled{opacity:.4}
+.deal-hint{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font-size:12px;font-weight:800;color:rgba(255,255,255,.35);z-index:1;pointer-events:none;text-align:center}
 </style>
 </head>
 <body>
@@ -154,48 +104,41 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   </header>
 
   <div class="status">
-    <div class="status-text" id="status">Нажмите «Начать»</div>
+    <div class="status-text" id="status">Загрузка…</div>
     <div class="status-detail" id="statusDetail">Vs Дилер</div>
   </div>
+  <div class="timer-bar" id="timerBar"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="log" id="log"></div>
 
   <div class="table-wrap">
     <div class="table" id="table">
       <div class="table-rim"></div>
-
-      <!-- DEALER -->
       <div class="dealer-zone">
-        <div class="dealer-figure">
-          <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
-          <div class="dealer-name">Дилер</div>
-        </div>
+        <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
+        <div class="dealer-name">Дилер</div>
         <div class="dealer-cards" id="dealerCards"></div>
         <div class="dealer-hand-name" id="dealerHandName"></div>
       </div>
-
-      <!-- BOARD -->
       <div class="board-zone">
         <div class="board-label">Общие карты</div>
         <div class="board" id="board"></div>
         <div class="pot" id="pot">Банк: 0</div>
       </div>
-
-      <!-- PLAYER -->
       <div class="player-zone">
         <div class="player-cards" id="playerCards"></div>
         <div class="player-meta">
+          <div class="player-avatar" id="playerAvatar">😎</div>
           <div class="player-name" id="playerName">Вы</div>
-          <div class="player-stack" id="playerStack">Стек: 1000</div>
+          <div class="player-stack" id="playerStack">💎 —</div>
           <div class="player-bet" id="playerBet"></div>
           <div class="player-hand-name" id="playerHandName"></div>
         </div>
       </div>
-
-      <div class="deal-hint" id="dealHint">Дилер раздаёт карты…</div>
-
+      <div class="deal-hint" id="dealHint" style="display:none">Дилер раздаёт карты…</div>
       <div class="start-overlay" id="startOverlay">
         <h2>♠ Poker vs Дилер</h2>
-        <p>Вы против дилера.<br>Дилер раздаёт 2 карты вам и себе, затем выкладывает флоп (3 карты), тёрн и ривер.</p>
-        <button class="btn-start" id="startBtn">Начать раздачу</button>
+        <p>Игра на кристаллы из баланса.<br>Блайнды 10 / 20 · Таймер хода 20 сек</p>
+        <button class="btn-start" id="startBtn" disabled>Загрузка баланса…</button>
       </div>
     </div>
   </div>
@@ -204,20 +147,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
     <div class="phase" id="phaseLabel">—</div>
     <div class="blinds" id="blindsLabel">Блайнды 10 / 20</div>
   </div>
-
-  <div class="raise-row" id="raiseRow" style="display:none">
+  <div class="raise-row" id="raiseRow">
     <input type="range" id="raiseSlider" min="20" max="1000" step="10" value="40">
     <div class="raise-amt" id="raiseAmt">40</div>
   </div>
-
-  <div class="actions" id="actions" style="display:none">
+  <div class="actions" id="actions">
     <button class="act fold" id="foldBtn"><span class="ico">✕</span>Фолд</button>
     <button class="act check" id="checkBtn"><span class="ico">✓</span>Чек</button>
     <button class="act call" id="callBtn"><span class="ico">→</span>Колл</button>
     <button class="act raise" id="raiseBtn"><span class="ico">↑</span>Рейз</button>
   </div>
-
-  <div class="note">Дилер раздаёт карты · Вы играете против дилера · Texas Hold'em</div>
+  <div class="note">Игра на 💎 · Таймер 20с → автофолд · Дилер раздаёт карты</div>
 </div>
 
 <script>
@@ -229,34 +169,118 @@ const SUITS=['♠','♥','♦','♣'];
 const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
 const PHASE_RU={deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
-const SB=10,BB=20,START_STACK=1000;
+const SB=10,BB=20,TURN_TIME=20;
 const fmt=n=>Number(n||0).toLocaleString('ru-RU');
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 const params=new URLSearchParams(location.search);
-let player={id:params.get('uid'),name:params.get('name')||'Вы'};
-let balance=0;
-let g=null; // game state
+let player={id:params.get('uid'),name:params.get('name')||'Вы',photo:null};
+let balance=0,balanceLoaded=false;
+let g=null;
 let busy=false;
+let timerId=null,timerLeft=0;
+let logLines=[];
 
 function resolvePlayer(){
   try{
     const tg=window.Telegram?.WebApp;
-    if(tg){tg.ready();tg.expand();
+    if(tg){
+      tg.ready();tg.expand();
       const u=tg.initDataUnsafe?.user;
-      if(u?.id) player={id:String(u.id),name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Вы'};
+      if(u?.id){
+        player.id=String(u.id);
+        player.name=[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Вы';
+        player.photo=u.photo_url||null;
+      }
     }
   }catch(e){}
   $('playerName').textContent=player.name||'Вы';
+  const av=$('playerAvatar');
+  if(player.photo){
+    av.innerHTML=`<img src="${player.photo}" alt="" referrerpolicy="no-referrer">`;
+  }else{
+    av.textContent='😎';
+  }
 }
+
 async function loadBalance(){
-  if(!player.id||!sb){$('balance').textContent='—';return}
-  try{
-    const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
-    balance=Number(data?.total_score||0);
+  $('startBtn').disabled=true;
+  $('startBtn').textContent='Загрузка баланса…';
+  if(!player.id||!sb){
+    balance=1000;balanceLoaded=true;
     $('balance').textContent=fmt(balance);
-  }catch(e){}
+    $('playerStack').textContent='💎 '+fmt(balance);
+    $('startBtn').disabled=false;
+    $('startBtn').textContent='Начать раздачу';
+    setStatus('Демо-баланс 1000','info');
+    return;
+  }
+  try{
+    const{data,error}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    if(error)throw error;
+    balance=Number(data?.total_score||0);
+    balanceLoaded=true;
+    $('balance').textContent=fmt(balance);
+    $('playerStack').textContent='💎 '+fmt(balance);
+    if(balance<BB){
+      setStatus('Недостаточно 💎 для блайнда','loss');
+      $('startBtn').disabled=true;
+      $('startBtn').textContent='Мало кристаллов';
+    }else{
+      $('startBtn').disabled=false;
+      $('startBtn').textContent='Начать раздачу';
+      setStatus('Баланс загружен','info');
+    }
+  }catch(e){
+    console.error(e);
+    balance=0;balanceLoaded=true;
+    $('balance').textContent='—';
+    setStatus('Ошибка загрузки баланса','loss');
+    $('startBtn').textContent='Ошибка баланса';
+  }
+}
+
+/** Settle hand result against Supabase balance */
+async function settleBalance(netChange){
+  if(!sb||!player.id||!balanceLoaded) return;
+  try{
+    // try RPC if exists
+    const{data,error}=await sb.rpc('poker_settle',{
+      p_user_id:player.id,
+      p_user_name:player.name,
+      p_net:netChange
+    });
+    if(!error&&data!==null&&data!==undefined){
+      balance=Number(data);
+    }else{
+      // fallback direct update
+      const next=Math.max(0,balance+netChange);
+      const{error:u}=await sb.from('player_ratings').upsert({
+        telegram_user_id:player.id,
+        name:player.name,
+        total_score:next,
+        updated_at:new Date().toISOString()
+      },{onConflict:'telegram_user_id'});
+      if(u)throw u;
+      balance=next;
+    }
+    $('balance').textContent=fmt(balance);
+    $('playerStack').textContent='💎 '+fmt(balance);
+  }catch(e){
+    console.error('settle',e);
+    // still update local
+    balance=Math.max(0,balance+netChange);
+    $('balance').textContent=fmt(balance);
+    $('playerStack').textContent='💎 '+fmt(balance);
+  }
+}
+
+function setStatus(t,cls){$('status').textContent=t;$('status').className='status-text '+(cls||'info')}
+function addLog(text,who){
+  logLines.push({text,who});
+  if(logLines.length>4) logLines=logLines.slice(-4);
+  $('log').innerHTML=logLines.map(l=>`<div class="log-item ${l.who||'sys'}">${l.text}</div>`).join('');
 }
 
 function newDeck(){
@@ -271,17 +295,17 @@ function cardHTML(c,faceDown){
 }
 
 function evalHand(cards){
-  if(cards.length<5) return {rank:0,name:'—',score:0};
+  if(!cards||cards.length<5) return {rank:0,name:'—',score:0};
   const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
   const suits=cards.map(c=>c.s);
-  const counts={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);
   const byCount=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
   const unique=[...new Set(vals)];
   const isFlush=SUITS.some(s=>suits.filter(x=>x===s).length>=5);
   let straightHigh=0;
-  const u=[...unique]; if(u.includes(14)) u.push(1); u.sort((a,b)=>b-a);
+  const u=[...unique];if(u.includes(14))u.push(1);u.sort((a,b)=>b-a);
   for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){straightHigh=u[i];break}}
-  if(!straightHigh && unique.includes(14)&&unique.includes(5)&&unique.includes(4)&&unique.includes(3)&&unique.includes(2)) straightHigh=5;
+  if(!straightHigh&&unique.includes(14)&&[2,3,4,5].every(x=>unique.includes(x))) straightHigh=5;
   let rank=0,name='Старшая карта',kickers=[];
   if(isFlush&&straightHigh){rank=8;name='Стрит-флеш';kickers=[straightHigh]}
   else if(byCount[0].c===4){rank=7;name='Каре';kickers=[byCount[0].v,byCount[1]?.v||0]}
@@ -291,22 +315,48 @@ function evalHand(cards){
   else if(byCount[0].c===3){rank=3;name='Сет';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
   else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары';kickers=[byCount[0].v,byCount[1].v,byCount[2]?.v||0]}
   else if(byCount[0].c===2){rank=1;name='Пара';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
-  else{kickers=unique.slice(0,5)}
-  let score=rank*1e10; kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
-  return {rank,name,score,kickers};
+  else kickers=unique.slice(0,5);
+  let score=rank*1e10;kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
+  return{rank,name,score,kickers};
 }
 function bestHand(hole,board){
-  const all=[...hole,...board];
+  const all=[...(hole||[]),...(board||[])];
   if(all.length<5) return evalHand(all);
-  let best={score:-1}; const n=all.length;
-  function comb(start,chosen){
-    if(chosen.length===5){const h=evalHand(chosen.map(i=>all[i])); if(h.score>best.score) best=h; return}
-    for(let i=start;i<n;i++){chosen.push(i);comb(i+1,chosen);chosen.pop()}
-  }
-  comb(0,[]); return best;
+  let best={score:-1};const n=all.length;
+  (function comb(s,ch){
+    if(ch.length===5){const h=evalHand(ch.map(i=>all[i]));if(h.score>best.score)best=h;return}
+    for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}
+  })(0,[]);
+  return best;
 }
 
-function setStatus(t,cls){$('status').textContent=t;$('status').className='status-text '+(cls||'info')}
+/* ── timer ── */
+function stopTimer(){
+  if(timerId){clearInterval(timerId);timerId=null}
+  $('timerBar').style.display='none';
+  $('timerFill').style.width='100%';
+  $('timerFill').className='timer-fill';
+}
+function startTimer(){
+  stopTimer();
+  if(!g||g.handOver||g.toAct!=='player') return;
+  timerLeft=TURN_TIME;
+  $('timerBar').style.display='block';
+  $('timerFill').style.width='100%';
+  $('timerFill').className='timer-fill';
+  timerId=setInterval(()=>{
+    timerLeft-=0.1;
+    const pct=Math.max(0,(timerLeft/TURN_TIME)*100);
+    $('timerFill').style.width=pct+'%';
+    if(timerLeft<=8) $('timerFill').className='timer-fill warn';
+    if(timerLeft<=4) $('timerFill').className='timer-fill crit';
+    if(timerLeft<=0){
+      stopTimer();
+      addLog('⏱ Время вышло → фолд','sys');
+      playerAction('fold',null,true);
+    }
+  },100);
+}
 
 function render(){
   if(!g) return;
@@ -314,52 +364,61 @@ function render(){
   $('dealerCards').innerHTML=(g.dealerHole||[]).map(c=>cardHTML(c,!showDealer)).join('');
   $('playerCards').innerHTML=(g.playerHole||[]).map(c=>cardHTML(c,false)).join('');
   $('board').innerHTML=(g.board||[]).map(c=>cardHTML(c)).join('');
-  const potTotal=g.pot+(g.playerBet||0)+(g.dealerBet||0);
+  const potTotal=(g.pot||0)+(g.playerBet||0)+(g.dealerBet||0);
   $('pot').textContent='Банк: '+fmt(potTotal);
-  $('playerStack').textContent='Стек: '+fmt(g.playerStack);
+  // stack shown is remaining crystals not yet in pot/bets for this hand tracking
+  $('playerStack').textContent='💎 '+fmt(g.playerStack);
   $('playerBet').textContent=g.playerBet?('Ставка: '+fmt(g.playerBet)):'';
   $('phaseLabel').textContent=PHASE_RU[g.phase]||'—';
-  $('blindsLabel').textContent=`Блайнды ${SB} / ${BB}`;
-  if(g.playerShow) $('playerHandName').textContent=g.playerShow.name;
-  else $('playerHandName').textContent='';
-  if(g.dealerShow) $('dealerHandName').textContent=g.dealerShow.name;
-  else $('dealerHandName').textContent='';
-  updateActions();
+  $('playerHandName').textContent=g.playerShow?g.playerShow.name:'';
+  $('dealerHandName').textContent=g.dealerShow?g.dealerShow.name:'';
 }
 
-function updateActions(){
-  if(!g||g.handOver||busy||g.phase==='deal'){
-    $('actions').style.display='none';
-    $('raiseRow').style.display='none';
-    return;
-  }
-  if(g.toAct!=='player'){
+function showActions(){
+  if(!g||g.handOver||busy||g.toAct!=='player'||g.phase==='deal'||g.phase==='showdown'){
     $('actions').style.display='none';
     $('raiseRow').style.display='none';
     return;
   }
   $('actions').style.display='grid';
-  const toCall=g.currentBet-g.playerBet;
+  const toCall=Math.max(0,g.currentBet-g.playerBet);
   $('checkBtn').style.display=toCall===0?'flex':'none';
   $('callBtn').style.display=toCall>0?'flex':'none';
-  $('callBtn').innerHTML=`<span class="ico">→</span>Колл ${fmt(toCall)}`;
-  const minR=g.currentBet+g.minRaise;
-  const maxR=g.playerBet+g.playerStack;
+  const callAmt=Math.min(toCall,g.playerStack);
+  $('callBtn').innerHTML=`<span class="ico">→</span>Колл ${fmt(callAmt)}`;
+
+  // min raise: currentBet + minRaise, or all-in
+  const minRaiseTo=g.currentBet+g.minRaise;
+  const maxRaiseTo=g.playerBet+g.playerStack;
   const sl=$('raiseSlider');
-  sl.min=Math.min(minR,maxR);
-  sl.max=Math.max(minR,maxR);
-  sl.value=Math.min(Math.max(minR,Number(sl.value)||minR),maxR);
+  if(maxRaiseTo<=g.currentBet&&g.playerStack>0){
+    // can only all-in call essentially
+    sl.min=maxRaiseTo;sl.max=maxRaiseTo;sl.value=maxRaiseTo;
+  }else{
+    sl.min=Math.min(minRaiseTo,maxRaiseTo);
+    sl.max=Math.max(minRaiseTo,maxRaiseTo);
+    let v=Number(sl.value)||minRaiseTo;
+    if(v<sl.min) v=sl.min;
+    if(v>sl.max) v=sl.max;
+    sl.value=v;
+  }
   $('raiseAmt').textContent=fmt(sl.value);
   $('raiseRow').style.display='flex';
-  $('raiseBtn').disabled=maxR<minR;
-  setStatus('Ваш ход','info');
+  $('raiseBtn').disabled=g.playerStack<=0;
+  setStatus((PHASE_RU[g.phase]||'')+' — ваш ход','info');
   $('statusDetail').textContent=toCall?`До колла ${fmt(toCall)}`:'Можно чек';
+  startTimer();
 }
 
-/* ── deal animation sequence ── */
 async function startHand(){
-  if(busy) return;
+  if(busy||!balanceLoaded) return;
+  if(balance<BB){
+    setStatus('Нужно минимум '+BB+' 💎','loss');
+    return;
+  }
   busy=true;
+  stopTimer();
+  logLines=[];$('log').innerHTML='';
   $('startOverlay').style.display='none';
   $('dealHint').style.display='block';
   $('dealHint').textContent='Дилер тасует колоду…';
@@ -367,179 +426,214 @@ async function startHand(){
   $('raiseRow').style.display='none';
 
   const deck=newDeck();
-  const playerStack=g?g.playerStack:START_STACK;
-  if(playerStack<BB){
-    setStatus('Недостаточно фишек','loss');
-    $('startOverlay').style.display='flex';
-    busy=false; return;
-  }
-
+  // playerStack for the hand starts as current balance
   g={
     deck,
-    playerHole:[], dealerHole:[], board:[],
-    playerStack, dealerStack:999999,
-    playerBet:0, dealerBet:0,
-    pot:0, currentBet:0, minRaise:BB,
-    phase:'deal', toAct:null, handOver:false,
-    playerShow:null, dealerShow:null,
-    playerFolded:false
+    playerHole:[],dealerHole:[],board:[],
+    playerStack:balance,
+    playerBet:0,dealerBet:0,
+    pot:0,currentBet:0,minRaise:BB,
+    phase:'deal',toAct:null,handOver:false,
+    playerShow:null,dealerShow:null,
+    invested:0 // total player put into pot this hand
   };
   render();
-  await sleep(500);
+  await sleep(400);
 
-  // Dealer posts blinds conceptually: player posts BB to start
   $('dealHint').textContent='Дилер раздаёт карты…';
   setStatus('Раздача','info');
+  addLog('Дилер раздаёт карты','dealer');
 
-  // Deal player 1, dealer 1, player 2, dealer 2
-  g.playerHole.push(deck.pop()); render(); await sleep(280);
-  g.dealerHole.push(deck.pop()); render(); await sleep(280);
-  g.playerHole.push(deck.pop()); render(); await sleep(280);
-  g.dealerHole.push(deck.pop()); render(); await sleep(350);
+  g.playerHole.push(deck.pop());render();await sleep(250);
+  g.dealerHole.push(deck.pop());render();await sleep(250);
+  g.playerHole.push(deck.pop());render();await sleep(250);
+  g.dealerHole.push(deck.pop());render();await sleep(300);
 
-  // Post blinds: player SB-style ante as BB for heads-up simplicity
-  // Heads-up: dealer is BB, player is SB (acts first preflop)
-  const pSB=Math.min(SB,g.playerStack);
-  g.playerStack-=pSB; g.playerBet=pSB;
-  g.dealerBet=BB; // dealer covers BB from infinite stack
-  g.pot=0;
+  // Heads-up blinds: player posts SB, dealer posts BB
+  // Player is first to act preflop
+  const sbAmt=Math.min(SB,g.playerStack);
+  g.playerStack-=sbAmt;
+  g.playerBet=sbAmt;
+  g.invested+=sbAmt;
+  g.dealerBet=BB;
   g.currentBet=BB;
   g.minRaise=BB;
   g.phase='preflop';
   g.toAct='player';
   $('dealHint').style.display='none';
+  addLog(`Вы поставили SB ${fmt(sbAmt)}`,'you');
+  addLog(`Дилер поставил BB ${fmt(BB)}`,'dealer');
   render();
-  setStatus('Префлоп — ваш ход','info');
   busy=false;
-  updateActions();
+  showActions();
 }
 
-async function playerAction(type,raiseTo){
-  if(!g||busy||g.handOver||g.toAct!=='player') return;
+async function playerAction(type,raiseTo,fromTimer){
+  if(!g||g.handOver||g.toAct!=='player') return;
+  if(busy&&!fromTimer) return;
   busy=true;
-  const toCall=g.currentBet-g.playerBet;
+  stopTimer();
+  $('actions').style.display='none';
+  $('raiseRow').style.display='none';
+
+  const toCall=Math.max(0,g.currentBet-g.playerBet);
 
   if(type==='fold'){
-    g.playerFolded=true;
     g.handOver=true;
-    // dealer wins pot
-    const won=g.pot+g.playerBet+g.dealerBet;
-    g.pot=0; g.playerBet=0; g.dealerBet=0;
+    const lost=g.invested; // already deducted from stack via bets
+    // remaining bets go to pot conceptually — dealer wins
+    g.pot+=g.playerBet+g.dealerBet;
+    g.playerBet=0;g.dealerBet=0;
+    const potWon=g.pot;g.pot=0;
+    addLog(fromTimer?'⏱ Автофолд':'Вы: фолд','you');
     setStatus('Фолд · Дилер забирает банк','loss');
-    $('statusDetail').textContent='−'+fmt(won-g.dealerBet);
+    $('statusDetail').textContent='−'+fmt(lost);
+    // balance already reduced as chips left playerStack; sync: balance should equal playerStack
+    await settleBalance(g.playerStack-balance); // net change from start-of-hand balance
+    // actually simpler: set balance to playerStack (chips left)
+    // invested already left the stack
+    balance=g.playerStack;
+    await settleBalance(0); // force write current
+    // fix settle: write absolute
+    await writeBalance(g.playerStack);
     render();
     busy=false;
     endPrompt();
     return;
   }
+
   if(type==='check'){
-    if(toCall>0){busy=false;return}
+    if(toCall>0){busy=false;showActions();return}
+    addLog('Вы: чек','you');
   } else if(type==='call'){
     const amt=Math.min(toCall,g.playerStack);
-    g.playerStack-=amt; g.playerBet+=amt;
+    g.playerStack-=amt;
+    g.playerBet+=amt;
+    g.invested+=amt;
+    addLog('Вы: колл '+fmt(amt),'you');
   } else if(type==='raise'){
-    const target=raiseTo??(g.currentBet+g.minRaise);
+    const target=Number(raiseTo)|| (g.currentBet+g.minRaise);
     const need=Math.max(0,target-g.playerBet);
     const amt=Math.min(need,g.playerStack);
-    g.playerStack-=amt; g.playerBet+=amt;
+    g.playerStack-=amt;
+    g.playerBet+=amt;
+    g.invested+=amt;
     if(g.playerBet>g.currentBet){
-      g.minRaise=g.playerBet-g.currentBet;
+      g.minRaise=Math.max(BB,g.playerBet-g.currentBet);
       g.currentBet=g.playerBet;
     }
+    addLog('Вы: рейз до '+fmt(g.playerBet),'you');
   }
 
   render();
-  // Dealer responds
-  await sleep(400);
+  await sleep(350);
   await dealerAct();
+  // dealerAct will either return turn to player or advance/end
   busy=false;
+  if(g&&!g.handOver&&g.toAct==='player') showActions();
+}
+
+async function writeBalance(abs){
+  balance=Math.max(0,abs);
+  $('balance').textContent=fmt(balance);
+  $('playerStack').textContent='💎 '+fmt(balance);
+  if(!sb||!player.id) return;
+  try{
+    await sb.from('player_ratings').upsert({
+      telegram_user_id:player.id,
+      name:player.name,
+      total_score:balance,
+      updated_at:new Date().toISOString()
+    },{onConflict:'telegram_user_id'});
+  }catch(e){console.error(e)}
 }
 
 async function dealerAct(){
   if(!g||g.handOver) return;
   g.toAct='dealer';
   setStatus('Дилер думает…','info');
-  $('actions').style.display='none';
-  await sleep(500+Math.random()*400);
+  await sleep(450+Math.random()*350);
 
-  const toCall=g.currentBet-g.dealerBet;
+  const toCall=Math.max(0,g.currentBet-g.dealerBet);
   const hand=bestHand(g.dealerHole,g.board);
   const strength=hand.rank;
   const rand=Math.random();
 
-  // simple dealer policy
   if(toCall===0){
     // check or bet
-    if(strength>=3||(g.phase!=='preflop'&&rand<0.25)){
-      const betTo=g.currentBet+Math.max(BB,g.minRaise);
+    if(strength>=3||(g.phase!=='preflop'&&strength>=1&&rand<0.3)||rand<0.12){
+      const raiseBy=Math.max(BB,g.minRaise)*(strength>=4?2:1);
+      const betTo=g.currentBet+raiseBy;
       g.dealerBet=betTo;
       g.minRaise=betTo-g.currentBet;
       g.currentBet=betTo;
+      addLog('Дилер: ставка '+fmt(betTo),'dealer');
       setStatus('Дилер ставит '+fmt(betTo),'info');
       render();
       g.toAct='player';
-      updateActions();
       return;
     }
-    // check -> advance street
+    addLog('Дилер: чек','dealer');
     setStatus('Дилер чек','info');
-    await sleep(300);
+    await sleep(250);
     await nextStreet();
     return;
   }
 
-  // facing a bet
-  if(strength>=4||(strength>=2&&rand>0.35)||(strength>=1&&toCall<=BB)){
-    // call
+  // facing bet
+  if(strength>=4||(strength>=2&&rand>0.3)||(strength>=1&&toCall<=BB)||rand<0.1){
+    // call (dealer infinite stack)
     g.dealerBet=g.currentBet;
+    addLog('Дилер: колл','dealer');
     setStatus('Дилер колл','info');
     render();
-    await sleep(300);
+    await sleep(250);
     await nextStreet();
     return;
   }
-  if(strength>=5||rand<0.08){
-    // rare raise
+  if(strength>=5&&rand<0.4){
     const betTo=g.currentBet+Math.max(BB*2,g.minRaise);
     g.dealerBet=betTo;
     g.minRaise=betTo-g.currentBet;
     g.currentBet=betTo;
-    setStatus('Дилер рейз до '+fmt(betTo),'info');
+    addLog('Дилер: рейз до '+fmt(betTo),'dealer');
+    setStatus('Дилер рейз','info');
     render();
     g.toAct='player';
-    updateActions();
     return;
   }
-  // fold
+
+  // dealer fold
   g.handOver=true;
-  const won=g.pot+g.playerBet+g.dealerBet;
+  g.pot+=g.playerBet+g.dealerBet;
+  g.playerBet=0;g.dealerBet=0;
+  const won=g.pot;
   g.playerStack+=won;
-  g.pot=0; g.playerBet=0; g.dealerBet=0;
-  setStatus('Дилер сфолдил · Вы забираете банк','win');
+  g.pot=0;
+  addLog('Дилер: фолд','dealer');
+  setStatus('Дилер сфолдил · +'+fmt(won),'win');
   $('statusDetail').textContent='+'+fmt(won);
+  await writeBalance(g.playerStack);
   render();
-  endPrompt();
 }
 
 async function nextStreet(){
-  // collect bets to pot
   g.pot+=g.playerBet+g.dealerBet;
-  g.playerBet=0; g.dealerBet=0;
-  g.currentBet=0; g.minRaise=BB;
+  g.playerBet=0;g.dealerBet=0;
+  g.currentBet=0;g.minRaise=BB;
 
   if(g.phase==='preflop'){
     g.phase='flop';
     setStatus('Дилер открывает флоп…','info');
     $('dealHint').style.display='block';
     $('dealHint').textContent='Дилер выкладывает флоп';
-    await sleep(400);
-    g.board.push(g.deck.pop()); render(); await sleep(220);
-    g.board.push(g.deck.pop()); render(); await sleep(220);
-    g.board.push(g.deck.pop()); render(); await sleep(300);
+    addLog('Флоп','sys');
+    await sleep(350);
+    g.board.push(g.deck.pop());render();await sleep(200);
+    g.board.push(g.deck.pop());render();await sleep(200);
+    g.board.push(g.deck.pop());render();await sleep(250);
     $('dealHint').style.display='none';
     g.toAct='player';
-    setStatus('Флоп — ваш ход','info');
-    updateActions();
     return;
   }
   if(g.phase==='flop'){
@@ -547,12 +641,11 @@ async function nextStreet(){
     setStatus('Дилер открывает тёрн…','info');
     $('dealHint').style.display='block';
     $('dealHint').textContent='Дилер выкладывает тёрн';
-    await sleep(400);
-    g.board.push(g.deck.pop()); render(); await sleep(300);
+    addLog('Тёрн','sys');
+    await sleep(350);
+    g.board.push(g.deck.pop());render();await sleep(250);
     $('dealHint').style.display='none';
     g.toAct='player';
-    setStatus('Тёрн — ваш ход','info');
-    updateActions();
     return;
   }
   if(g.phase==='turn'){
@@ -560,12 +653,11 @@ async function nextStreet(){
     setStatus('Дилер открывает ривер…','info');
     $('dealHint').style.display='block';
     $('dealHint').textContent='Дилер выкладывает ривер';
-    await sleep(400);
-    g.board.push(g.deck.pop()); render(); await sleep(300);
+    addLog('Ривер','sys');
+    await sleep(350);
+    g.board.push(g.deck.pop());render();await sleep(250);
     $('dealHint').style.display='none';
     g.toAct='player';
-    setStatus('Ривер — ваш ход','info');
-    updateActions();
     return;
   }
   if(g.phase==='river'){
@@ -577,46 +669,61 @@ async function showdown(){
   g.phase='showdown';
   g.handOver=true;
   g.toAct=null;
+  stopTimer();
   setStatus('Шоудаун…','info');
   $('dealHint').style.display='block';
   $('dealHint').textContent='Дилер открывает карты';
+  addLog('Шоудаун','sys');
   await sleep(500);
   $('dealHint').style.display='none';
 
   g.playerShow=bestHand(g.playerHole,g.board);
   g.dealerShow=bestHand(g.dealerHole,g.board);
+  g.pot+=g.playerBet+g.dealerBet;
+  g.playerBet=0;g.dealerBet=0;
+  const pot=g.pot;g.pot=0;
   render();
-  await sleep(600);
-
-  const pot=g.pot+g.playerBet+g.dealerBet;
-  g.playerBet=0; g.dealerBet=0; g.pot=0;
+  await sleep(500);
 
   if(g.playerShow.score>g.dealerShow.score){
     g.playerStack+=pot;
+    addLog('Победа: '+g.playerShow.name+' · +'+fmt(pot),'you');
     setStatus('Победа · '+g.playerShow.name,'win');
     $('statusDetail').textContent='+'+fmt(pot);
-  } else if(g.playerShow.score<g.dealerShow.score){
-    setStatus('Поражение · у дилера '+g.dealerShow.name,'loss');
-    $('statusDetail').textContent='−'+fmt(pot);
-  } else {
-    g.playerStack+=Math.floor(pot/2);
+  }else if(g.playerShow.score<g.dealerShow.score){
+    addLog('Поражение: у дилера '+g.dealerShow.name,'dealer');
+    setStatus('Поражение · '+g.dealerShow.name,'loss');
+    $('statusDetail').textContent='−'+fmt(g.invested);
+  }else{
+    const half=Math.floor(pot/2);
+    g.playerStack+=half;
+    addLog('Ничья · пуш','sys');
     setStatus('Ничья · '+g.playerShow.name,'info');
     $('statusDetail').textContent='Пуш';
   }
+  await writeBalance(g.playerStack);
   render();
-  endPrompt();
 }
 
 function endPrompt(){
+  stopTimer();
   $('actions').style.display='none';
   $('raiseRow').style.display='none';
   setTimeout(()=>{
-    if(confirm('Ещё раздачу?')) startHand();
+    const again=balance>=BB&&confirm('Ещё раздачу?\nБаланс: 💎 '+fmt(balance));
+    if(again) startHand();
     else{
       $('startOverlay').style.display='flex';
       $('dealHint').style.display='none';
+      if(balance<BB){
+        $('startBtn').disabled=true;
+        $('startBtn').textContent='Мало кристаллов';
+      }else{
+        $('startBtn').disabled=false;
+        $('startBtn').textContent='Начать раздачу';
+      }
     }
-  },1600);
+  },1400);
 }
 
 $('startBtn').onclick=()=>startHand();
@@ -625,7 +732,7 @@ $('checkBtn').onclick=()=>playerAction('check');
 $('callBtn').onclick=()=>playerAction('call');
 $('raiseBtn').onclick=()=>playerAction('raise',Number($('raiseSlider').value));
 $('raiseSlider').oninput=()=>{$('raiseAmt').textContent=fmt($('raiseSlider').value)};
-$('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='poker.html'+location.search};
+$('backBtn').onclick=()=>{stopTimer();if(history.length>1)history.back();else location.href='poker.html'+location.search};
 
 resolvePlayer();
 loadBalance();
