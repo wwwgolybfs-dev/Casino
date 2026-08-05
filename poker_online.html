@@ -289,14 +289,79 @@ async function loadBalance(){
 }
 /** Stack for seat: min(balance, MAX_BUYIN). Guests / no rating → START_STACK. Never more than balance. */
 function seatBuyIn(){
-  if (balance > 0) return Math.max(0, Math.min(balance, MAX_BUYIN));
-  return START_STACK;
+  // Guests (no telegram id) get practice chips; real users only what they have
+  if (!player.id || String(player.id).startsWith('g_')) return START_STACK;
+  return Math.max(0, Math.min(Number(balance) || 0, MAX_BUYIN));
 }
 function clampBet(amount, stack){
   const a = Math.floor(Number(amount) || 0);
   const s = Math.max(0, Math.floor(Number(stack) || 0));
   return Math.max(0, Math.min(a, s));
 }
+
+/** last handId we already wrote to player_ratings (avoid double sync) */
+let lastScoreSyncHandId = null;
+
+/**
+ * Apply delta to total_score for the local player only.
+ * delta = stack_now - stack_at_hand_start
+ */
+async function applyScoreDelta(delta, handId){
+  if (!sb || !player.id || String(player.id).startsWith('g_')) return;
+  if (!delta) return;
+  if (handId && handId === lastScoreSyncHandId) return;
+  try {
+    await loadBalance();
+    const next = Math.max(0, Math.floor(balance + delta));
+    const { error } = await sb.from('player_ratings')
+      .update({ total_score: next })
+      .eq('telegram_user_id', player.id);
+    if (error) throw error;
+    balance = next;
+    $('balance').textContent = fmt(balance);
+    if (handId) lastScoreSyncHandId = handId;
+    console.log('[score] delta', delta, '→', next);
+  } catch (e) {
+    console.error('[score] sync failed', e);
+  }
+}
+
+/**
+ * After hand ends: settle local player's total_score from stack delta.
+ * Safe to call from onState on every client — each updates only themselves.
+ */
+async function settleMyScoreIfNeeded(){
+  if (!state || !state.handOver) return;
+  if (!sb || !player.id || String(player.id).startsWith('g_')) return;
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (!me) return;
+  if (me.stackAtHandStart == null || me.stackAtHandStart === undefined) return;
+  const handId = state.handId || null;
+  if (handId && handId === lastScoreSyncHandId) return;
+  const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
+  // Clear local marker so we don't re-apply if onState fires again before push
+  me.stackAtHandStart = null;
+  await applyScoreDelta(delta, handId);
+}
+
+/**
+ * On leave mid-session: settle open hand delta if any, otherwise no-op.
+ * Chips left on table are already reflected in stack; if hand in progress,
+ * settle vs stackAtHandStart; if between hands, stack is "house money" still
+ * counted in total_score via previous settles — no extra write needed
+ * (buy-in never deducted separately).
+ */
+async function settleOnLeave(){
+  if (!state) return;
+  const me = (state.players || []).find(p => p.id === player.id);
+  if (!me) return;
+  if (me.stackAtHandStart != null && me.stackAtHandStart !== undefined) {
+    const delta = Math.floor(me.stack || 0) - Math.floor(me.stackAtHandStart);
+    me.stackAtHandStart = null;
+    await applyScoreDelta(delta, state.handId || ('leave_' + Date.now()));
+  }
+}
+
 function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
 function setStatus(t,c){$('status').textContent=t;$('status').className='status-text '+(c||'info')}
 function newDeck(){
@@ -541,6 +606,8 @@ async function leaveRoom(opts={}){
   if(leaving||!roomId)return;
   leaving=true;stopHeartbeat();
   try{
+    // Settle open hand score before leaving the table
+    try { await settleOnLeave(); } catch (e) { console.error(e); }
     if(sb&&!String(roomId).startsWith('local')&&state){
       const players=(state.players||[]).filter(p=>p.id!==player.id);
       state.players=players;
@@ -656,6 +723,18 @@ function onState(){
   }else $('hostBar').style.display='none';
 
   updateActionsUI();
+
+  // Write win/loss to player_ratings.total_score (each client updates only self)
+  if (state.handOver || state.phase === 'showdown') {
+    settleMyScoreIfNeeded().then(() => {
+      // After settle, if broke, top-up from remaining balance so next hand can start
+      const me = (state.players || []).find(p => p.id === player.id);
+      if (me && (me.stack || 0) <= 0 && balance > 0) {
+        me.stack = seatBuyIn();
+        if (me.stack > 0) pushState(roomStatusFromState(state));
+      }
+    });
+  }
 }
 
 function renderBoard(){
@@ -986,17 +1065,17 @@ function advanceStreet(){
   pushState();
 }
 
-function hostStartHand(){
+async function hostStartHand(){
   if (!isHost || !state) return;
   const allPlayers = state.players || [];
   if (allPlayers.length < 2) { setStatus('Нужно 2+ игрока за столом', 'loss'); return; }
 
-  // Rebuy: seat with 0 chips gets a fresh buy-in so heads-up doesn't softlock
+  await loadBalance();
+
+  // Local host can top-up own zero stack from balance; others keep 0 until they rebuy on their client.
   allPlayers.forEach(p => {
-    if ((p.stack || 0) <= 0) {
-      // Only auto-rebuy known amounts; remote players get START_STACK (their client set initial stack on join)
-      if (p.id === player.id) p.stack = seatBuyIn();
-      else if ((p.stack || 0) <= 0) p.stack = START_STACK;
+    if ((p.stack || 0) <= 0 && p.id === player.id) {
+      p.stack = seatBuyIn();
     }
   });
 
@@ -1041,6 +1120,8 @@ function hostStartHand(){
     p.acted = false;
     p.lastAction = null;
     p.lastSeen = Date.now();
+    // Snapshot BEFORE blinds — win/loss delta includes blind losses
+    p.stackAtHandStart = p.stack || 0;
   });
 
   const post = (idx, amt, label) => {
@@ -1086,6 +1167,7 @@ function hostStartHand(){
     toAct,
     actionCount: 0,
     handOver: false,
+    handId: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     dealMsg: 'Дилер раздал карты'
   };
   pushState('playing');
