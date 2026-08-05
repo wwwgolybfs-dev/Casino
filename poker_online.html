@@ -1,841 +1,822 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Онлайн Покер - Casino</title>
-    <style>
-        :root {
-            --table-color: #35654d;
-            --table-border: #4e342e;
-            --card-bg: #ffffff;
-            --chip-red: #d32f2f;
-            --chip-blue: #1976d2;
-            --chip-green: #388e3c;
-            --ui-bg: rgba(0, 0, 0, 0.85);
-            --text-gold: #ffd700;
-            --btn-fold: #d32f2f;
-            --btn-check: #fbc02d;
-            --btn-call: #1976d2;
-            --btn-raise: #388e3c;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker Bet — Poker Online</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#06080a;--panel:#0c1210;--panel2:#111a16;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--text:#f0f5ee;--muted:#7a9272;--gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.2);--green:#18d890;--red:#e04050;--win:#2ecc8e;--loss:#e05060;--blue:#4a90e8;--felt:#0a2e1c}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{overflow-x:hidden;background:radial-gradient(ellipse 100% 55% at 50% 0,rgba(18,80,42,.22),transparent 55%),var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.app{width:min(100%,440px);margin:auto;padding:8px 10px 18px;min-height:100dvh;display:flex;flex-direction:column}
+.top{height:42px;display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0}
+.back{width:36px;height:36px;border:1px solid var(--line2);background:rgba(0,0,0,.4);border-radius:11px;display:grid;place-items:center;font-size:16px}
+.title{font-size:14px;font-weight:900}.title span{color:var(--gold)}
+.balance{margin-left:auto;background:rgba(0,0,0,.5);border:1px solid rgba(232,200,114,.22);border-radius:11px;padding:6px 12px;font-size:11px;font-weight:900}
+.balance b{color:var(--gold)}
+.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,rgba(12,20,14,.95),rgba(8,14,10,.95));border-radius:12px;margin-bottom:8px;flex-shrink:0}
+.status-text{font-size:11px;font-weight:900;color:var(--muted)}
+.status-text.info{color:var(--gold)}.status-text.win{color:var(--win)}.status-text.loss{color:var(--loss)}
+.status-detail{margin-left:auto;color:var(--muted);font-size:10px;font-weight:700}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: white;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
+/* LOBBY */
+.lobby{display:flex;flex-direction:column;gap:12px}
+.card-box{border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,var(--panel),var(--panel2));padding:16px}
+.card-box h3{font-size:14px;font-weight:800;margin-bottom:8px}
+.card-box p{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4}
+.row{display:flex;gap:8px}
+.input{flex:1;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 12px;font-size:13px;font-weight:700;text-transform:uppercase}
+.btn{height:42px;border-radius:12px;padding:0 16px;font-size:12px;font-weight:900;white-space:nowrap}
+.btn.primary{background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;box-shadow:0 4px 14px rgba(18,184,138,.25)}
+.btn.secondary{background:linear-gradient(135deg,#3a82f0,#1a4a9a);color:#fff}
+.btn.ghost{border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.btn:disabled{opacity:.4}
+.rooms{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto}
+.room{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer}
+.room:active{border-color:var(--gold)}
+.room .code{font-weight:900;color:var(--gold);font-size:13px;min-width:56px}
+.room .meta{flex:1;font-size:11px;color:var(--muted)}
+.room .join{font-size:11px;font-weight:800;color:var(--green)}
 
-        /* Стол */
-        .poker-table {
-            position: relative;
-            width: 800px;
-            height: 400px;
-            background: radial-gradient(circle, #4caf50 0%, var(--table-color) 80%);
-            border: 15px solid var(--table-border);
-            border-radius: 200px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
-            margin-bottom: 20px;
-        }
+/* TABLE */
+.table-wrap{display:none;position:relative;margin-bottom:10px;flex:1}
+.table{
+  position:relative;border-radius:30px;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 38%,rgba(18,100,56,.5),transparent 65%),
+    radial-gradient(ellipse 100% 80% at 50% 60%,#0c3320,#041510);
+  border:4px solid #1d6644;
+  box-shadow:
+    inset 0 0 50px rgba(0,0,0,.4),
+    0 0 0 6px rgba(4,14,8,.85),
+    0 0 0 8px #2a8a5a,
+    0 12px 36px rgba(0,0,0,.55);
+  min-height:420px;padding:14px 10px 16px;overflow:hidden;
+}
+.table::before{
+  content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 35% at 50% 20%,rgba(255,255,255,.04),transparent 60%);
+}
+.table-rim{display:none}
 
-        .community-cards {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            gap: 10px;
-            height: 90px;
-        }
+.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:6px}
+.dealer-avatar{
+  width:50px;height:50px;border-radius:50%;margin:0 auto;
+  background:linear-gradient(145deg,#1a2840,#0d1620);
+  border:2.5px solid var(--blue);box-shadow:0 0 0 3px rgba(74,144,232,.2),0 4px 12px rgba(0,0,0,.4);
+  display:grid;place-items:center;font-size:22px;position:relative;
+}
+.dealer-avatar .badge{position:absolute;bottom:-4px;right:-8px;background:var(--blue);color:#fff;font-size:7px;font-weight:900;border-radius:5px;padding:2px 5px}
+.dealer-name{font-size:10px;font-weight:900;color:rgba(255,255,255,.75);margin-top:5px}
+.deal-msg{font-size:11px;font-weight:800;color:rgba(255,255,255,.35);min-height:16px;margin-top:2px}
 
-        .pot-display {
-            position: absolute;
-            top: 35%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.6);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            color: var(--text-gold);
-            border: 1px solid var(--text-gold);
-            font-size: 1.1em;
-        }
+.board-zone{position:relative;z-index:2;text-align:center;margin:8px 0 4px}
+.board-label{font-size:9px;font-weight:900;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.board{display:flex;justify-content:center;gap:6px;min-height:58px;align-items:center}
+.pot{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.5);border:1.5px solid rgba(232,200,114,.3);border-radius:12px;padding:5px 14px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 
-        /* Карты */
-        .card {
-            width: 60px;
-            height: 84px;
-            background: var(--card-bg);
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            position: relative;
-            user-select: none;
-        }
+.seats-row{display:flex;justify-content:space-around;align-items:flex-end;gap:4px;margin-top:10px;position:relative;z-index:2;min-height:140px}
+.seat{width:118px;text-align:center;position:relative}
+.seat .avatar-wrap{position:relative;width:44px;margin:0 auto 4px;padding-top:16px}
+.seat .avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(145deg,#2a3020,#141a0d);border:2.5px solid var(--line2);
+  display:grid;place-items:center;font-size:17px;position:relative;overflow:hidden;
+  box-shadow:0 3px 10px rgba(0,0,0,.4);
+}
+.seat .avatar img.face{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.seat .hat{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:38px;height:26px;z-index:3;pointer-events:none;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.seat .hat img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.seat .hat .hat-emoji{font-size:15px;line-height:1;text-shadow:0 2px 3px rgba(0,0,0,.5)}
+.seat.me .avatar{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow),0 4px 12px rgba(0,0,0,.4)}
+.seat.active .avatar{border-color:var(--green);box-shadow:0 0 0 3px rgba(24,216,144,.28),0 0 16px rgba(24,216,144,.15)}
+.seat.folded{opacity:.38;filter:grayscale(.4)}
+.seat.empty .avatar{opacity:.22;border-style:dashed}
+.seat .name{font-size:10px;font-weight:900;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;margin:0 auto}
+.seat .stack{font-size:11px;font-weight:900;color:var(--gold);margin-top:1px}
+.seat .bet-pill{font-size:10px;font-weight:900;color:var(--gold);background:rgba(0,0,0,.55);border:1px solid rgba(232,200,114,.3);border-radius:9px;padding:3px 8px;margin-top:3px;display:inline-block}
+.seat .bet-pill:empty{display:none}
+.seat .cards{display:flex;justify-content:center;gap:4px;margin-top:5px;min-height:50px}
+.seat .role{position:absolute;top:-4px;right:-8px;font-size:7px;font-weight:900;background:var(--gold);color:#1a1408;border-radius:4px;padding:2px 4px;z-index:2}
+.seat .hand-name{font-size:8px;font-weight:800;color:var(--green);margin-top:2px;min-height:12px}
 
-        .card.red { color: #d32f2f; }
-        .card.black { color: #212121; }
-        
-        .card-back {
-            background: repeating-linear-gradient(
-                45deg,
-                #1565c0,
-                #1565c0 10px,
-                #1976d2 10px,
-                #1976d2 20px
-            );
-            border: 2px solid white;
-        }
+/* action bubble over seat */
+.seat .action-bubble{
+  position:absolute;left:50%;top:-2px;transform:translateX(-50%);
+  z-index:10;pointer-events:none;
+  padding:4px 10px;border-radius:10px;
+  font-size:11px;font-weight:900;white-space:nowrap;line-height:1.2;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+  animation:bubbleIn .28s cubic-bezier(.2,1.2,.4,1);
+}
+.seat .action-bubble.fold{background:linear-gradient(135deg,#5a2030,#3a1018);color:#ff8a9a;border:1px solid rgba(255,100,120,.45)}
+.seat .action-bubble.check{background:linear-gradient(135deg,#2a3540,#1a222c);color:#a0b8c8;border:1px solid rgba(160,180,200,.35)}
+.seat .action-bubble.call{background:linear-gradient(135deg,#1a4a9a,#123570);color:#9ec8ff;border:1px solid rgba(100,160,255,.5)}
+.seat .action-bubble.raise{background:linear-gradient(135deg,#8a5a18,#5a3a08);color:var(--gold);border:1px solid rgba(232,200,114,.55)}
+.seat .action-bubble.blind{background:linear-gradient(135deg,#2a2a18,#1a1a10);color:rgba(232,200,114,.9);border:1px solid rgba(232,200,114,.3)}
+@keyframes bubbleIn{from{opacity:0;transform:translateX(-50%) translateY(8px) scale(.85)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 
-        .card-rank { font-size: 20px; line-height: 1; }
-        .card-suit { font-size: 28px; line-height: 1; }
+.card{width:38px;height:54px;border-radius:7px;background:linear-gradient(160deg,#fff,#f0f4f0);box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;font-size:11px;font-weight:900;line-height:1;position:relative;animation:dealIn .28s ease-out}
+.card .suit{font-size:13px;align-self:center}
+.card .rank.bot{transform:rotate(180deg);align-self:flex-end}
+.card.red{color:#c43b4e}.card.black{color:#1a1e28}
+.card.back{background:linear-gradient(145deg,#1a3a5c,#0d2240);border:1.5px solid rgba(232,200,114,.35);color:transparent}
+.seat.me .card{width:44px;height:62px;font-size:12px}
+.seat.me .card .suit{font-size:15px}
+@keyframes dealIn{from{opacity:0;transform:translateY(-12px) scale(.88)}to{opacity:1;transform:none}}
 
-        /* Игроки */
-        .player-seat {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .avatar {
-            width: 60px;
-            height: 60px;
-            background: #333;
-            border-radius: 50%;
-            border: 3px solid #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            position: relative;
-            z-index: 2;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        }
-
-        .player-info {
-            background: rgba(0,0,0,0.8);
-            padding: 4px 8px;
-            border-radius: 10px;
-            text-align: center;
-            margin-top: -10px;
-            z-index: 3;
-            border: 1px solid #555;
-            min-width: 80px;
-        }
-
-        .player-name { font-size: 12px; color: #ccc; }
-        .player-stack { font-size: 14px; font-weight: bold; color: var(--text-gold); }
-        .player-action { 
-            position: absolute; 
-            top: -20px; 
-            background: #fff; 
-            color: #000; 
-            padding: 2px 8px; 
-            border-radius: 10px; 
-            font-size: 12px; 
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-        }
-        .player-action.visible { opacity: 1; }
-
-        .active-turn .avatar { border-color: var(--text-gold); box-shadow: 0 0 15px var(--text-gold); }
-        .dealer-button {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            color: black;
-            border-radius: 50%;
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid black;
-            z-index: 4;
-        }
-
-        /* Позиции игроков (абсолютные) */
-        .seat-0 { bottom: -40px; left: 50%; transform: translateX(-50%); } /* Hero */
-        .seat-1 { bottom: 20px; left: -60px; }
-        .seat-2 { top: 20px; left: -60px; }
-        .seat-3 { top: -40px; left: 50%; transform: translateX(-50%); }
-        .seat-4 { top: 20px; right: -60px; }
-        .seat-5 { bottom: 20px; right: -60px; }
-
-        .hero-cards {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        /* Интерфейс управления */
-        .controls-area {
-            background: var(--ui-bg);
-            width: 100%;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            border-top: 2px solid var(--text-gold);
-            box-sizing: border-box;
-        }
-
-        .game-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-            text-transform: uppercase;
-            transition: transform 0.1s, filter 0.2s;
-            min-width: 100px;
-        }
-
-        .game-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .game-btn:active { transform: translateY(0); }
-        .game-btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.5; }
-
-        .btn-fold { background: var(--btn-fold); }
-        .btn-check { background: var(--btn-check); color: #333; }
-        .btn-call { background: var(--btn-call); }
-        .btn-raise { background: var(--btn-raise); }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #333;
-            padding: 5px 15px;
-            border-radius: 5px;
-        }
-        
-        input[type=range] { accent-color: var(--text-gold); }
-
-        .log-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 250px;
-            height: 150px;
-            background: rgba(0,0,0,0.7);
-            overflow-y: auto;
-            font-size: 12px;
-            padding: 10px;
-            border-radius: 5px;
-            pointer-events: none;
-        }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #444; padding-bottom: 2px; }
-        .log-highlight { color: var(--text-gold); }
-
-        /* Адаптив */
-        @media (max-width: 850px) {
-            .poker-table { transform: scale(0.8); margin-bottom: 60px; }
-            .controls-area { flex-wrap: wrap; position: fixed; bottom: 0; }
-            .hero-cards { bottom: 140px; }
-        }
-    </style>
+.bottom-info{display:none;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 2px}
+.phase{font-size:12px;font-weight:900;color:var(--gold)}
+.blinds{font-size:10px;color:var(--muted);font-weight:700}
+.actions{display:none;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+.act{height:48px;border-radius:13px;font-size:10px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line);background:var(--panel);transition:transform .1s}
+.act:active{transform:scale(.96)}
+.act:disabled{opacity:.3}.act.fold{background:linear-gradient(160deg,#3a1420,#220a10);border-color:rgba(200,50,60,.3);color:rgba(230,100,100,.95)}
+.act.check{background:linear-gradient(160deg,#1e2a24,#121a16)}
+.act.call{background:linear-gradient(160deg,#1a4a9a,#123570);border-color:rgba(74,144,232,.3)}
+.act.raise{background:linear-gradient(160deg,#3a2a08,#201508);border-color:rgba(232,200,114,.3);color:var(--gold)}
+.raise-row{display:none;gap:8px;align-items:center;margin-bottom:8px}
+.raise-row input{flex:1;accent-color:var(--gold);height:4px}
+.raise-amt{font-size:13px;font-weight:900;color:var(--gold);min-width:60px;text-align:right}
+.note{text-align:center;color:#3a4a3a;font-size:9px;margin-top:auto;padding-top:8px;font-weight:600}
+.host-bar{display:none;margin-bottom:8px}
+.host-bar .btn{width:100%}
+</style>
 </head>
 <body>
+<div class="app">
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Poker</span> · Online</div>
+    <div class="balance">💎 <b id="balance">—</b></div>
+  </header>
+  <div class="status">
+    <div class="status-text" id="status">Лобби</div>
+    <div class="status-detail" id="statusDetail">Онлайн</div>
+  </div>
 
-<div class="poker-table" id="table">
-    <div class="pot-display">Банк: <span id="potAmount">0</span> $</div>
-    <div class="community-cards" id="communityCards"></div>
-    
-    <!-- Игроки генерируются JS -->
-    <div id="playersContainer"></div>
-
-    <div class="hero-cards" id="heroCards"></div>
-</div>
-
-<div class="log-panel" id="gameLog"></div>
-
-<div class="controls-area">
-    <button class="game-btn btn-fold" id="btnFold" onclick="playerAction('fold')">Фолд</button>
-    <button class="game-btn btn-check" id="btnCheck" onclick="playerAction('check')">Чек</button>
-    <button class="game-btn btn-call" id="btnCall" onclick="playerAction('call')">Колл</button>
-    
-    <div class="slider-container">
-        <input type="range" id="raiseSlider" min="0" max="100" value="0" oninput="updateRaiseLabel()">
-        <span id="raiseLabel" style="min-width: 60px; text-align: right;">0 $</span>
+  <div class="lobby" id="lobby">
+    <div class="card-box">
+      <h3>Создать комнату</h3>
+      <p>Вы — хост. Дилер раздаёт карты. 2–3 игрока за столом.</p>
+      <button class="btn primary" id="createBtn" style="width:100%">Создать комнату</button>
     </div>
-    
-    <button class="game-btn btn-raise" id="btnRaise" onclick="playerAction('raise')">Повышение</button>
+    <div class="card-box">
+      <h3>Войти по коду</h3>
+      <div class="row">
+        <input class="input" id="codeInput" placeholder="Код" maxlength="6">
+        <button class="btn secondary" id="joinBtn">Войти</button>
+      </div>
+    </div>
+    <div class="card-box">
+      <h3>Открытые комнаты</h3>
+      <div class="rooms" id="roomsList"><div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Загрузка…</div></div>
+      <button class="btn ghost" id="refreshBtn" style="width:100%;margin-top:10px">Обновить</button>
+    </div>
+  </div>
+
+  <div class="host-bar" id="hostBar">
+    <button class="btn primary" id="startHandBtn">Начать раздачу</button>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <div class="table">
+      <div class="table-rim"></div>
+      <div class="dealer-zone">
+        <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
+        <div class="dealer-name">Дилер</div>
+        <div class="deal-msg" id="dealMsg"></div>
+      </div>
+      <div class="board-zone">
+        <div class="board-label">Общие карты</div>
+        <div class="board" id="board"></div>
+        <div class="pot" id="pot">Банк: 0</div>
+      </div>
+      <div class="seats-row" id="seats"></div>
+    </div>
+  </div>
+
+  <div class="bottom-info" id="bottomInfo">
+    <div class="phase" id="phaseLabel">—</div>
+    <div class="blinds" id="blindsLabel">Блайнды 10 / 20</div>
+  </div>
+  <div class="raise-row" id="raiseRow">
+    <input type="range" id="raiseSlider" min="20" max="1000" step="10" value="40">
+    <div class="raise-amt" id="raiseAmt">40</div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="act fold" id="foldBtn"><span>✕</span>Фолд</button>
+    <button class="act check" id="checkBtn"><span>✓</span>Чек</button>
+    <button class="act call" id="callBtn"><span>→</span>Колл</button>
+    <button class="act raise" id="raiseBtn"><span>↑</span>Рейз</button>
+  </div>
+  <div class="note">Дилер раздаёт · 2–3 игрока · Texas Hold'em · Supabase</div>
 </div>
 
 <script>
-    // --- КОНФИГУРАЦИЯ И СОСТОЯНИЕ ---
-    const SUITS = ['♠', '♥', '♦', '♣'];
-    const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    const VALUES = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14 };
-    
-    let deck = [];
-    let players = [];
-    let communityCards = [];
-    let pot = 0;
-    let currentBet = 0;
-    let dealerIdx = 0;
-    let activePlayerIdx = 0;
-    let gamePhase = 'preflop'; // preflop, flop, turn, river, showdown
-    let minRaise = 20; // Минимальное повышение
-    let bigBlind = 20;
-    let smallBlind = 10;
-    let lastAggressorIdx = -1;
-    let isGameActive = false;
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
 
-    // --- ИНИЦИАЛИЗАЦИЯ ---
-    function initGame() {
-        createPlayers();
-        renderTable();
-        startNewHand();
+const SUITS=['♠','♥','♦','♣'],RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const PHASE_RU={lobby:'Лобби',deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
+const SB=10,BB=20,START_STACK=1000,MAX_PLAYERS=3;
+const STALE_MS=45000; // игрок «ушёл», если нет heartbeat
+const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+const $=id=>document.getElementById(id);
+
+const HAT_IMAGES={
+  none:null,cowboy:'hats/hat_cowboy.svg',tophat:'hats/hat_tophat.svg',crown:'hats/hat_crown.svg',
+  wizard:'hats/hat_wizard.svg',party:'hats/hat_party.svg',pirate:'hats/hat_pirate.svg',
+  viking:'hats/hat_viking.svg',chef:'hats/hat_chef.svg',detective:'hats/hat_detective.svg'
+};
+const HAT_EMOJIS={none:'',cowboy:'🤠',tophat:'🎩',crown:'👑',wizard:'🧙',party:'🥳',pirate:'🏴‍☠️',viking:'🪖',chef:'👨‍🍳',detective:'🕵️'};
+
+const params=new URLSearchParams(location.search);
+let player={id:params.get('uid'),name:params.get('name')||'Игрок',photo:null,hatId:'none'};
+let balance=0,roomId=null,roomCode=null,isHost=false,channel=null,state=null;
+let heartbeatTimer=null,leaving=false;
+
+function resolvePlayer(){
+  try{const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();
+    const u=tg.initDataUnsafe?.user;
+    if(u?.id)player={
+      id:String(u.id),
+      name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Игрок',
+      photo:u.photo_url||null,
+      hatId:player.hatId||'none'
+    };
+  }}catch(e){}
+  if(!player.id)player.id='g_'+Math.random().toString(36).slice(2,9);
+}
+async function loadHat(){
+  let hatId=localStorage.getItem('petzker_active_hat')||'none';
+  if(sb&&player.id&&!String(player.id).startsWith('g_')){
+    try{
+      const{data}=await sb.from('player_active_hat').select('hat_id').eq('telegram_user_id',player.id).maybeSingle();
+      if(data?.hat_id)hatId=data.hat_id;
+    }catch(e){}
+  }
+  player.hatId=hatId||'none';
+}
+function hatHTML(hatId){
+  const src=HAT_IMAGES[hatId];
+  if(src)return`<div class="hat"><img src="${src}" alt="" draggable="false"></div>`;
+  const em=HAT_EMOJIS[hatId];
+  if(em)return`<div class="hat"><span class="hat-emoji">${em}</span></div>`;
+  return`<div class="hat"></div>`;
+}
+async function loadBalance(){
+  if(!sb||!player.id||String(player.id).startsWith('g_')){$('balance').textContent='—';return}
+  try{const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    balance=Number(data?.total_score||0);$('balance').textContent=fmt(balance)}catch(e){}
+}
+function genCode(){return Math.random().toString(36).slice(2,6).toUpperCase()}
+function setStatus(t,c){$('status').textContent=t;$('status').className='status-text '+(c||'info')}
+function newDeck(){
+  const d=[];for(const s of SUITS)for(const r of RANKS)d.push({r,s,red:s==='♥'||s==='♦'});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d;
+}
+function cardHTML(c,fd){if(fd||!c)return'<div class="card back"></div>';return`<div class="card ${c.red?'red':'black'}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`}
+
+function evalHand(cards){
+  if(cards.length<5)return{rank:0,name:'—',score:0};
+  const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
+  const suits=cards.map(c=>c.s);
+  const counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const byCount=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
+  const unique=[...new Set(vals)];
+  const isFlush=SUITS.some(s=>suits.filter(x=>x===s).length>=5);
+  let sh=0;const u=[...unique];if(u.includes(14))u.push(1);u.sort((a,b)=>b-a);
+  for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){sh=u[i];break}}
+  if(!sh&&unique.includes(14)&&[5,4,3,2].every(x=>unique.includes(x)))sh=5;
+  let rank=0,name='Старшая карта',kickers=[];
+  if(isFlush&&sh){rank=8;name='Стрит-флеш';kickers=[sh]}
+  else if(byCount[0].c===4){rank=7;name='Каре';kickers=[byCount[0].v,byCount[1]?.v||0]}
+  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус';kickers=[byCount[0].v,byCount[1].v]}
+  else if(isFlush){rank=5;name='Флеш';kickers=unique.slice(0,5)}
+  else if(sh){rank=4;name='Стрит';kickers=[sh]}
+  else if(byCount[0].c===3){rank=3;name='Сет';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары';kickers=[byCount[0].v,byCount[1].v,byCount[2]?.v||0]}
+  else if(byCount[0].c===2){rank=1;name='Пара';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else kickers=unique.slice(0,5);
+  let score=rank*1e10;kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
+  return{rank,name,score};
+}
+function bestHand(hole,board){
+  const all=[...(hole||[]),...(board||[])];if(all.length<5)return evalHand(all);
+  let best={score:-1};const n=all.length;
+  (function comb(s,ch){if(ch.length===5){const h=evalHand(ch.map(i=>all[i]));if(h.score>best.score)best=h;return}for(let i=s;i<n;i++){ch.push(i);comb(i+1,ch);ch.pop()}})(0,[]);
+  return best;
+}
+
+/* ── Rooms ── */
+function playerSeat(extra){
+  return{
+    id:player.id,name:player.name,stack:START_STACK,bet:0,hole:[],folded:false,allIn:false,handName:'',
+    photo:player.photo||null,hatId:player.hatId||'none',lastSeen:Date.now(),
+    ...extra
+  };
+}
+async function createRoom(){
+  if(!sb){alert('Нет Supabase');return}
+  await loadHat();
+  const code=genCode();
+  const initial={
+    phase:'lobby',dealMsg:'',
+    players:[playerSeat()],
+    hostId:player.id,board:[],pot:0,deck:[],
+    dealerIdx:0,sbIdx:0,bbIdx:0,toAct:null,
+    currentBet:0,minRaise:BB,actionCount:0,handOver:false
+  };
+  try{
+    const{data,error}=await sb.from('poker_rooms').insert([{code,host_id:player.id,status:'lobby',max_players:MAX_PLAYERS,state:initial}]).select().single();
+    if(error)throw error;
+    roomId=data.id;roomCode=code;isHost=true;state=initial;
+    await subscribeRoom();startHeartbeat();showTable();setStatus('Комната '+code,'info');
+  }catch(e){
+    console.error(e);
+    roomId='local_'+code;roomCode=code;isHost=true;state=initial;
+    showTable();setStatus('Локально '+code+' (нет таблицы poker_rooms)','info');
+    $('dealMsg').textContent='Создайте таблицу poker_rooms в Supabase';
+  }
+}
+async function joinRoom(code){
+  code=(code||'').trim().toUpperCase();if(!code||!sb)return;
+  await loadHat();
+  try{
+    const{data,error}=await sb.from('poker_rooms').select('*').eq('code',code).maybeSingle();
+    if(error)throw error;if(!data){setStatus('Комната не найдена','loss');return}
+    if(data.status==='closed'){setStatus('Комната закрыта','loss');return}
+    state=data.state||{};
+    const players=state.players||[];
+    if(!players.some(p=>p.id===player.id)){
+      if(players.length>=MAX_PLAYERS){setStatus('Комната полная','loss');return}
+      // можно зайти в lobby или между руками (handOver)
+      const midHand=data.status==='playing'&&state.phase!=='lobby'&&!state.handOver;
+      if(midHand){setStatus('Игра уже идёт','loss');return}
+      players.push(playerSeat());
+      state.players=players;
+      await sb.from('poker_rooms').update({state,status:'lobby',updated_at:new Date().toISOString()}).eq('id',data.id);
+    }else{
+      // refresh presence + hat
+      const me=players.find(p=>p.id===player.id);
+      if(me){me.lastSeen=Date.now();me.hatId=player.hatId||me.hatId;me.photo=player.photo||me.photo;me.name=player.name||me.name}
+      state.players=players;
+      await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',data.id);
     }
-
-    function createPlayers() {
-        players = [
-            { id: 0, name: "Вы", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: false },
-            { id: 1, name: "Бот 1", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: true },
-            { id: 2, name: "Бот 2", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: true },
-            { id: 3, name: "Бот 3", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: true },
-            { id: 4, name: "Бот 4", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: true },
-            { id: 5, name: "Бот 5", stack: 1000, hand: [], folded: false, allIn: false, bet: 0, isBot: true }
-        ];
+    roomId=data.id;roomCode=code;isHost=data.host_id===player.id||state.hostId===player.id;
+    await subscribeRoom();startHeartbeat();showTable();setStatus('В комнате '+code,'info');
+  }catch(e){console.error(e);setStatus('Ошибка: '+e.message,'loss')}
+}
+async function listRooms(){
+  if(!sb){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет подключения</div>';return}
+  try{
+    // показываем lobby + старые playing без игроков почистим позже
+    const{data,error}=await sb.from('poker_rooms')
+      .select('code,status,state,created_at,updated_at')
+      .in('status',['lobby','playing'])
+      .order('created_at',{ascending:false}).limit(20);
+    if(error)throw error;
+    const open=(data||[]).filter(r=>{
+      const n=(r.state?.players||[]).length;
+      if(n===0)return false;
+      // playing только если handOver (между руками) или phase lobby
+      if(r.status==='playing'){
+        const st=r.state||{};
+        return !!st.handOver || st.phase==='lobby' || st.phase==='showdown';
+      }
+      return r.status==='lobby';
+    }).slice(0,10);
+    if(!open.length){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нет открытых комнат</div>';return}
+    $('roomsList').innerHTML=open.map(r=>{
+      const n=(r.state?.players||[]).length;
+      return`<div class="room" data-code="${r.code}"><div class="code">${r.code}</div><div class="meta">${n}/${MAX_PLAYERS} · ${r.status}</div><div class="join">Войти →</div></div>`;
+    }).join('');
+    $('roomsList').querySelectorAll('.room').forEach(el=>el.onclick=()=>joinRoom(el.dataset.code));
+  }catch(e){$('roomsList').innerHTML='<div style="text-align:center;color:var(--muted);padding:12px;font-size:12px">Нужна таблица poker_rooms</div>'}
+}
+async function subscribeRoom(){
+  if(!sb||!roomId||String(roomId).startsWith('local'))return;
+  if(channel)sb.removeChannel(channel);
+  channel=sb.channel('poker:'+roomId)
+    .on('postgres_changes',{event:'*',schema:'public',table:'poker_rooms',filter:`id=eq.${roomId}`},payload=>{
+      if(payload.eventType==='DELETE'||payload.new?.status==='closed'){
+        stopHeartbeat();setStatus('Комната закрыта','loss');return;
+      }
+      if(payload.new?.state){state=payload.new.state;onState()}
+    }).subscribe();
+}
+/** status: lobby между руками / playing во время раздачи / closed если пусто */
+function roomStatusFromState(st,forced){
+  if(forced)return forced;
+  if(!st)return'lobby';
+  if(!(st.players||[]).length)return'closed';
+  if(st.handOver||st.phase==='lobby'||st.phase==='showdown')return'lobby';
+  if(st.phase&&st.phase!=='lobby')return'playing';
+  return'lobby';
+}
+async function pushState(extraStatus){
+  if(!state)return;
+  // обновить свой lastSeen
+  const me=(state.players||[]).find(p=>p.id===player.id);
+  if(me)me.lastSeen=Date.now();
+  if(!sb||!roomId||String(roomId).startsWith('local')){onState();return}
+  try{
+    const status=roomStatusFromState(state,extraStatus);
+    const patch={state,status,updated_at:new Date().toISOString()};
+    await sb.from('poker_rooms').update(patch).eq('id',roomId);
+    if(status==='closed'){
+      try{await sb.from('poker_rooms').delete().eq('id',roomId)}catch(e){}
     }
+  }catch(e){console.error(e);onState()}
+}
 
-    function createDeck() {
-        deck = [];
-        for (let s of SUITS) {
-            for (let r of RANKS) {
-                deck.push({ suit: s, rank: r, value: VALUES[r], color: (s === '♥' || s === '♦') ? 'red' : 'black' });
-            }
+async function leaveRoom(opts={}){
+  if(leaving||!roomId)return;
+  leaving=true;stopHeartbeat();
+  try{
+    if(sb&&!String(roomId).startsWith('local')&&state){
+      const players=(state.players||[]).filter(p=>p.id!==player.id);
+      state.players=players;
+      if(!players.length){
+        state.phase='lobby';state.handOver=true;
+        await sb.from('poker_rooms').update({state,status:'closed',updated_at:new Date().toISOString()}).eq('id',roomId);
+        try{await sb.from('poker_rooms').delete().eq('id',roomId)}catch(e){}
+      }else{
+        // если ушёл хост — передать
+        if(state.hostId===player.id||isHost){
+          state.hostId=players[0].id;
+          await sb.from('poker_rooms').update({state,host_id:players[0].id,status:roomStatusFromState(state),updated_at:new Date().toISOString()}).eq('id',roomId);
+        }else{
+          await sb.from('poker_rooms').update({state,status:roomStatusFromState(state),updated_at:new Date().toISOString()}).eq('id',roomId);
         }
-        // Тасование Фишера-Йетса
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
+      }
     }
+  }catch(e){console.error(e)}
+  if(channel&&sb){try{sb.removeChannel(channel)}catch(e){}}
+  channel=null;roomId=null;roomCode=null;isHost=false;state=null;leaving=false;
+  if(!opts.silent){
+    $('lobby').style.display='flex';
+    $('tableWrap').style.display='none';
+    $('bottomInfo').style.display='none';
+    $('actions').style.display='none';
+    $('raiseRow').style.display='none';
+    $('hostBar').style.display='none';
+    setStatus('Лобби','info');
+    listRooms();
+  }
+}
 
-    function log(msg) {
-        const panel = document.getElementById('gameLog');
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        div.innerHTML = msg;
-        panel.prepend(div);
-        if (panel.children.length > 20) panel.lastChild.remove();
+function pruneStalePlayers(){
+  if(!state||!isHost)return false;
+  const now=Date.now();
+  const before=(state.players||[]).length;
+  state.players=(state.players||[]).filter(p=>{
+    if(p.id===player.id)return true;
+    const ls=p.lastSeen||0;
+    // если lastSeen никогда не писался — даём шанс (старые комнаты)
+    if(!ls)return true;
+    return(now-ls)<STALE_MS;
+  });
+  if(state.players.length!==before){
+    if(!state.players.length){state.phase='lobby';state.handOver=true}
+    else if(state.hostId&&!state.players.some(p=>p.id===state.hostId)){
+      state.hostId=state.players[0].id;
     }
-
-    // --- ЛОГИКА ИГРЫ ---
-
-    function startNewHand() {
-        if (players.every(p => p.stack <= 0)) {
-            alert("Игра окончена! Вы банкрот или выиграли всё.");
-            location.reload();
-            return;
-        }
-
-        createDeck();
-        communityCards = [];
-        pot = 0;
-        currentBet = 0;
-        gamePhase = 'preflop';
-        lastAggressorIdx = -1;
-        isGameActive = true;
-
-        // Сброс ставок и фолдов
-        players.forEach(p => {
-            p.hand = [];
-            p.folded = false;
-            p.allIn = (p.stack === 0);
-            p.bet = 0;
-        });
-
-        // Раздача карт
-        for(let i=0; i<2; i++) {
-            players.forEach(p => {
-                if(!p.allIn) p.hand.push(deck.pop());
-            });
-        }
-
-        // Блайнды
-        dealerIdx = (dealerIdx + 1) % players.length;
-        let sbIdx = (dealerIdx + 1) % players.length;
-        let bbIdx = (dealerIdx + 2) % players.length;
-
-        placeBet(sbIdx, smallBlind);
-        placeBet(bbIdx, bigBlind);
-        currentBet = bigBlind;
-        lastAggressorIdx = bbIdx;
-
-        log(`Новая раздача. Дилер: ${players[dealerIdx].name}. Блайнды: МБ ${smallBlind}, ББ ${bigBlind}.`);
-        
-        renderTable();
-        updateControls();
-        
-        // Первый ход после блайндов
-        activePlayerIdx = (bbIdx + 1) % players.length;
-        nextTurn();
+    return true;
+  }
+  return false;
+}
+function startHeartbeat(){
+  stopHeartbeat();
+  heartbeatTimer=setInterval(async()=>{
+    if(!roomId||!state||leaving)return;
+    const me=(state.players||[]).find(p=>p.id===player.id);
+    if(me)me.lastSeen=Date.now();
+    // хост чистит AFK
+    let changed=false;
+    if(isHost)changed=pruneStalePlayers();
+    if(changed){
+      await pushState(roomStatusFromState(state));
+      if(!(state.players||[]).length){await leaveRoom({silent:true});return}
+    }else if(sb&&roomId&&!String(roomId).startsWith('local')){
+      // лёгкий heartbeat без смены status
+      try{
+        await sb.from('poker_rooms').update({state,updated_at:new Date().toISOString()}).eq('id',roomId);
+      }catch(e){}
     }
+  },12000);
+}
+function stopHeartbeat(){
+  if(heartbeatTimer){clearInterval(heartbeatTimer);heartbeatTimer=null}
+}
 
-    function placeBet(playerIdx, amount) {
-        let p = players[playerIdx];
-        if (p.folded) return;
+function showTable(){
+  $('lobby').style.display='none';
+  $('tableWrap').style.display='block';
+  $('bottomInfo').style.display='flex';
+  onState();
+}
 
-        let actualAmount = Math.min(amount, p.stack);
-        p.stack -= actualAmount;
-        p.bet += actualAmount;
-        pot += actualAmount;
+function onState(){
+  if(!state)return;
+  // синхронизация хоста (если предыдущий ушёл)
+  const hostStillHere=(state.players||[]).some(p=>p.id===state.hostId);
+  if(!hostStillHere&&(state.players||[]).length){
+    state.hostId=state.players[0].id;
+  }
+  isHost=state.hostId===player.id;
 
-        if (p.stack === 0) {
-            p.allIn = true;
-            log(`${p.name} идет ва-банк на ${actualAmount}!`);
-        }
-        
-        updatePotDisplay();
-        renderPlayerSeat(playerIdx);
+  // если меня выкинули из списка — вернуться в лобби
+  if(roomId&&!(state.players||[]).some(p=>p.id===player.id)){
+    stopHeartbeat();roomId=null;roomCode=null;isHost=false;state=null;
+    $('lobby').style.display='flex';$('tableWrap').style.display='none';
+    $('bottomInfo').style.display='none';$('actions').style.display='none';
+    $('raiseRow').style.display='none';$('hostBar').style.display='none';
+    setStatus('Вас исключили из комнаты (AFK)','loss');listRooms();return;
+  }
+
+  renderSeats();
+  $('board').innerHTML=(state.board||[]).map(c=>cardHTML(c)).join('');
+  const pot=(state.pot||0)+(state.players||[]).reduce((s,p)=>s+(p.bet||0),0);
+  $('pot').textContent='Банк: '+fmt(pot);
+  $('phaseLabel').textContent=PHASE_RU[state.phase]||state.phase||'—';
+  $('dealMsg').textContent=state.dealMsg||'';
+  $('statusDetail').textContent=roomCode?('Код '+roomCode):'Онлайн';
+
+  if(isHost&&(state.phase==='lobby'||state.handOver||state.phase==='showdown')){
+    $('hostBar').style.display='block';
+    $('startHandBtn').textContent=state.handOver||state.phase==='showdown'?'Следующая раздача':'Начать раздачу';
+    $('startHandBtn').disabled=(state.players||[]).filter(p=>p.stack>0).length<2;
+  }else $('hostBar').style.display='none';
+
+  updateActionsUI();
+}
+
+function renderSeats(){
+  const seats=$('seats');seats.innerHTML='';
+  const players=state.players||[];
+  let ordered=[...players];
+  while(ordered.length<MAX_PLAYERS) ordered.push(null);
+
+  ordered.forEach((p)=>{
+    const div=document.createElement('div');
+    const isMe=p&&p.id===player.id;
+    const realIdx=p?players.indexOf(p):-1;
+    div.className=`seat ${isMe?'me':''} ${p&&p.folded?'folded':''} ${!p?'empty':''} ${state.toAct===realIdx?'active':''}`;
+    if(!p){
+      div.innerHTML=`<div class="avatar-wrap"><div class="avatar">+</div></div><div class="name">Пусто</div><div class="stack">—</div><div class="cards"></div>`;
+    }else{
+      const show=isMe||state.phase==='showdown'||state.handOver;
+      const cards=(p.hole||[]).map(c=>cardHTML(c,!show)).join('');
+      let role='';
+      if(realIdx===state.dealerIdx)role='D';
+      else if(realIdx===state.sbIdx)role='SB';
+      else if(realIdx===state.bbIdx)role='BB';
+      const act=p.lastAction;
+      const bubble=act?`<div class="action-bubble ${act.type}">${act.label}</div>`:'';
+      const face=p.photo
+        ?`<img class="face" src="${p.photo}" alt="" referrerpolicy="no-referrer">`
+        :(isMe?'😎':'👤');
+      div.innerHTML=`
+        <div class="avatar-wrap">
+          ${bubble}
+          ${hatHTML(p.hatId)}
+          <div class="avatar">${face}${role?`<span class="role">${role}</span>`:''}</div>
+        </div>
+        <div class="name">${p.name}${isMe?' (вы)':''}</div>
+        <div class="stack">💎 ${fmt(p.stack)}</div>
+        <div class="bet-pill">${p.bet?'💎 '+fmt(p.bet):''}</div>
+        <div class="cards">${cards}</div>
+        <div class="hand-name">${p.handName||''}</div>`;
     }
+    seats.appendChild(div);
+  });
+}
 
-    function nextTurn() {
-        if (!isGameActive) return;
+function updateActionsUI(){
+  if(!state||state.handOver||state.phase==='lobby'||state.phase==='deal'||state.phase==='showdown'){
+    $('actions').style.display='none';$('raiseRow').style.display='none';return;
+  }
+  const players=state.players||[];
+  const myIdx=players.findIndex(p=>p.id===player.id);
+  const me=players[myIdx];
+  if(myIdx<0||state.toAct!==myIdx||!me||me.folded||me.allIn){
+    $('actions').style.display='none';$('raiseRow').style.display='none';
+    const cur=players[state.toAct];
+    if(cur) setStatus('Ход: '+cur.name,'info');
+    return;
+  }
+  $('actions').style.display='grid';
+  const toCall=(state.currentBet||0)-(me.bet||0);
+  $('checkBtn').style.display=toCall===0?'flex':'none';
+  $('callBtn').style.display=toCall>0?'flex':'none';
+  $('callBtn').innerHTML=`<span>→</span>Колл ${fmt(toCall)}`;
+  const minR=(state.currentBet||0)+(state.minRaise||BB);
+  const maxR=(me.bet||0)+(me.stack||0);
+  $('raiseSlider').min=Math.min(minR,maxR);
+  $('raiseSlider').max=Math.max(minR,maxR);
+  $('raiseSlider').value=Math.min(Math.max(minR,Number($('raiseSlider').value)||minR),maxR);
+  $('raiseAmt').textContent=fmt($('raiseSlider').value);
+  $('raiseRow').style.display='flex';
+  setStatus('Ваш ход','info');
+}
 
-        // Проверка окончания раунда торгов
-        let activePlayers = players.filter(p => !p.folded && !p.allIn);
-        let totalActive = players.filter(p => !p.folded).length;
+/* ── Host: start hand with deal animation flags ── */
+function hostStartHand(){
+  if(!isHost||!state)return;
+  const players=(state.players||[]).filter(p=>p.stack>0);
+  if(players.length<2){setStatus('Нужно 2+ игрока','loss');return}
 
-        // Если остался один игрок
-        if (totalActive === 1) {
-            endHand(true);
-            return;
-        }
+  const deck=newDeck();
+  // rotate dealer
+  let d=((state.dealerIdx??-1)+1)%players.length;
+  let sb=(d+1)%players.length;
+  let bb=(d+2)%players.length;
+  if(players.length===2){sb=d;bb=(d+1)%players.length} // heads-up rule
 
-        // Если все активные игроки сравняли ставки и сделали ход
-        if (activePlayers.length === 0 || (lastAggressorIdx !== -1 && activePlayerIdx === lastAggressorIdx && players[activePlayerIdx].bet === currentBet)) {
-             // Исключение: если последний агрессор зашел олл-ин меньше мин рейза, ход переходит дальше
-             // Но для простоты: если круг замкнулся
-             if (players[activePlayerIdx].bet === currentBet || players[activePlayerIdx].allIn) {
-                 nextPhase();
-                 return;
-             }
-        }
+  players.forEach(p=>{p.hole=[];p.bet=0;p.folded=false;p.allIn=false;p.handName='';p.totalBet=0;p.lastAction=null;p.lastSeen=Date.now()});
 
-        // Пропуск неактивных
-        while (players[activePlayerIdx].folded || players[activePlayerIdx].allIn) {
-            activePlayerIdx = (activePlayerIdx + 1) % players.length;
-            // Защита от зацикливания если все кроме одного фолднули (обработано выше)
-            if (players.filter(p => !p.folded && !p.allIn).length === 0) {
-                 // Все либо фолд, либо аллин. Ждем пока аллины вскроются или конец
-                 // Если текущий бет покрыт всеми аллинами
-                 let canContinue = false;
-                 players.forEach(p => {
-                     if (!p.folded && !p.allIn) canContinue = true;
-                 });
-                 if (!canContinue) { nextPhase(); return; }
-            }
-        }
+  const post=(idx,amt,label)=>{
+    const p=players[idx];const a=Math.min(amt,p.stack);p.stack-=a;p.bet=a;p.totalBet=a;
+    if(p.stack===0)p.allIn=true;
+    setLastAction(p,'blind',label+' '+fmt(a));
+    return a;
+  };
+  let pot=0;
+  pot+=post(sb,SB,'SB');
+  pot+=post(bb,BB,'BB');
 
-        renderTable(); // Обновить подсветку хода
-        
-        if (players[activePlayerIdx].isBot) {
-            setTimeout(botDecision, 1000);
-        } else {
-            updateControls();
-        }
-    }
+  // deal 2 each
+  for(let r=0;r<2;r++) for(const p of players) p.hole.push(deck.pop());
 
-    function botDecision() {
-        if (!isGameActive) return;
-        let bot = players[activePlayerIdx];
-        let toCall = currentBet - bot.bet;
-        let handStrength = evaluateHandStrength(bot.hand, communityCards); // 0..1
-        
-        let action = 'fold';
-        let raiseAmt = 0;
+  let toAct=(bb+1)%players.length;
+  while(players[toAct].folded||players[toAct].stack<=0){toAct=(toAct+1)%players.length}
 
-        // Логика бота (упрощенная)
-        if (toCall === 0) {
-            action = Math.random() > 0.8 ? 'raise' : 'check';
-            if (action === 'raise') raiseAmt = currentBet + bigBlind * 2;
-        } else {
-            if (handStrength > 0.6 || (handStrength > 0.3 && toCall < pot * 0.2)) {
-                action = 'call';
-                if (handStrength > 0.8 && Math.random() > 0.7) {
-                    action = 'raise';
-                    raiseAmt = currentBet * 2;
-                }
-            } else if (handStrength > 0.4 && toCall < bigBlind) {
-                action = 'call';
-            } else {
-                action = 'fold';
-            }
-        }
+  state={
+    ...state,
+    players,
+    deck,
+    board:[],
+    pot:0, // bets sit in front until collected
+    dealerIdx:d,sbIdx:sb,bbIdx:bb,
+    phase:'preflop',
+    currentBet:BB,
+    minRaise:BB,
+    toAct,
+    actionCount:0,
+    handOver:false,
+    dealMsg:'Дилер раздал карты'
+  };
+  // store bets already on players; pot accumulates on street end
+  pushState('playing');
+  setStatus('Префлоп','info');
+}
 
-        // Ограничения по стеку для рейза
-        if (action === 'raise') {
-            if (raiseAmt > bot.stack + bot.bet) {
-                if (bot.stack + bot.bet >= toCall) action = 'call';
-                else action = 'fold'; // Не хватает даже на колл
-            }
-        }
+function canAct(p){return p&&!p.folded&&!p.allIn&&p.stack>0}
+function nextActor(from){
+  const pl=state.players;const n=pl.length;
+  for(let i=1;i<=n;i++){const idx=(from+i)%n;if(canAct(pl[idx]))return idx}
+  return null;
+}
+function allMatched(){
+  const need=state.currentBet;
+  return state.players.every(p=>p.folded||p.allIn||p.bet===need);
+}
 
-        if (action === 'fold') playerAction('fold');
-        else if (action === 'check') playerAction('check');
-        else if (action === 'call') playerAction('call');
-        else if (action === 'raise') {
-            let slider = document.getElementById('raiseSlider');
-            slider.value = raiseAmt - currentBet; // Примерно
-            updateRaiseLabel();
-            playerAction('raise');
-        }
-    }
+function setLastAction(p,type,label){
+  if(!p)return;
+  p.lastAction={type,label,ts:Date.now()};
+}
+function sendAction(type,raiseTo){
+  if(!state||state.handOver)return;
+  const pl=state.players;
+  const idx=pl.findIndex(p=>p.id===player.id);
+  if(idx!==state.toAct||idx<0)return;
+  const p=pl[idx];
+  if(!canAct(p))return;
+  const toCall=state.currentBet-p.bet;
 
-    function playerAction(action) {
-        if (!isGameActive || activePlayerIdx !== 0) return;
+  if(type==='fold'){
+    p.folded=true;
+    setLastAction(p,'fold','Сброс');
+  }else if(type==='check'){
+    if(toCall>0)return;
+    setLastAction(p,'check','Чек');
+  }else if(type==='call'){
+    const a=Math.min(toCall,p.stack);p.stack-=a;p.bet+=a;if(p.stack===0)p.allIn=true;
+    setLastAction(p,'call',a>0?`Колл ${fmt(a)}`:'Чек');
+  }else if(type==='raise'){
+    const target=raiseTo||(state.currentBet+state.minRaise);
+    const need=Math.max(0,target-p.bet);
+    const a=Math.min(need,p.stack);p.stack-=a;p.bet+=a;
+    if(p.bet>state.currentBet){state.minRaise=p.bet-state.currentBet;state.currentBet=p.bet}
+    if(p.stack===0)p.allIn=true;
+    setLastAction(p,'raise',`Рейз ${fmt(p.bet)}`);
+  }
+  state.actionCount=(state.actionCount||0)+1;
 
-        let p = players[0];
-        let toCall = currentBet - p.bet;
+  const alive=pl.filter(x=>!x.folded);
+  if(alive.length===1){
+    // award pot
+    pl.forEach(x=>{state.pot+=x.bet;x.bet=0});
+    alive[0].stack+=state.pot;
+    state.dealMsg=alive[0].name+' забирает банк';
+    state.pot=0;state.handOver=true;state.phase='showdown';state.toAct=null;
+    pushState('lobby');return;
+  }
 
-        if (action === 'fold') {
-            p.folded = true;
-            log(`${p.name}: Фолд`);
-            showActionBubble(0, "Фолд");
-        } 
-        else if (action === 'check') {
-            if (toCall > 0) return; // Нельзя чекнуть если есть ставка
-            log(`${p.name}: Чек`);
-            showActionBubble(0, "Чек");
-        } 
-        else if (action === 'call') {
-            placeBet(0, toCall);
-            log(`${p.name}: Колл ${toCall}`);
-            showActionBubble(0, "Колл");
-        } 
-        else if (action === 'raise') {
-            let raiseInput = parseInt(document.getElementById('raiseLabel').innerText);
-            let totalBet = currentBet + raiseInput;
-            
-            if (totalBet > p.stack + p.bet) {
-                totalBet = p.stack + p.bet; // Олл-ин
-            }
-            
-            let addAmount = totalBet - p.bet;
-            if (addAmount <= 0) return;
+  // street done?
+  if(allMatched()&&state.actionCount>0){
+    advanceStreet();
+  }else{
+    const n=nextActor(idx);
+    state.toAct=n;
+    state.dealMsg='';
+    pushState();
+  }
+}
 
-            placeBet(0, addAmount);
-            currentBet = p.bet;
-            lastAggressorIdx = 0;
-            log(`${p.name}: Повышение до ${p.bet}`);
-            showActionBubble(0, `Повышение ${p.bet}`);
-        }
+function advanceStreet(){
+  const pl=state.players;
+  pl.forEach(x=>{state.pot+=x.bet;x.bet=0; /* keep lastAction visible a moment */});
+  state.currentBet=0;state.minRaise=BB;state.actionCount=0;
 
-        activePlayerIdx = (activePlayerIdx + 1) % players.length;
-        updateControls();
-        nextTurn();
-    }
+  if(state.phase==='preflop'){
+    state.phase='flop';
+    state.board.push(state.deck.pop(),state.deck.pop(),state.deck.pop());
+    state.dealMsg='Дилер открыл флоп';
+  }else if(state.phase==='flop'){
+    state.phase='turn';
+    state.board.push(state.deck.pop());
+    state.dealMsg='Дилер открыл тёрн';
+  }else if(state.phase==='turn'){
+    state.phase='river';
+    state.board.push(state.deck.pop());
+    state.dealMsg='Дилер открыл ривер';
+  }else if(state.phase==='river'){
+    // showdown
+    state.phase='showdown';state.handOver=true;state.toAct=null;
+    const cont=pl.filter(p=>!p.folded);
+    let best=null,winners=[];
+    cont.forEach(p=>{
+      const h=bestHand(p.hole,state.board);p.handName=h.name;
+      if(!best||h.score>best.score){best=h;winners=[p]}
+      else if(h.score===best.score)winners.push(p);
+    });
+    const share=Math.floor(state.pot/winners.length);
+    winners.forEach(w=>w.stack+=share);
+    state.dealMsg='Победа: '+winners.map(w=>w.name).join(', ')+' · '+(best?.name||'');
+    state.pot=0;
+    pushState('lobby');return;
+  }
 
-    function nextPhase() {
-        // Сброс ставок раунда, но не стека
-        players.forEach(p => {
-            p.bet = 0;
-            // Если игрок не в игре (фолд), он не участвует
-        });
-        currentBet = 0;
-        lastAggressorIdx = -1;
-        activePlayerIdx = (dealerIdx + 1) % players.length; // Начинает слева от дилера
+  // first to act: left of dealer
+  let first=(state.dealerIdx+1)%pl.length;
+  for(let i=0;i<pl.length;i++){if(canAct(pl[first]))break;first=(first+1)%pl.length}
+  state.toAct=first;
+  pushState();
+}
 
-        if (gamePhase === 'preflop') {
-            gamePhase = 'flop';
-            communityCards.push(deck.pop(), deck.pop(), deck.pop());
-            log("Флоп: " + communityCards.map(c=>c.rank+c.suit).join(' '));
-        } else if (gamePhase === 'flop') {
-            gamePhase = 'turn';
-            communityCards.push(deck.pop());
-            log("Тёрн: " + communityCards[3].rank + communityCards[3].suit);
-        } else if (gamePhase === 'turn') {
-            gamePhase = 'river';
-            communityCards.push(deck.pop());
-            log("Ривер: " + communityCards[4].rank + communityCards[4].suit);
-        } else if (gamePhase === 'river') {
-            gamePhase = 'showdown';
-            endHand(false);
-            return;
-        }
+$('createBtn').onclick=createRoom;
+$('joinBtn').onclick=()=>joinRoom($('codeInput').value);
+$('refreshBtn').onclick=listRooms;
+$('startHandBtn').onclick=hostStartHand;
+$('foldBtn').onclick=()=>sendAction('fold');
+$('checkBtn').onclick=()=>sendAction('check');
+$('callBtn').onclick=()=>sendAction('call');
+$('raiseBtn').onclick=()=>sendAction('raise',Number($('raiseSlider').value));
+$('raiseSlider').oninput=()=>$('raiseAmt').textContent=fmt($('raiseSlider').value);
+$('backBtn').onclick=async()=>{
+  await leaveRoom({silent:true});
+  if(history.length>1)history.back();
+  else location.href='poker.html'+location.search;
+};
+$('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom($('codeInput').value)});
 
-        renderTable();
-        
-        // Поиск первого активного игрока
-        while (players[activePlayerIdx].folded || players[activePlayerIdx].allIn) {
-            activePlayerIdx = (activePlayerIdx + 1) % players.length;
-        }
-        
-        setTimeout(nextTurn, 1000);
-    }
+// уход со страницы → выйти из комнаты
+window.addEventListener('pagehide',()=>{leaveRoom({silent:true})});
+window.addEventListener('beforeunload',()=>{leaveRoom({silent:true})});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&roomId){
+    // обновить lastSeen последний раз; полный leave — на pagehide
+    const me=(state?.players||[]).find(p=>p.id===player.id);
+    if(me)me.lastSeen=Date.now();
+  }
+});
 
-    function endHand(foldedWin) {
-        isGameActive = false;
-        let winnerIdx = -1;
-        let bestScore = -1;
-        let winners = [];
-
-        if (foldedWin) {
-            // Нашелся единственный не сбросивший
-            winnerIdx = players.findIndex(p => !p.folded);
-            winners = [winnerIdx];
-            log(`${players[winnerIdx].name} выиграл банк (${pot} $), так как остальные сбросили.`);
-        } else {
-            // Шоудаун
-            log("--- ШОУДАУН ---");
-            let activePlayers = players.filter(p => !p.folded);
-            
-            activePlayers.forEach(p => {
-                let scoreData = getBestHand(p.hand, communityCards);
-                p.scoreVal = scoreData.score;
-                p.scoreName = scoreData.name;
-                log(`${p.name}: ${p.scoreName}`);
-                
-                if (p.scoreVal > bestScore) {
-                    bestScore = p.scoreVal;
-                    winners = [p.id];
-                } else if (p.scoreVal === bestScore) {
-                    winners.push(p.id);
-                }
-            });
-        }
-
-        let winAmount = Math.floor(pot / winners.length);
-        winners.forEach(id => {
-            let p = players[id];
-            p.stack += winAmount;
-            log(`🏆 ${p.name} выигрывает ${winAmount} $!`);
-            showActionBubble(id, "ПОБЕДА!");
-        });
-
-        renderTable();
-        setTimeout(startNewHand, 4000);
-    }
-
-    // --- ОТРИСОВКА И UI ---
-
-    function renderTable() {
-        document.getElementById('potAmount').innerText = pot;
-        
-        // Карты стола
-        const commDiv = document.getElementById('communityCards');
-        commDiv.innerHTML = '';
-        communityCards.forEach(c => {
-            commDiv.appendChild(createCardEl(c));
-        });
-        // Заполнители для пустых слотов
-        for(let i=communityCards.length; i<5; i++) {
-            let placeholder = document.createElement('div');
-            placeholder.style.width = '60px';
-            placeholder.style.height = '84px';
-            placeholder.style.border = '2px dashed rgba(255,255,255,0.2)';
-            placeholder.style.borderRadius = '6px';
-            commDiv.appendChild(placeholder);
-        }
-
-        // Карты героя
-        const heroDiv = document.getElementById('heroCards');
-        heroDiv.innerHTML = '';
-        if (players[0].hand.length > 0) {
-            players[0].hand.forEach(c => heroDiv.appendChild(createCardEl(c)));
-        } else {
-            heroDiv.innerHTML = '<div style="color:#aaa">Ожидание...</div>';
-        }
-
-        // Игроки
-        const container = document.getElementById('playersContainer');
-        container.innerHTML = '';
-        players.forEach((p, idx) => {
-            let seat = document.createElement('div');
-            seat.className = `player-seat seat-${idx} ${idx === activePlayerIdx ? 'active-turn' : ''}`;
-            seat.id = `seat-${idx}`;
-            
-            let avatar = document.createElement('div');
-            avatar.className = 'avatar';
-            avatar.innerText = p.name[0];
-            if(idx === dealerIdx) {
-                let dBtn = document.createElement('div');
-                dBtn.className = 'dealer-button';
-                dBtn.innerText = 'D';
-                dBtn.style.right = '-5px';
-                dBtn.style.top = '-5px';
-                avatar.appendChild(dBtn);
-            }
-
-            let info = document.createElement('div');
-            info.className = 'player-info';
-            info.innerHTML = `<div class="player-name">${p.name}</div><div class="player-stack">${p.stack} $</div>`;
-
-            let actionBubble = document.createElement('div');
-            actionBubble.className = 'player-action';
-            actionBubble.id = `action-${idx}`;
-            
-            seat.appendChild(actionBubble);
-            seat.appendChild(avatar);
-            seat.appendChild(info);
-            container.appendChild(seat);
-        });
-    }
-
-    function renderPlayerSeat(idx) {
-        // Обновление только стака и статуса
-        let p = players[idx];
-        let seat = document.getElementById(`seat-${idx}`);
-        if(seat) {
-            seat.querySelector('.player-stack').innerText = p.stack + ' $';
-            if(idx === activePlayerIdx) seat.classList.add('active-turn');
-            else seat.classList.remove('active-turn');
-        }
-    }
-
-    function showActionBubble(idx, text) {
-        let el = document.getElementById(`action-${idx}`);
-        if(el) {
-            el.innerText = text;
-            el.classList.add('visible');
-            setTimeout(() => el.classList.remove('visible'), 1500);
-        }
-    }
-
-    function createCardEl(card) {
-        let el = document.createElement('div');
-        el.className = `card ${card.color}`;
-        el.innerHTML = `<div class="card-rank">${card.rank}</div><div class="card-suit">${card.suit}</div>`;
-        return el;
-    }
-
-    function updatePotDisplay() {
-        document.getElementById('potAmount').innerText = pot;
-    }
-
-    function updateControls() {
-        let p = players[0];
-        if (p.folded || p.allIn || activePlayerIdx !== 0) {
-            document.querySelectorAll('.game-btn').forEach(b => b.disabled = true);
-            document.getElementById('raiseSlider').disabled = true;
-            return;
-        }
-
-        let toCall = currentBet - p.bet;
-        let btnCheck = document.getElementById('btnCheck');
-        let btnCall = document.getElementById('btnCall');
-
-        if (toCall === 0) {
-            btnCheck.disabled = false;
-            btnCheck.style.display = 'inline-block';
-            btnCall.style.display = 'none';
-        } else {
-            btnCheck.style.display = 'none';
-            btnCall.disabled = false;
-            btnCall.style.display = 'inline-block';
-            btnCall.innerText = `Колл ${toCall}`;
-        }
-
-        document.getElementById('btnFold').disabled = false;
-        
-        // Настройка слайдера
-        let slider = document.getElementById('raiseSlider');
-        let minR = currentBet + bigBlind; // Минимум для рейза
-        if (minR > p.stack + p.bet) minR = p.stack + p.bet; // Олл ин
-        
-        let maxPossible = p.stack;
-        
-        slider.min = 0;
-        slider.max = maxPossible;
-        slider.value = (minR - p.bet > 0) ? (minR - p.bet) : bigBlind;
-        
-        updateRaiseLabel();
-        document.getElementById('raiseSlider').disabled = false;
-        document.getElementById('btnRaise').disabled = false;
-    }
-
-    function updateRaiseLabel() {
-        let val = parseInt(document.getElementById('raiseSlider').value);
-        let total = currentBet + val;
-        let p = players[0];
-        
-        // Корректировка отображения: показываем сумму добавления или общую?
-        // Обычно показывают общую ставку или размер повышения. Покажем общую.
-        if (total > p.stack + p.bet) {
-             total = p.stack + p.bet;
-             val = total - currentBet;
-             document.getElementById('raiseSlider').value = val;
-        }
-        
-        document.getElementById('raiseLabel').innerText = total + ' $';
-    }
-
-    // --- ОЦЕНКА РУК (Упрощенная) ---
-    function evaluateHandStrength(hand, comm) {
-        // Возвращает 0..1
-        let allCards = [...hand, ...comm];
-        let data = getBestHand(hand, comm);
-        let score = data.score;
-        // Нормализация грубая: HighCard=100, Pair=300, ..., Royal=9000
-        return Math.min(1, score / 5000);
-    }
-
-    function getBestHand(hand, comm) {
-        let cards = [...hand, ...comm].sort((a,b) => b.value - a.value);
-        // Очень упрощенная оценка для демо
-        // Считаем пары, сеты и т.д.
-        
-        let counts = {};
-        cards.forEach(c => counts[c.rank] = (counts[c.rank] || 0) + 1);
-        
-        let pairs = 0;
-        let three = 0;
-        let four = 0;
-        let high = cards[0].value;
-
-        for (let r in counts) {
-            if (counts[r] === 4) four++;
-            if (counts[r] === 3) three++;
-            if (counts[r] === 2) pairs++;
-        }
-
-        let score = high;
-        let name = "Старшая карта";
-
-        if (four > 0) { score = 7000 + high; name = "Каре"; }
-        else if (three > 0 && pairs > 0) { score = 6000 + high; name = "Фулл-хаус"; }
-        else if (three > 0) { score = 3000 + high; name = "Сет"; }
-        else if (pairs >= 2) { score = 2000 + high; name = "Две пары"; }
-        else if (pairs === 1) { score = 1000 + high; name = "Пара"; }
-        
-        // Флеши и стриты тут опущены для краткости кода, но логика похожа
-        
-        return { score, name };
-    }
-
-    // Старт
-    initGame();
-
+resolvePlayer();loadHat();loadBalance();listRooms();
 </script>
 </body>
 </html>
