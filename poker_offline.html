@@ -1,693 +1,634 @@
 <!DOCTYPE html>
-<html lang="en-US" class="hide-scroll">
-<head> 
-    <title>Holistic healing therapies HTML Template Live Demo</title>
-    <meta name="Keywords">
-    <meta name="Description">
-    
-
-    <link rel="shortcut icon" href="https://csite.nicepage.com/favicon.ico" type="image/x-icon">
-
-    
-    
-
-
-    <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no,width=device-width">
-
-<link rel="preconnect" href="https://csite.nicepage.com" />
-<link rel="preconnect" href="https://capp.nicepage.com" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://www.googletagmanager.com" />
-<link rel="preconnect" href="https://images01.nicepagecdn.com" />
-<link rel="preconnect" href="https://images03.nicepagecdn.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-
-
-<script src="//capp.nicepage.com/ffb52f5be14da7b8ac7beed64bb96e92996b70ae/main-libs.js" ></script>
-<link href="//capp.nicepage.com/ffb52f5be14da7b8ac7beed64bb96e92996b70ae/main-libs.css" rel="stylesheet" />
-
-
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200..900&family=Roboto:wght@200..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@200..900&family=Roboto:wght@200..900&display=swap">
-    </noscript>
-
-
-
-
-
-<script>
-    window.isAuthenticated = 0;
-    window.useExternalGtmCode = 0;
-    window.clientUserId = 0;
-    window.clientUserName = '';
-    window.userCountryCode = '';
-    window.logPageEvent = 1;
-    window.userHasAdsParams = 1;
-    window.utmSourceFromReferrer = 0;
-    window.currentLang = '';
-    window.baseUrl = 'html-templates';
-    window.currentUrl = 'html-templates';
-    window.np_userId = '';
-    window.isAmplitudeInitialized = false;
-    window.sha256Email = '';
-    window.skipSetCountryCode = 0;
-
-    function getCookieOrLocalStorage(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) {
-                return c.substring(nameEQ.length, c.length);
-            }
-        }
-        var lsValue = localStorage.getItem(name);
-        return !!lsValue;
-    }
-
-    function sendAnalyticsData(eventType, props, cb) {
-        var json = { data: {} };
-        json.userToken = np_userId;
-        json.data.adsParams = $.cookie('AdsParameters');
-        json.data.ga = $.cookie('_ga');
-        json.data.gac = $.cookie('_gac_UA-88868916-2');
-        json.data.userAgent = navigator.userAgent;
-        json.data.eventType = eventType;
-        json.data.props = props;
-        $.ajax({
-            'type': 'POST',
-            'url': '/Feedback/SendAdsLog',
-            'contentType': 'application/json; charset=utf-8',
-            'data': JSON.stringify(json),
-            'dataType': 'json',
-            'complete': cb || function() {}
-        });
-    }
-
-    function initializeAmplitudeUser() {
-        if (isAmplitudeInitialized) {
-            return;
-        }
-        isAmplitudeInitialized = true;
-
-        if (clientUserId > 0)
-        {
-            identifyAmplitudeUser(clientUserId, clientUserName);
-        }
-        else
-        {
-            identifyAmplitudeUser(null);
-        }
-    }
-
-    function sendAmplitudeAnalyticsData(eventName, eventProperties, userProperties, callback_function) {
-        initializeAmplitudeUser();
-
-        if (userProperties) {
-            if(userProperties.utm_source || userProperties.utm_campaign) {
-                var identify = new amplitude.Identify();
-                identify.setOnce("utm_campaign", userProperties.utm_campaign);
-                identify.setOnce("utm_source", userProperties.utm_source);
-                identify.setOnce("utm_content", userProperties.utm_content);
-                identify.setOnce("utm_group", userProperties.utm_group);
-                identify.setOnce("utm_term", userProperties.utm_term);
-                identify.setOnce("utm_page", userProperties.utm_page);
-                identify.setOnce("utm_page2", userProperties.utm_page);
-                identify.setOnce("referrer", userProperties.referrer);
-
-                amplitude.getInstance().identify(identify);
-
-                userProperties.utm_source_last = userProperties.utm_source;
-                userProperties.utm_campaign_last = userProperties.utm_campaign;
-                userProperties.utm_content_last = userProperties.utm_content;
-                userProperties.utm_group_last = userProperties.utm_group;
-                userProperties.utm_term_last = userProperties.utm_term;
-                userProperties.utm_page_last = userProperties.utm_page;
-            }
-
-            var userProps = objectWithoutProperties(userProperties, ["utm_campaign", "utm_source","utm_content", "utm_term", "utm_page", "utm_group", "referrer"]);
-            amplitude.getInstance().setUserProperties(userProps);
-        }
-
-        if (!eventProperties) {
-            eventProperties = {};
-        }
-
-        eventProperties.WebSite = 'true';
-        eventProperties.IsAuthenticated = window.isAuthenticated;
-        eventProperties.country_code = getCountryCode();
-        eventProperties.lang = window.currentLang || '';
-
-        var fullPageUrl = window.location.pathname.split('?')[0];
-        eventProperties.full_page_url = fullPageUrl;
-        eventProperties.page_url = clearPageUrl(fullPageUrl);
-
-        if (typeof callback_function === 'function') {
-            amplitude.getInstance().logEvent(eventName, eventProperties, callback_function);
-        } else {
-            amplitude.getInstance().logEvent(eventName, eventProperties);
-        }
-    }
-
-    function identifyAmplitudeUser(userId, token) {
-        if (userId) {
-            amplitude.getInstance().setUserProperties({
-                "Token": token,
-                "UserId": userId
-            });
-        }
-
-        var identify = new amplitude.Identify();
-        amplitude.getInstance().identify(identify);
-        if (userId) {
-            amplitude.getInstance().setUserId(userId);
-        }
-    }
-
-    function getUtmParamsFromUrl() {
-        var hash = window.location.hash;
-        var url = new URL(window.location.href);
-        if (hash && hash.indexOf('utm_') >= 0) {
-            url = new URL(window.location.origin + window.location.pathname + hash.replace('#', '?'));
-        }
-
-        if (!url.searchParams) {
-            return '';
-        }
-        return getUtmParams(url);
-    }
-
-    function hasGoogleIdFromUrl() {
-        var url = new URL(window.location.href);
-        if (!url.searchParams) {
-            return false;
-        }
-        return !!url.searchParams.get('gclid');
-    }
-
-    function waitForDOMAndAmplitude(callback) {
-        var domReady = false;
-        var ampReady = false;
-        let hasRun = false;
-
-        function tryRun() {
-            if (domReady && ampReady && !hasRun) {
-                hasRun = true;
-                callback();
-            }
-        }
-
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", function () {
-                domReady = true;
-                tryRun();
-            });
-        } else {
-            domReady = true;
-            tryRun();
-        }
-
-        window._onAmplitudeReady = function () {
-            var urlParams = new URLSearchParams(window.location.search);
-            var passedDeviceId = urlParams.get('amp_device_id');
-            var amplitudeConfig = passedDeviceId ? { deviceId: passedDeviceId } : {};
-            amplitude.getInstance().init("878f4709123a5451aff838c1f870b849", null, amplitudeConfig, function() {
-                ampReady = true;
-                tryRun();
-            });
-        };
-    }
-
-    function sendAnalyticsFromUrl(referrer, pageType) {
-        var urlIsAvailable = typeof URL === "function" || (navigator.userAgent.indexOf('MSIE') !== -1 && typeof URL === 'object');
-        if (!urlIsAvailable) {
-            return;
-        }
-
-        var utmParams = getUtmParamsFromUrl();
-        if (!utmParams) {
-            return;
-        }
-
-        var gclidFromUrl = utmParams.gclid;
-        var utmParamsFromUrl = !!utmParams.utmSource || !!utmParams.utmCampaign || !!utmParams.gclid;
-        if (!utmParamsFromUrl && userHasAdsParams)
-        {
-            utmParams = getUtmParamsFromCookie();
-        }
-
-        var canLog = canLogToAmplitude(pageType);
-        if (utmParamsFromUrl || utmSourceFromReferrer) {
-            var fullPageUrl = window.location.pathname.split('?')[0];
-            var pageUrl = clearPageUrl(fullPageUrl);
-            var userProps = {
-                "utm_source": utmParams.utmSource,
-                "utm_campaign": utmParams.utmCampaign,
-                "utm_content": utmParams.utmContent,
-                "utm_group": utmParams.utmGroup,
-                "utm_term": utmParams.utmTerm,
-                "utm_page": getUtmPageValue(pageUrl),
-                "utm_lang": window.currentLang || '',
-                "referrer": referrer
-            };
-
-            if (gclidFromUrl) {
-                var landingUrl = pageUrl.startsWith('/') && pageUrl !== '/' ? pageUrl.substr(1) : pageUrl;
-                userProps.landing_page = landingUrl;
-
-                var event = {
-                    'Page': landingUrl,
-                    'Url': window.location.href,
-                    'utm_campaign_event': utmParams.utmCampaign,
-                    'utm_group_event': utmParams.utmGroup
-
-                }
-                sendAmplitudeAnalyticsData('Landing Page', event, userProps);
-            } else {
-                var eventProps = {
-                    "utm_source": utmParams.utmSource,
-                    "utm_campaign": utmParams.utmCampaign,
-                    "utm_content": utmParams.utmContent,
-                    "utm_group": utmParams.utmGroup,
-                    "utm_term": utmParams.utmTerm
-                };
-
-                if (utmParams.utmSource === "elastic") {
-                    sendAmplitudeAnalyticsData('Email Click', eventProps);
-                }
-
-                if (canLog) {
-                    sendAmplitudeAnalyticsData('Campaign', eventProps, userProps);
-                }
-            }
-        }
-
-        if (logPageEvent && canLog || (pageType === 'Pricing Page' && window.isValidCountry(true))) {
-            var pageEventProps = {
-                'type': pageType,
-                'accepted_country': isValidCountry(),
-                'force_log': !canLog
-            };
-
-            if (utmParams.gclid) {
-                pageEventProps.googleClickId = utmParams.gclid;
-            }
-
-            sendAmplitudeAnalyticsData('Page View', pageEventProps);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.skipInitCookieConsent !== 1 && location.href.indexOf('/frame/') === -1 && window.location.href.indexOf('skipCookie') === -1) {
-            PureCookie.initCookieConsent();
-        }
-        if(!skipSetCountryCode) {
-            setCountryCode('https://location.nicepagesrv.com/country');
-        }
-        setUserIdCookie();
-    });
-</script>
-
-    <!-- Google Tag Manager -->
-    <script>
-        // Define dataLayer and the gtag function.
-        window.dataLayer = window.dataLayer || [];
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-
-        var consentDefaultValue = 'granted';
-        gtag('consent', 'default', {
-            'ad_storage': consentDefaultValue,
-            'ad_user_data': consentDefaultValue,
-            'ad_personalization': consentDefaultValue,
-            'analytics_storage': consentDefaultValue
-        });
-        
-        if (hasGoogleIdFromUrl()) {
-            useExternalGtmCode = 1;
-        }
-        
-        function loadGTM() {
-            var w = window, d = document, s = 'script', l = 'dataLayer';
-            var i = useExternalGtmCode ? 'W76XGFR' : 'GTM-W76XGFR';
-            var src = useExternalGtmCode
-                ? 'https://load.api9.nicepage.com/nldlswob.js?st=' + i
-                : 'https://www.googletagmanager.com/gtm.js?id=' + i;
-
-            w[l] = w[l] || [];
-            w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-
-            var f = d.getElementsByTagName(s)[0];
-            var j = d.createElement(s);
-            var dl = l !== 'dataLayer' ? '&l=' + l : '';
-            j.async = true;
-            j.src = src + dl;
-            f.parentNode.insertBefore(j, f);
-        }
-
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(loadGTM);
-        } else {
-            setTimeout(loadGTM, 2000);
-        }
-    </script>
-    <!-- End Google Tag Manager -->
-    <script>
-        (function() {
-            var hasRefParam = window.location.search.includes('fpr=');
-            var hasFromCookie = document.cookie.includes('_fprom_ref') || document.cookie.includes('_fprom_tid');
-
-            if (hasRefParam || hasFromCookie) {
-                window.fpr = window.fpr || function() {
-                    window.fpr.q = window.fpr.q || [];
-                    window.fpr.q[arguments[0] == 'set' ? 'unshift' : 'push'](arguments);
-                };
-                fpr("init", {cid: "yek6q14u"}); 
-                fpr("click");
-
-                const script = document.createElement('script');
-                script.src = "https://cdn.firstpromoter.com/fpr.js";
-                script.async = true;
-                document.head.appendChild(script);
-            }
-        })();
-    </script>
-    <!-- Facebook Pixel Code -->
-        <script>
-            if(window.hideFacebookPixelCode !== true) {
-                !function (f, b, e, v, n, t, s) {
-                    if (f.fbq) return; n = f.fbq = function () {
-                        n.callMethod ?
-                            n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-                    };
-                    if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-                    n.queue = []; t = b.createElement(e); t.async = !0;
-                    t.src = v; s = b.getElementsByTagName(e)[0];
-                    s.parentNode.insertBefore(t, s)
-                }(window, document, 'script',
-                    'https://connect.facebook.net/en_US/fbevents.js');
-
-                var fbInitOptions = { em: '' };
-                if (clientUserId > 0) {
-                    fbInitOptions.external_id = clientUserId;
-                }
-
-                fbq('init', '251025992170426', fbInitOptions);
-                fbq('track', 'PageView');
-            }
-        </script>
-        <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=251025992170426&ev=PageView&noscript=1" /></noscript>
-    <!-- End Facebook Pixel Code -->
-<!-- Amplitude & ShareASale -->
-<script>
-    function loadAmplitude() {
-        (function(e,t){
-            var n=e.amplitude||{_q:[],_iq:{}};
-            var r=t.createElement("script");
-            r.type="text/javascript";
-            r.integrity="sha384-d/yhnowERvm+7eCU79T/bYjOiMmq4F11ElWYLmt0ktvYEVgqLDazh4+gW9CKMpYW";
-            r.crossOrigin="anonymous";
-            r.async=true;
-            r.src="https://cdn.amplitude.com/libs/amplitude-5.2.2-min.gz.js";
-            r.onload=function(){
-                if (!e.amplitude.runQueuedFunctions) {
-                    console.log("[Amplitude] Error: could not load SDK");
-                }
-                if (typeof window._onAmplitudeReady === 'function') {
-                    window._onAmplitudeReady();
-                }
-            };
-            var i=t.getElementsByTagName("script")[0];
-            i.parentNode.insertBefore(r,i);
-
-            function s(e,t){e.prototype[t]=function(){this._q.push([t].concat(Array.prototype.slice.call(arguments,0)));return this;}}
-            var o=function(){this._q=[];return this;}
-            var a=["add","append","clearAll","prepend","set","setOnce","unset"];
-            for(var u=0;u<a.length;u++){s(o,a[u]);}
-            n.Identify=o;
-            var c=function(){this._q=[];return this;}
-            var l=["setProductId","setQuantity","setPrice","setRevenueType","setEventProperties"];
-            for(var p=0;p<l.length;p++){s(c,l[p]);}
-            n.Revenue=c;
-            var d=["init","logEvent","logRevenue","setUserId","setUserProperties","setOptOut","setVersionName","setDomain","setDeviceId","setGlobalUserProperties","identify","clearUserProperties","setGroup","logRevenueV2","regenerateDeviceId","groupIdentify","onInit","logEventWithTimestamp","logEventWithGroups","setSessionId","resetSessionId"];
-            function v(e){for(var t=0;t<d.length;t++){(function(t){e[d[t]]=function(){e._q.push([d[t]].concat(Array.prototype.slice.call(arguments,0)));};})(t);}}
-            v(n);
-            n.getInstance=function(e){e=(!e||0===e.length?"$default_instance":e).toLowerCase();if(!n._iq.hasOwnProperty(e)){n._iq[e]={_q:[]};v(n._iq[e]);}return n._iq[e];};
-            e.amplitude=n;
-        })(window,document);
-
-        waitForDOMAndAmplitude(function() {
-            var referrer = '';
-            var pageType = 'Template Page Preview';
-            sendAnalyticsFromUrl(referrer, pageType);
-        });
-    }
-
-    if ('requestIdleCallback' in window) {
-        requestIdleCallback(loadAmplitude);
-    } else {
-        setTimeout(loadAmplitude, 2000);
-    }
-
-    var shareasaleSSCID=shareasaleGetParameterByName("sscid");function shareasaleSetCookie(e,a,r,s,t){if(e&&a){var o,n=s?"; path="+s:"",i=t?"; domain="+t:"",S="";r&&((o=new Date).setTime(o.getTime()+r),S="; expires="+o.toUTCString()),document.cookie=e+"="+a+S+n+i+"; SameSite=None;Secure"}}function shareasaleGetParameterByName(e,a){a||(a=window.location.href),e=e.replace(/[\[\]]/g,"\\$&");var r=new RegExp("[?&]"+e+"(=([^&#]*)|&|#|$)").exec(a);return r?r[2]?decodeURIComponent(r[2].replace(/\+/g," ")):"":null}shareasaleSSCID&&shareasaleSetCookie("shareasaleSSCID",shareasaleSSCID,94670778e4,"/");
-</script>
-
-
-
-
-
-<!--[if lt IE 9]>
-    <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-
-
-
-
-
-
-
-    <script src="https://accounts.google.com/gsi/client?hl=en" defer></script>
-    <script>
-        window.newAuthUri = 'https://auth.nicepage.com/authorize';
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof google === 'undefined') {
-                return;
-            }
-            try {
-                google.accounts.id.initialize({
-                    context: 'signin',
-                    client_id: '13150095650-mo8psu2colep6uv90a2mu6r87u87s35a.apps.googleusercontent.com',
-                    callback: window.handleCredentialResponse,
-                    use_fedcm_for_prompt: true,
-                });
-
-                if (window.renderGoogleSignIdButton) {
-                    google.accounts.id.renderButton(
-                        document.getElementById('google-signin-button'),
-                        {
-                            theme: 'filled_blue',
-                            size: 'large',
-                            text: window.renderSignUpGoogleButton ? 'signup_with' : 'signin_with',
-                            width: '250',
-                            locale: 'en',
-                        }
-                    );
-                }
-
-                // display the One Tap dialog
-                if (!window.hideGoogleSignIdPromt) {
-                    google.accounts.id.prompt();
-                }
-            } catch (e) {
-                console.error(e);
-                if (typeof sendMessageOnServer === 'function') {
-                    sendMessageOnServer('auth.js google.accounts.id.initialize error', { error: JSON.stringify(e, Object.getOwnPropertyNames(e)) });
-                }
-            }
-        });
-</script>
-
-
-    
-    <meta name="robots" content="noindex,nofollow">
-    <script type="text/javascript">
-        var device = '';
-        function init($) {
-            $('#previewDesktopBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-
-            $('#previewLaptopBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewTabletBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewPhoneHorizontalBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-            $('#previewPhoneBtn').click(function (e) {
-                setLivePreviewFrameSize($(this));
-                setActiveResponsiveButton(this);
-                e.preventDefault();
-            });
-
-            detectActiveResponsiveButton();
-        }
-
-        if (jQuery.isReady) {
-            init(jQuery);
-        } else {
-            jQuery(function ($) {
-                init($);
-            });
-        }
-
-        function setActiveResponsiveButton(btn) {
-            $(".page-preview-header > a").removeClass("active");
-            $(btn).addClass("active");
-        }
-
-        function detectActiveResponsiveButton() {
-            var d = device;
-            if (!d) {
-                d = 'desktop';
-            }
-            $("#preview" + d.charAt(0).toUpperCase() + d.substr(1) + "Btn").click();
-        }
-
-        function getDataPreviewSizeAttr(el) {
-            return el.closest("[data-preview-size]").attr("data-preview-size");
-        }
-
-        function setLivePreviewFrameSize(srcEl) {
-            var getScrollbarWidth = function () {
-                var s = $('<div style="width:100px;height:100px;overflow:scroll;visibility:hidden;position:absolute;top:-99999px"><div style="height:200px;"></div></div>')
-                    .appendTo("body");
-                var res = s.width() - s.find("div").last().width();
-                s.remove();
-                return res;
-            };
-            var attr = getDataPreviewSizeAttr(srcEl);
-            $('#livePreviewFrame').width(attr.indexOf("%") !== -1 ? attr : parseInt(attr, 10) + getScrollbarWidth());
-        }
-
-    </script>
-    <style>
-        .dialog-wrapper {
-            display: none !important;
-        }
-
-        .wrap,
-        #main {
-            height: 100vh;
-            margin: 0 !important;
-        }
-
-        iframe {
-            display: none;
-        }
-
-
-        html,
-        body {
-            height: 100%;
-        }
-
-        .page-preview {
-            border-radius: 0;
-            height: 100%;
-        }
-
-        .page-preview-header {
-            background: #f2f2f2;
-            border: none;
-            height: 70px;
-            position: relative;
-            text-align: center;
-        }
-
-        .page-preview-header > a {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 4px;
-        }
-
-        .page-preview-header > a:hover {
-            background: #e2f0fc;
-            text-decoration: none;
-        }
-
-        .page-preview-header > a.active {
-            background: #c9e4f9;
-        }
-
-        .page-preview-header > .close {
-            float: right;
-            margin-right: 10px;
-        }
-
-        .page-preview-body {
-            height: calc(100% - 70px);
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .page-preview-body iframe {
-            border: none;
-            display: inline-block;
-            height: 100%;
-        }
-    </style>
-
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Petzker Bet — Poker vs Dealer</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#07080c;--panel:#0e1118;--panel2:#131820;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);--text:#f4f6fb;--muted:#7a8496;--gold:#e8c872;--gold2:#b8923a;--gold-glow:rgba(232,200,114,.18);--green:#12b88a;--red:#c43b4e;--win:#3dd68c;--loss:#ff6b7a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:"SF Pro Display",Inter,system-ui,sans-serif}
+body{overflow-x:hidden;background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(232,200,114,.05),transparent 50%),var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+.app{width:min(100%,440px);margin:auto;padding:8px 10px 18px}
+.top{height:42px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.back{width:36px;height:36px;border:1px solid var(--line);background:var(--panel);border-radius:11px;display:grid;place-items:center;font-size:16px}
+.title{font-size:14px;font-weight:800}.title span{color:var(--gold)}
+.balance{margin-left:auto;background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;padding:6px 12px;font-size:11px;font-weight:800}
+.balance b{color:var(--gold)}
+.status{height:36px;display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);background:linear-gradient(90deg,#12161f,#0c0f16);border-radius:12px;margin-bottom:8px}
+.status-text{font-size:11px;font-weight:800;color:var(--muted)}
+.status-text.info{color:var(--gold)}.status-text.win{color:var(--win)}.status-text.loss{color:var(--loss)}
+.status-detail{margin-left:auto;color:var(--muted);font-size:10px;font-weight:700}
+
+/* TABLE */
+.table-wrap{position:relative;margin-bottom:10px}
+.table{
+  position:relative;border-radius:28px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%,rgba(18,184,138,.14),transparent 55%),
+    linear-gradient(180deg,#0c3d2e 0%,#072a1f 100%);
+  border:3px solid #1a5c45;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.45);
+  min-height:380px;padding:14px 12px 16px;overflow:hidden;
+}
+.table-rim{position:absolute;inset:-5px;border-radius:32px;border:3px solid #2a6b52;pointer-events:none;box-shadow:0 0 0 2px #0a1f18}
+
+/* DEALER zone top */
+.dealer-zone{position:relative;z-index:2;text-align:center;margin-bottom:8px}
+.dealer-figure{
+  display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+}
+.dealer-avatar{
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(145deg,#3a3540,#1a1520);
+  border:2px solid var(--gold);
+  box-shadow:0 0 0 3px var(--gold-glow),0 4px 14px rgba(0,0,0,.4);
+  display:grid;place-items:center;font-size:26px;position:relative;
+}
+.dealer-avatar .badge{
+  position:absolute;bottom:-4px;right:-4px;
+  background:var(--gold);color:#1a1408;font-size:8px;font-weight:900;
+  border-radius:6px;padding:2px 5px;
+}
+.dealer-name{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.3px}
+.dealer-cards{display:flex;justify-content:center;gap:4px;margin-top:6px;min-height:58px}
+.dealer-hand-name{font-size:9px;font-weight:800;color:var(--muted);margin-top:3px;min-height:14px}
+
+/* BOARD center */
+.board-zone{position:relative;z-index:2;text-align:center;margin:10px 0 8px}
+.board-label{font-size:9px;font-weight:800;color:rgba(255,255,255,.28);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.board{display:flex;justify-content:center;gap:6px;min-height:60px;align-items:center}
+.pot{
+  display:inline-block;margin-top:8px;
+  font-size:12px;font-weight:900;color:var(--gold);
+  background:rgba(0,0,0,.4);border:1px solid rgba(232,200,114,.3);
+  border-radius:10px;padding:5px 14px;
+}
+
+/* PLAYER zone bottom */
+.player-zone{position:relative;z-index:2;text-align:center;margin-top:8px}
+.player-cards{display:flex;justify-content:center;gap:6px;min-height:68px}
+.player-meta{margin-top:6px}
+.player-name{font-size:11px;font-weight:800;color:var(--text)}
+.player-stack{font-size:12px;font-weight:900;color:var(--gold);margin-top:2px}
+.player-bet{font-size:10px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 8px;display:inline-block;margin-top:3px}
+.player-bet:empty{display:none}
+.player-hand-name{font-size:9px;font-weight:800;color:var(--muted);margin-top:3px;min-height:14px}
+
+/* cards */
+.card{
+  width:42px;height:60px;border-radius:7px;
+  background:linear-gradient(160deg,#fff,#f0f2f5);
+  box-shadow:0 3px 10px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:4px 5px;font-size:12px;font-weight:900;line-height:1;
+  position:relative;animation:dealIn .28s ease-out;
+}
+.card .suit{font-size:14px;align-self:center}
+.card .rank.bot{transform:rotate(180deg);align-self:flex-end}
+.card.red{color:#c43b4e}.card.black{color:#1a1e28}
+.card.back{
+  background:linear-gradient(145deg,#1a3a5c,#0d2240);
+  border:1.5px solid rgba(232,200,114,.4);color:transparent;
+}
+.card.back:after{
+  content:"";position:absolute;inset:5px;border-radius:4px;
+  border:1px solid rgba(232,200,114,.2);
+  background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(232,200,114,.08) 3px,rgba(232,200,114,.08) 4px);
+}
+.player-cards .card{width:48px;height:68px;font-size:13px}
+.player-cards .card .suit{font-size:16px}
+@keyframes dealIn{from{opacity:0;transform:translateY(-14px) scale(.85)}to{opacity:1;transform:none}}
+
+/* phase / controls */
+.bottom-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.phase{font-size:12px;font-weight:800;color:var(--gold)}
+.blinds{font-size:10px;color:var(--muted);font-weight:700}
+
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.act{height:46px;border-radius:12px;font-size:10px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid var(--line);background:var(--panel)}
+.act:active{transform:scale(.96)}.act:disabled{opacity:.3;cursor:not-allowed}
+.act .ico{font-size:14px}
+.act.fold{background:linear-gradient(145deg,#4a2030,#2a1018);border-color:rgba(196,59,78,.3)}
+.act.check{background:linear-gradient(145deg,#2a3140,#1a1f2a)}
+.act.call{background:linear-gradient(145deg,#1a4a9a,#123570);border-color:rgba(42,111,214,.35)}
+.act.raise{background:linear-gradient(145deg,#8a5a20,#5a3a10);border-color:rgba(232,200,114,.3);color:var(--gold)}
+
+.raise-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.raise-row input[type=range]{flex:1;accent-color:var(--gold)}
+.raise-amt{font-size:12px;font-weight:900;color:var(--gold);min-width:56px;text-align:right}
+
+.note{text-align:center;color:#4a5363;font-size:9px;margin-top:6px;font-weight:600}
+
+.start-overlay{
+  position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  background:rgba(7,8,12,.88);border-radius:28px;backdrop-filter:blur(5px);
+}
+.start-overlay h2{font-size:17px;font-weight:900}
+.start-overlay p{font-size:12px;color:var(--muted);text-align:center;max-width:240px;line-height:1.4}
+.btn-start{
+  padding:12px 28px;border-radius:14px;font-size:13px;font-weight:900;
+  background:linear-gradient(135deg,#1ed9a0,#0a9a6a);color:#fff;
+  box-shadow:0 6px 18px rgba(18,184,138,.3);
+}
+.btn-start:active{transform:scale(.97)}
+
+.deal-hint{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:12px;font-weight:800;color:rgba(255,255,255,.35);z-index:1;
+  pointer-events:none;text-align:center;line-height:1.4;
+}
+</style>
 </head>
-    <body>
-        
+<body>
+<div class="app">
+  <header class="top">
+    <button class="back" id="backBtn">←</button>
+    <div class="title">Petzker <span>Poker</span></div>
+    <div class="balance">💎 <b id="balance">—</b></div>
+  </header>
 
+  <div class="status">
+    <div class="status-text" id="status">Нажмите «Начать»</div>
+    <div class="status-detail" id="statusDetail">Vs Дилер</div>
+  </div>
 
-<div class="page-preview">
-    <div class="page-preview-header">
-        <a class="hidden-sm hidden-xs" href="#" id="previewDesktopBtn" data-preview-size="100%"><img alt="Responsive Desktop Mode" src="//csite.nicepage.com/Images/Site/responsive-desktop.png"></a>
-        <a class="hidden-sm hidden-xs" href="#" id="previewLaptopBtn" data-preview-size="1040px"><img alt="Responsive Laptop Mode" src="//csite.nicepage.com/Images/Site/responsive-laptop.png"></a>
-        <a class="hidden-xs" href="#" id="previewTabletBtn" data-preview-size="820px"><img alt="Responsive Tablet Mode" src="//csite.nicepage.com/Images/Site/responsive-tablet.png"></a>
-        <a class="hidden-xs" href="#" id="previewPhoneHorizontalBtn" data-preview-size="640px"><img alt="Responsive Phone Horizontal Mode" src="//csite.nicepage.com/Images/Site/responsive-phone-horizontal.png"></a>
-        <a class="hidden-xs" href="#" id="previewPhoneBtn" data-preview-size="440px"><img alt="Responsive Phone Mode" src="//csite.nicepage.com/Images/Site/responsive-phone.png"></a>
-        <a class="close" href="/ht/6562656/holistic-healing-therapies-html-template"><img alt="Close" src="//csite.nicepage.com/Images/Site/icon-close.png"></a>
+  <div class="table-wrap">
+    <div class="table" id="table">
+      <div class="table-rim"></div>
+
+      <!-- DEALER -->
+      <div class="dealer-zone">
+        <div class="dealer-figure">
+          <div class="dealer-avatar">🎩<span class="badge">DEALER</span></div>
+          <div class="dealer-name">Дилер</div>
+        </div>
+        <div class="dealer-cards" id="dealerCards"></div>
+        <div class="dealer-hand-name" id="dealerHandName"></div>
+      </div>
+
+      <!-- BOARD -->
+      <div class="board-zone">
+        <div class="board-label">Общие карты</div>
+        <div class="board" id="board"></div>
+        <div class="pot" id="pot">Банк: 0</div>
+      </div>
+
+      <!-- PLAYER -->
+      <div class="player-zone">
+        <div class="player-cards" id="playerCards"></div>
+        <div class="player-meta">
+          <div class="player-name" id="playerName">Вы</div>
+          <div class="player-stack" id="playerStack">Стек: 1000</div>
+          <div class="player-bet" id="playerBet"></div>
+          <div class="player-hand-name" id="playerHandName"></div>
+        </div>
+      </div>
+
+      <div class="deal-hint" id="dealHint">Дилер раздаёт карты…</div>
+
+      <div class="start-overlay" id="startOverlay">
+        <h2>♠ Poker vs Дилер</h2>
+        <p>Вы против дилера.<br>Дилер раздаёт 2 карты вам и себе, затем выкладывает флоп (3 карты), тёрн и ривер.</p>
+        <button class="btn-start" id="startBtn">Начать раздачу</button>
+      </div>
     </div>
-    <div class="page-preview-body">
-        <iframe id="livePreviewFrame" src="https://website6551490.nicepage.io/wellness-22.html?version=a162536b-9d5c-485e-99a0-2b5ee557ea5f" width="1057" height="640" style="width:100%;"></iframe>
-    </div>
+  </div>
+
+  <div class="bottom-info">
+    <div class="phase" id="phaseLabel">—</div>
+    <div class="blinds" id="blindsLabel">Блайнды 10 / 20</div>
+  </div>
+
+  <div class="raise-row" id="raiseRow" style="display:none">
+    <input type="range" id="raiseSlider" min="20" max="1000" step="10" value="40">
+    <div class="raise-amt" id="raiseAmt">40</div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none">
+    <button class="act fold" id="foldBtn"><span class="ico">✕</span>Фолд</button>
+    <button class="act check" id="checkBtn"><span class="ico">✓</span>Чек</button>
+    <button class="act call" id="callBtn"><span class="ico">→</span>Колл</button>
+    <button class="act raise" id="raiseBtn"><span class="ico">↑</span>Рейз</button>
+  </div>
+
+  <div class="note">Дилер раздаёт карты · Вы играете против дилера · Texas Hold'em</div>
 </div>
-<a style="position:absolute;top:17px;left:10px;" href="/"><img alt="NicePage.com" src="//csite.nicepage.com/Images/logo-w.png"></a>
 
-        <script>
-            if (window.parent) {
-                var _w = 0, _h = 0;
-                var updateFormSize = function () {
-                    var form = $('form.shaped-form-extended,form.shaped-form');
-                    var w = form.outerWidth(true);
-                    var h = form.outerHeight(true);
-                    if (Math.abs(_w - w) > 5 || Math.abs(_h - h) > 5) {
-                        _w = w;
-                        _h = h;
-                        var msg = { key: 'login-frame-size', width: w, height: h };
-                        window.parent.postMessage(msg, "*");
-                    }
-                    setTimeout(updateFormSize, 300);
-                }
-                updateFormSize();
-            }
-        </script>
-    </body>
+<script>
+const SUPABASE_URL='https://heubrattlnikielnfheg.supabase.co';
+const PROJECT_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldWJyYXR0bG5pa2llbG5maGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NzYyMjcsImV4cCI6MjEwMDU1MjIyN30._lRs77YnsILFN_Ru4uR2wDWQFtAlazZh8UaaKa7fsnM';
+const sb=window.supabase?.createClient(SUPABASE_URL,PROJECT_ANON_KEY)||null;
+
+const SUITS=['♠','♥','♦','♣'];
+const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const PHASE_RU={deal:'Раздача',preflop:'Префлоп',flop:'Флоп',turn:'Тёрн',river:'Ривер',showdown:'Шоудаун'};
+const SB=10,BB=20,START_STACK=1000;
+const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+const params=new URLSearchParams(location.search);
+let player={id:params.get('uid'),name:params.get('name')||'Вы'};
+let balance=0;
+let g=null; // game state
+let busy=false;
+
+function resolvePlayer(){
+  try{
+    const tg=window.Telegram?.WebApp;
+    if(tg){tg.ready();tg.expand();
+      const u=tg.initDataUnsafe?.user;
+      if(u?.id) player={id:String(u.id),name:[u.first_name,u.last_name].filter(Boolean).join(' ').trim()||u.username||'Вы'};
+    }
+  }catch(e){}
+  $('playerName').textContent=player.name||'Вы';
+}
+async function loadBalance(){
+  if(!player.id||!sb){$('balance').textContent='—';return}
+  try{
+    const{data}=await sb.from('player_ratings').select('total_score').eq('telegram_user_id',player.id).maybeSingle();
+    balance=Number(data?.total_score||0);
+    $('balance').textContent=fmt(balance);
+  }catch(e){}
+}
+
+function newDeck(){
+  const d=[];
+  for(const s of SUITS) for(const r of RANKS) d.push({r,s,red:s==='♥'||s==='♦'});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
+  return d;
+}
+function cardHTML(c,faceDown){
+  if(faceDown||!c) return '<div class="card back"></div>';
+  return `<div class="card ${c.red?'red':'black'}"><span class="rank">${c.r}</span><span class="suit">${c.s}</span><span class="rank bot">${c.r}</span></div>`;
+}
+
+function evalHand(cards){
+  if(cards.length<5) return {rank:0,name:'—',score:0};
+  const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
+  const suits=cards.map(c=>c.s);
+  const counts={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const byCount=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
+  const unique=[...new Set(vals)];
+  const isFlush=SUITS.some(s=>suits.filter(x=>x===s).length>=5);
+  let straightHigh=0;
+  const u=[...unique]; if(u.includes(14)) u.push(1); u.sort((a,b)=>b-a);
+  for(let i=0;i<=u.length-5;i++){if(u[i]-u[i+4]===4){straightHigh=u[i];break}}
+  if(!straightHigh && unique.includes(14)&&unique.includes(5)&&unique.includes(4)&&unique.includes(3)&&unique.includes(2)) straightHigh=5;
+  let rank=0,name='Старшая карта',kickers=[];
+  if(isFlush&&straightHigh){rank=8;name='Стрит-флеш';kickers=[straightHigh]}
+  else if(byCount[0].c===4){rank=7;name='Каре';kickers=[byCount[0].v,byCount[1]?.v||0]}
+  else if(byCount[0].c===3&&byCount[1]?.c>=2){rank=6;name='Фулл-хаус';kickers=[byCount[0].v,byCount[1].v]}
+  else if(isFlush){rank=5;name='Флеш';kickers=unique.slice(0,5)}
+  else if(straightHigh){rank=4;name='Стрит';kickers=[straightHigh]}
+  else if(byCount[0].c===3){rank=3;name='Сет';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else if(byCount[0].c===2&&byCount[1]?.c===2){rank=2;name='Две пары';kickers=[byCount[0].v,byCount[1].v,byCount[2]?.v||0]}
+  else if(byCount[0].c===2){rank=1;name='Пара';kickers=[byCount[0].v,...byCount.slice(1).map(x=>x.v)]}
+  else{kickers=unique.slice(0,5)}
+  let score=rank*1e10; kickers.slice(0,5).forEach((k,i)=>score+=k*Math.pow(100,4-i));
+  return {rank,name,score,kickers};
+}
+function bestHand(hole,board){
+  const all=[...hole,...board];
+  if(all.length<5) return evalHand(all);
+  let best={score:-1}; const n=all.length;
+  function comb(start,chosen){
+    if(chosen.length===5){const h=evalHand(chosen.map(i=>all[i])); if(h.score>best.score) best=h; return}
+    for(let i=start;i<n;i++){chosen.push(i);comb(i+1,chosen);chosen.pop()}
+  }
+  comb(0,[]); return best;
+}
+
+function setStatus(t,cls){$('status').textContent=t;$('status').className='status-text '+(cls||'info')}
+
+function render(){
+  if(!g) return;
+  const showDealer=g.phase==='showdown'||g.handOver;
+  $('dealerCards').innerHTML=(g.dealerHole||[]).map(c=>cardHTML(c,!showDealer)).join('');
+  $('playerCards').innerHTML=(g.playerHole||[]).map(c=>cardHTML(c,false)).join('');
+  $('board').innerHTML=(g.board||[]).map(c=>cardHTML(c)).join('');
+  const potTotal=g.pot+(g.playerBet||0)+(g.dealerBet||0);
+  $('pot').textContent='Банк: '+fmt(potTotal);
+  $('playerStack').textContent='Стек: '+fmt(g.playerStack);
+  $('playerBet').textContent=g.playerBet?('Ставка: '+fmt(g.playerBet)):'';
+  $('phaseLabel').textContent=PHASE_RU[g.phase]||'—';
+  $('blindsLabel').textContent=`Блайнды ${SB} / ${BB}`;
+  if(g.playerShow) $('playerHandName').textContent=g.playerShow.name;
+  else $('playerHandName').textContent='';
+  if(g.dealerShow) $('dealerHandName').textContent=g.dealerShow.name;
+  else $('dealerHandName').textContent='';
+  updateActions();
+}
+
+function updateActions(){
+  if(!g||g.handOver||busy||g.phase==='deal'){
+    $('actions').style.display='none';
+    $('raiseRow').style.display='none';
+    return;
+  }
+  if(g.toAct!=='player'){
+    $('actions').style.display='none';
+    $('raiseRow').style.display='none';
+    return;
+  }
+  $('actions').style.display='grid';
+  const toCall=g.currentBet-g.playerBet;
+  $('checkBtn').style.display=toCall===0?'flex':'none';
+  $('callBtn').style.display=toCall>0?'flex':'none';
+  $('callBtn').innerHTML=`<span class="ico">→</span>Колл ${fmt(toCall)}`;
+  const minR=g.currentBet+g.minRaise;
+  const maxR=g.playerBet+g.playerStack;
+  const sl=$('raiseSlider');
+  sl.min=Math.min(minR,maxR);
+  sl.max=Math.max(minR,maxR);
+  sl.value=Math.min(Math.max(minR,Number(sl.value)||minR),maxR);
+  $('raiseAmt').textContent=fmt(sl.value);
+  $('raiseRow').style.display='flex';
+  $('raiseBtn').disabled=maxR<minR;
+  setStatus('Ваш ход','info');
+  $('statusDetail').textContent=toCall?`До колла ${fmt(toCall)}`:'Можно чек';
+}
+
+/* ── deal animation sequence ── */
+async function startHand(){
+  if(busy) return;
+  busy=true;
+  $('startOverlay').style.display='none';
+  $('dealHint').style.display='block';
+  $('dealHint').textContent='Дилер тасует колоду…';
+  $('actions').style.display='none';
+  $('raiseRow').style.display='none';
+
+  const deck=newDeck();
+  const playerStack=g?g.playerStack:START_STACK;
+  if(playerStack<BB){
+    setStatus('Недостаточно фишек','loss');
+    $('startOverlay').style.display='flex';
+    busy=false; return;
+  }
+
+  g={
+    deck,
+    playerHole:[], dealerHole:[], board:[],
+    playerStack, dealerStack:999999,
+    playerBet:0, dealerBet:0,
+    pot:0, currentBet:0, minRaise:BB,
+    phase:'deal', toAct:null, handOver:false,
+    playerShow:null, dealerShow:null,
+    playerFolded:false
+  };
+  render();
+  await sleep(500);
+
+  // Dealer posts blinds conceptually: player posts BB to start
+  $('dealHint').textContent='Дилер раздаёт карты…';
+  setStatus('Раздача','info');
+
+  // Deal player 1, dealer 1, player 2, dealer 2
+  g.playerHole.push(deck.pop()); render(); await sleep(280);
+  g.dealerHole.push(deck.pop()); render(); await sleep(280);
+  g.playerHole.push(deck.pop()); render(); await sleep(280);
+  g.dealerHole.push(deck.pop()); render(); await sleep(350);
+
+  // Post blinds: player SB-style ante as BB for heads-up simplicity
+  // Heads-up: dealer is BB, player is SB (acts first preflop)
+  const pSB=Math.min(SB,g.playerStack);
+  g.playerStack-=pSB; g.playerBet=pSB;
+  g.dealerBet=BB; // dealer covers BB from infinite stack
+  g.pot=0;
+  g.currentBet=BB;
+  g.minRaise=BB;
+  g.phase='preflop';
+  g.toAct='player';
+  $('dealHint').style.display='none';
+  render();
+  setStatus('Префлоп — ваш ход','info');
+  busy=false;
+  updateActions();
+}
+
+async function playerAction(type,raiseTo){
+  if(!g||busy||g.handOver||g.toAct!=='player') return;
+  busy=true;
+  const toCall=g.currentBet-g.playerBet;
+
+  if(type==='fold'){
+    g.playerFolded=true;
+    g.handOver=true;
+    // dealer wins pot
+    const won=g.pot+g.playerBet+g.dealerBet;
+    g.pot=0; g.playerBet=0; g.dealerBet=0;
+    setStatus('Фолд · Дилер забирает банк','loss');
+    $('statusDetail').textContent='−'+fmt(won-g.dealerBet);
+    render();
+    busy=false;
+    endPrompt();
+    return;
+  }
+  if(type==='check'){
+    if(toCall>0){busy=false;return}
+  } else if(type==='call'){
+    const amt=Math.min(toCall,g.playerStack);
+    g.playerStack-=amt; g.playerBet+=amt;
+  } else if(type==='raise'){
+    const target=raiseTo??(g.currentBet+g.minRaise);
+    const need=Math.max(0,target-g.playerBet);
+    const amt=Math.min(need,g.playerStack);
+    g.playerStack-=amt; g.playerBet+=amt;
+    if(g.playerBet>g.currentBet){
+      g.minRaise=g.playerBet-g.currentBet;
+      g.currentBet=g.playerBet;
+    }
+  }
+
+  render();
+  // Dealer responds
+  await sleep(400);
+  await dealerAct();
+  busy=false;
+}
+
+async function dealerAct(){
+  if(!g||g.handOver) return;
+  g.toAct='dealer';
+  setStatus('Дилер думает…','info');
+  $('actions').style.display='none';
+  await sleep(500+Math.random()*400);
+
+  const toCall=g.currentBet-g.dealerBet;
+  const hand=bestHand(g.dealerHole,g.board);
+  const strength=hand.rank;
+  const rand=Math.random();
+
+  // simple dealer policy
+  if(toCall===0){
+    // check or bet
+    if(strength>=3||(g.phase!=='preflop'&&rand<0.25)){
+      const betTo=g.currentBet+Math.max(BB,g.minRaise);
+      g.dealerBet=betTo;
+      g.minRaise=betTo-g.currentBet;
+      g.currentBet=betTo;
+      setStatus('Дилер ставит '+fmt(betTo),'info');
+      render();
+      g.toAct='player';
+      updateActions();
+      return;
+    }
+    // check -> advance street
+    setStatus('Дилер чек','info');
+    await sleep(300);
+    await nextStreet();
+    return;
+  }
+
+  // facing a bet
+  if(strength>=4||(strength>=2&&rand>0.35)||(strength>=1&&toCall<=BB)){
+    // call
+    g.dealerBet=g.currentBet;
+    setStatus('Дилер колл','info');
+    render();
+    await sleep(300);
+    await nextStreet();
+    return;
+  }
+  if(strength>=5||rand<0.08){
+    // rare raise
+    const betTo=g.currentBet+Math.max(BB*2,g.minRaise);
+    g.dealerBet=betTo;
+    g.minRaise=betTo-g.currentBet;
+    g.currentBet=betTo;
+    setStatus('Дилер рейз до '+fmt(betTo),'info');
+    render();
+    g.toAct='player';
+    updateActions();
+    return;
+  }
+  // fold
+  g.handOver=true;
+  const won=g.pot+g.playerBet+g.dealerBet;
+  g.playerStack+=won;
+  g.pot=0; g.playerBet=0; g.dealerBet=0;
+  setStatus('Дилер сфолдил · Вы забираете банк','win');
+  $('statusDetail').textContent='+'+fmt(won);
+  render();
+  endPrompt();
+}
+
+async function nextStreet(){
+  // collect bets to pot
+  g.pot+=g.playerBet+g.dealerBet;
+  g.playerBet=0; g.dealerBet=0;
+  g.currentBet=0; g.minRaise=BB;
+
+  if(g.phase==='preflop'){
+    g.phase='flop';
+    setStatus('Дилер открывает флоп…','info');
+    $('dealHint').style.display='block';
+    $('dealHint').textContent='Дилер выкладывает флоп';
+    await sleep(400);
+    g.board.push(g.deck.pop()); render(); await sleep(220);
+    g.board.push(g.deck.pop()); render(); await sleep(220);
+    g.board.push(g.deck.pop()); render(); await sleep(300);
+    $('dealHint').style.display='none';
+    g.toAct='player';
+    setStatus('Флоп — ваш ход','info');
+    updateActions();
+    return;
+  }
+  if(g.phase==='flop'){
+    g.phase='turn';
+    setStatus('Дилер открывает тёрн…','info');
+    $('dealHint').style.display='block';
+    $('dealHint').textContent='Дилер выкладывает тёрн';
+    await sleep(400);
+    g.board.push(g.deck.pop()); render(); await sleep(300);
+    $('dealHint').style.display='none';
+    g.toAct='player';
+    setStatus('Тёрн — ваш ход','info');
+    updateActions();
+    return;
+  }
+  if(g.phase==='turn'){
+    g.phase='river';
+    setStatus('Дилер открывает ривер…','info');
+    $('dealHint').style.display='block';
+    $('dealHint').textContent='Дилер выкладывает ривер';
+    await sleep(400);
+    g.board.push(g.deck.pop()); render(); await sleep(300);
+    $('dealHint').style.display='none';
+    g.toAct='player';
+    setStatus('Ривер — ваш ход','info');
+    updateActions();
+    return;
+  }
+  if(g.phase==='river'){
+    await showdown();
+  }
+}
+
+async function showdown(){
+  g.phase='showdown';
+  g.handOver=true;
+  g.toAct=null;
+  setStatus('Шоудаун…','info');
+  $('dealHint').style.display='block';
+  $('dealHint').textContent='Дилер открывает карты';
+  await sleep(500);
+  $('dealHint').style.display='none';
+
+  g.playerShow=bestHand(g.playerHole,g.board);
+  g.dealerShow=bestHand(g.dealerHole,g.board);
+  render();
+  await sleep(600);
+
+  const pot=g.pot+g.playerBet+g.dealerBet;
+  g.playerBet=0; g.dealerBet=0; g.pot=0;
+
+  if(g.playerShow.score>g.dealerShow.score){
+    g.playerStack+=pot;
+    setStatus('Победа · '+g.playerShow.name,'win');
+    $('statusDetail').textContent='+'+fmt(pot);
+  } else if(g.playerShow.score<g.dealerShow.score){
+    setStatus('Поражение · у дилера '+g.dealerShow.name,'loss');
+    $('statusDetail').textContent='−'+fmt(pot);
+  } else {
+    g.playerStack+=Math.floor(pot/2);
+    setStatus('Ничья · '+g.playerShow.name,'info');
+    $('statusDetail').textContent='Пуш';
+  }
+  render();
+  endPrompt();
+}
+
+function endPrompt(){
+  $('actions').style.display='none';
+  $('raiseRow').style.display='none';
+  setTimeout(()=>{
+    if(confirm('Ещё раздачу?')) startHand();
+    else{
+      $('startOverlay').style.display='flex';
+      $('dealHint').style.display='none';
+    }
+  },1600);
+}
+
+$('startBtn').onclick=()=>startHand();
+$('foldBtn').onclick=()=>playerAction('fold');
+$('checkBtn').onclick=()=>playerAction('check');
+$('callBtn').onclick=()=>playerAction('call');
+$('raiseBtn').onclick=()=>playerAction('raise',Number($('raiseSlider').value));
+$('raiseSlider').oninput=()=>{$('raiseAmt').textContent=fmt($('raiseSlider').value)};
+$('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='poker.html'+location.search};
+
+resolvePlayer();
+loadBalance();
+</script>
+</body>
 </html>
