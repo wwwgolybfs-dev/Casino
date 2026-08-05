@@ -22,7 +22,7 @@
   --gold-glow:rgba(232,200,114,.18);
   --red:#c43b4e;
   --red-deep:#8a2433;
-  --black:#1a1e28;
+  --black:#222833;
   --blue:#2a6fd6;
   --blue-deep:#1a4a9a;
   --green:#12b88a;
@@ -80,7 +80,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   box-shadow:0 2px 6px rgba(0,0,0,.4)
 }
 .hball.red{background:linear-gradient(145deg,#e04a5c,#9a2a38)}
-.hball.black{background:linear-gradient(145deg,#2a3040,#12151c)}
+.hball.black{background:linear-gradient(145deg,#2e3545,#1a1f2a)}
 .hball.blue{background:linear-gradient(145deg,#3a82f0,#1a4a9a)}
 .hball.green{background:linear-gradient(145deg,#1ed9a0,#0a7a5a)}
 
@@ -126,23 +126,34 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
     inset 0 2px 0 rgba(255,255,255,.1)
 }
 
-/* colored sectors — 12 sectors: 4 red, 4 black, 3 blue, 1 green */
+/* colored sectors — 24 sectors (15° each): 8 red, 8 black, 6 blue, 2 green */
 .wheel-ring{
   position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(
-    from -15deg,
-    #c43b4e 0deg 30deg,     /* red */
-    #1a1e28 30deg 60deg,    /* black */
-    #2a6fd6 60deg 90deg,    /* blue */
-    #c43b4e 90deg 120deg,   /* red */
-    #1a1e28 120deg 150deg,  /* black */
-    #12b88a 150deg 180deg,  /* green */
-    #c43b4e 180deg 210deg,  /* red */
-    #1a1e28 210deg 240deg,  /* black */
-    #2a6fd6 240deg 270deg,  /* blue */
-    #c43b4e 270deg 300deg,  /* red */
-    #1a1e28 300deg 330deg,  /* black */
-    #2a6fd6 330deg 360deg   /* blue */
+    #c43b4e 0deg 15deg,     /* 0  red */
+    #222833 15deg 30deg,    /* 1  black */
+    #2a6fd6 30deg 45deg,    /* 2  blue */
+    #c43b4e 45deg 60deg,    /* 3  red */
+    #222833 60deg 75deg,    /* 4  black */
+    #2a6fd6 75deg 90deg,    /* 5  blue */
+    #c43b4e 90deg 105deg,   /* 6  red */
+    #222833 105deg 120deg,  /* 7  black */
+    #12b88a 120deg 135deg,  /* 8  green */
+    #c43b4e 135deg 150deg,  /* 9  red */
+    #222833 150deg 165deg,  /* 10 black */
+    #2a6fd6 165deg 180deg,  /* 11 blue */
+    #c43b4e 180deg 195deg,  /* 12 red */
+    #222833 195deg 210deg,  /* 13 black */
+    #2a6fd6 210deg 225deg,  /* 14 blue */
+    #c43b4e 225deg 240deg,  /* 15 red */
+    #222833 240deg 255deg,  /* 16 black */
+    #2a6fd6 255deg 270deg,  /* 17 blue */
+    #c43b4e 270deg 285deg,  /* 18 red */
+    #222833 285deg 300deg,  /* 19 black */
+    #2a6fd6 300deg 315deg,  /* 20 blue */
+    #c43b4e 315deg 330deg,  /* 21 red */
+    #222833 330deg 345deg,  /* 22 black */
+    #12b88a 345deg 360deg   /* 23 green */
   );
   box-shadow:
     inset 0 0 30px rgba(0,0,0,.75),
@@ -161,9 +172,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 .wheel-dividers{
   position:absolute;inset:0;border-radius:50%;
   background:repeating-conic-gradient(
-    from -15deg,
-    rgba(255,255,255,.12) 0deg .5deg,
-    transparent .5deg 30deg
+    rgba(255,255,255,.14) 0deg .4deg,
+    transparent .4deg 15deg
   );
 }
 
@@ -268,7 +278,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 14px rgba(196,59,78,.25)
 }
 .color-bet.black{
-  background:linear-gradient(145deg,#2a3140 0%,#12161e 100%);
+  background:linear-gradient(145deg,#2e3545 0%,#1a1f2a 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 4px 14px rgba(0,0,0,.3)
 }
 .color-bet.blue{
@@ -434,16 +444,17 @@ const COLORS = ['red','black','blue','green'];
 const MULTIPLIER = { red:2, black:2, blue:3, green:10 };
 const COLOR_LABEL = { red:'Красный', black:'Чёрный', blue:'Синий', green:'Зелёный' };
 
-/* Wheel sectors (clockwise from top after -15deg offset):
-   0:red, 1:black, 2:blue, 3:red, 4:black, 5:green,
-   6:red, 7:black, 8:blue, 9:red, 10:black, 11:blue
+/* Wheel sectors — 24 slices (15° each), clockwise from 12 o'clock:
+   8 red ×2, 8 black ×2, 6 blue ×3, 2 green ×10
 */
 const SECTOR_COLORS = [
-  'red','black','blue','red','black','green',
-  'red','black','blue','red','black','blue'
+  'red','black','blue','red','black','blue',   // 0-5
+  'red','black','green','red','black','blue',  // 6-11
+  'red','black','blue','red','black','blue',   // 12-17
+  'red','black','blue','red','black','green'   // 18-23
 ];
-const SECTOR_COUNT = SECTOR_COLORS.length; // 12
-const SECTOR_ANGLE = 360 / SECTOR_COUNT;   // 30deg
+const SECTOR_COUNT = SECTOR_COLORS.length; // 24
+const SECTOR_ANGLE = 360 / SECTOR_COUNT;   // 15deg
 
 const fmt = n => Number(n||0).toLocaleString('ru-RU');
 
@@ -651,10 +662,11 @@ async function spin(){
   const idx = Math.floor(Math.random() * SECTOR_COUNT);
   const result = SECTOR_COLORS[idx];
 
-  // rotate so winning sector center lands under pointer (top)
-  // sectors start at -15deg, each 30deg → center of sector i is at i*30 -15 +15 = i*30
-  const targetAngle = 360 - (idx * SECTOR_ANGLE);
-  rotation += 360 * 7 + targetAngle;
+  // Bring the CENTER of the winning sector exactly under the pointer (top / 0°)
+  // Sector idx occupies [idx * 15°, (idx+1) * 15°], center = (idx + 0.5) * 15°
+  const centerAngle = (idx + 0.5) * SECTOR_ANGLE;
+  const targetAngle = (360 - centerAngle) % 360;
+  rotation += 360 * 8 + targetAngle;
   $('wheel').classList.add('spinning');
   $('wheel').style.transform = `perspective(900px) rotateX(14deg) rotate(${rotation}deg)`;
 
@@ -740,4 +752,4 @@ if(window.Telegram?.WebApp){
 }
 </script>
 </body>
-</html>
+  </html>
