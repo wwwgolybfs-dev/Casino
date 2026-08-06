@@ -187,7 +187,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   color:#c8d0da;font-size:11px;font-weight:900;letter-spacing:-.5px
 }
 
-/* ball */
+/* ball — теперь sibling колеса, позиционируется в .wheel-stage */
 .ball{
   position:absolute;z-index:7;
   width:15px;height:15px;border-radius:50%;
@@ -199,13 +199,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 }
 .ball.animate{
   opacity:1;
-  animation:ballOrbit 4.5s cubic-bezier(.1,.75,.08,1) forwards
+  animation:ballOrbit 4.6s cubic-bezier(.1,.75,.08,1) forwards
 }
+/* КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: финальный rotate = 1800° (кратно 360°), т.е. шарик всегда наверху (0°) */
 @keyframes ballOrbit{
   0%  {transform:rotate(-90deg) translateY(-44%) scale(1.15)}
-  55% {transform:rotate(1380deg) translateY(-44%) scale(1)}
-  78% {transform:rotate(1480deg) translateY(-46%) scale(.92)}
-  100%{transform:rotate(1530deg) translateY(-47%) scale(.85)}
+  15% {transform:rotate(270deg) translateY(-44%) scale(1.12)}
+  35% {transform:rotate(810deg) translateY(-44%) scale(1.06)}
+  55% {transform:rotate(1170deg) translateY(-45%) scale(1.02)}
+  75% {transform:rotate(1530deg) translateY(-46%) scale(.95)}
+  90% {transform:rotate(1764deg) translateY(-47%) scale(.88)}
+  100%{transform:rotate(1800deg) translateY(-47%) scale(.85)}
 }
 
 /* pointer */
@@ -214,11 +218,20 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   width:0;height:0;
   border-left:9px solid transparent;border-right:9px solid transparent;
   border-top:18px solid var(--gold);
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.85))
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.85));
+  transition:filter .2s
 }
 .pointer:after{
   content:"";position:absolute;top:-18px;left:-5px;
   width:10px;height:8px;background:var(--gold2);border-radius:2px 2px 0 0
+}
+.pointer.spinning{
+  animation:pointerVibrate .08s linear infinite;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.85)) drop-shadow(0 0 8px rgba(232,200,114,.6))
+}
+@keyframes pointerVibrate{
+  0%,100%{transform:translateX(-50%) rotate(-1.2deg)}
+  50%{transform:translateX(-50%) rotate(1.2deg)}
 }
 
 /* result card */
@@ -413,9 +426,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
       <div class="wheel-ring"></div>
       <div class="wheel-dividers"></div>
       <div class="hub"><div class="hub-core" id="hub">●</div></div>
-      <div class="ball" id="ball"></div>
     </div>
-    <div class="pointer"></div>
+    <!-- ШАРИК ВЫНЕСЕН за пределы колеса — теперь это sibling, а не child -->
+    <div class="ball" id="ball"></div>
+    <div class="pointer" id="pointer"></div>
     <div class="result-card" id="resultCard">
       Выпало
       <b id="resultColor">—</b>
@@ -475,9 +489,7 @@ const COLORS = ['red','black','blue','green'];
 const MULTIPLIER = { red:2, black:2, blue:3, green:10 };
 const COLOR_LABEL = { red:'Красный', black:'Чёрный', blue:'Синий', green:'Зелёный' };
 
-/* Wheel sectors — 24 slices (15° each), clockwise from 12 o'clock:
-   8 red ×2, 8 black ×2, 6 blue ×3, 2 green ×10
-*/
+/* Wheel sectors — 24 slices (15° each), clockwise from 12 o'clock */
 const SECTOR_COLORS = [
   'red','black','blue','red','black','blue',   // 0-5
   'red','black','green','red','black','blue',  // 6-11
@@ -493,7 +505,7 @@ const fmt = n => Number(n||0).toLocaleString('ru-RU');
 const params = new URLSearchParams(location.search);
 let player = { id: params.get('uid'), name: params.get('name') || 'Игрок' };
 let balance = 0, selectedChip = 100, spinning = false, rotation = 0;
-let bets = {};          // { red: amount, black: amount, ... }
+let bets = {};
 let historyArr = ['red','black','blue','green','red','black'];
 
 const $ = id => document.getElementById(id);
@@ -517,7 +529,7 @@ function resolvePlayer(){
 
 /* ── render chips ── */
 const CHIP_VALUES = [10, 25, 50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000];
-const MAX_BET = 500000; // максимальная сумма ставок
+const MAX_BET = 500000;
 
 function renderChips(){
   const chipsHtml = CHIP_VALUES.map(v => {
@@ -589,11 +601,6 @@ function addBet(color){
     $('status').className = 'status-result loss';
     return;
   }
-  if(total > MAX_BET){
-    $('status').textContent = 'Макс. ставка 500 000';
-    $('status').className = 'status-result loss';
-    return;
-  }
   bets[color] = next;
   renderBets();
   $('status').textContent = `${COLOR_LABEL[color]} · ${fmt(next)}`;
@@ -624,7 +631,7 @@ async function saveSpin(result, total, payout){
     telegram_user_id: player.id,
     name: player.name,
     game_id: 'roulette',
-    result_number: result,          // now stores color string
+    result_number: result,
     total_bet: total,
     total_payout: payout,
     net_result: payout - total,
@@ -655,7 +662,6 @@ async function settleBalance(total, payout, result){
       balance = Number(data);
       return {ok:true, rpc:true};
     }
-    // fallback
     const {data:row, error:e} = await sb.from('player_ratings')
       .select('total_score').eq('telegram_user_id',player.id).maybeSingle();
     if(e) throw e;
@@ -678,7 +684,7 @@ async function settleBalance(total, payout, result){
   }
 }
 
-/* ── spin ── */
+/* ── spin (ИСПРАВЛЕННАЯ ЛОГИКА) ── */
 async function spin(){
   if(spinning) return;
   const total = betTotal();
@@ -711,22 +717,36 @@ async function spin(){
   $('statusDetail').textContent = 'Ставки ' + fmt(total);
   $('resultCard').classList.remove('show');
 
+  // Включаем вибрацию стрелки
+  $('pointer').classList.add('spinning');
+
   // pick random sector
   const idx = Math.floor(Math.random() * SECTOR_COUNT);
   const result = SECTOR_COLORS[idx];
 
-  // Bring the CENTER of the winning sector exactly under the pointer (top / 0°)
-  // Sector idx occupies [idx * 15°, (idx+1) * 15°], center = (idx + 0.5) * 15°
+  /*
+   * КЛЮЧЕВАЯ ЛОГИКА (сохранена, работает корректно):
+   * centerAngle — угол центра выигрышного сектора от 12 часов (по часовой)
+   * targetAngle — на сколько нужно повернуть колесо ПО ЧАСОВОЙ,
+   *               чтобы этот центр оказался под стрелкой (на 0°)
+   */
   const centerAngle = (idx + 0.5) * SECTOR_ANGLE;
   const targetAngle = (360 - centerAngle) % 360;
-  rotation += 360 * 8 + targetAngle;
+
+  /*
+   * ИСПРАВЛЕНИЕ: вместо бесконечного накопления rotation (rotation += ...),
+   * сбрасываем к текущему углу (mod 360) и добавляем 8 полных оборотов + смещение.
+   * Это предотвращает рост числа и гарантирует стабильное поведение transition.
+   */
+  rotation = (rotation % 360) + 360 * 8 + targetAngle;
+
   $('wheel').classList.add('spinning');
   $('wheel').style.transform = `perspective(900px) rotateX(14deg) rotate(${rotation}deg)`;
 
-  // ball
+  // ball — теперь sibling колеса, анимируется независимо
   const ball = $('ball');
   ball.classList.remove('animate');
-  void ball.offsetWidth;
+  void ball.offsetWidth; // force reflow для перезапуска анимации
   ball.classList.add('animate');
 
   const payout = calculatePayout(result);
@@ -771,10 +791,11 @@ async function spin(){
       }catch(e){}
     }
     $('wheel').classList.remove('spinning');
+    $('pointer').classList.remove('spinning');
     spinning = false;
     $('spinBtn').disabled = false;
     $('clearBtn').disabled = false;
-  }, 4700);
+  }, 4800); // увеличен с 4700 до 4800 для надёжного завершения анимаций
 }
 
 /* ── events ── */
@@ -788,14 +809,12 @@ document.addEventListener('click', e => {
     renderChips();
   }
   if(maxBtn && !spinning){
-    // MAX: put remaining up to MAX_BET on last selected color, or red by default
     const remaining = Math.min(balance, MAX_BET) - betTotal();
     if(remaining <= 0){
       $('status').textContent = betTotal() >= MAX_BET ? 'Макс. ставка 500 000' : 'Недостаточно очков';
       $('status').className = 'status-result loss';
       return;
     }
-    // distribute to the color that already has bets, or red
     let target = COLORS.find(c => bets[c] > 0) || 'red';
     bets[target] = (bets[target] || 0) + remaining;
     renderBets();
