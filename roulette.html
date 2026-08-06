@@ -194,22 +194,21 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   background:radial-gradient(circle at 32% 26%,#fff,#d4dae2 42%,#8a949e 78%,#5a6470);
   box-shadow:0 3px 10px rgba(0,0,0,.85),inset 0 1px 2px rgba(255,255,255,.65);
   left:50%;top:50%;margin:-7.5px;
-  transform:rotate(-90deg) translateY(-44%);
+  transform:rotate(270deg) translateY(-44%);
   opacity:0;pointer-events:none
 }
 .ball.animate{
   opacity:1;
   animation:ballOrbit 4.6s cubic-bezier(.1,.75,.08,1) forwards
 }
-/* КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: финальный rotate = 1800° (кратно 360°), т.е. шарик всегда наверху (0°) */
 @keyframes ballOrbit{
-  0%  {transform:rotate(-90deg) translateY(-44%) scale(1.15)}
-  15% {transform:rotate(270deg) translateY(-44%) scale(1.12)}
-  35% {transform:rotate(810deg) translateY(-44%) scale(1.06)}
-  55% {transform:rotate(1170deg) translateY(-45%) scale(1.02)}
-  75% {transform:rotate(1530deg) translateY(-46%) scale(.95)}
-  90% {transform:rotate(1764deg) translateY(-47%) scale(.88)}
-  100%{transform:rotate(1800deg) translateY(-47%) scale(.85)}
+  0%  {transform:rotate(270deg) translateY(-44%) scale(1.15)}
+  15% {transform:rotate(-90deg) translateY(-44%) scale(1.12)}
+  35% {transform:rotate(-630deg) translateY(-44%) scale(1.06)}
+  55% {transform:rotate(-990deg) translateY(-45%) scale(1.02)}
+  75% {transform:rotate(-1350deg) translateY(-46%) scale(.95)}
+  90% {transform:rotate(-1584deg) translateY(-47%) scale(.88)}
+  100%{transform:rotate(calc(var(--ball-final-angle, 0deg) - 1800deg)) translateY(-47%) scale(.85)}
 }
 
 /* pointer */
@@ -226,7 +225,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
   width:10px;height:8px;background:var(--gold2);border-radius:2px 2px 0 0
 }
 .pointer.spinning{
-  animation:pointerVibrate .08s linear infinite;
+  animation:pointerVibrate .15s linear infinite;
   filter:drop-shadow(0 3px 6px rgba(0,0,0,.85)) drop-shadow(0 0 8px rgba(232,200,114,.6))
 }
 @keyframes pointerVibrate{
@@ -504,7 +503,7 @@ const fmt = n => Number(n||0).toLocaleString('ru-RU');
 /* ── state ── */
 const params = new URLSearchParams(location.search);
 let player = { id: params.get('uid'), name: params.get('name') || 'Игрок' };
-let balance = 0, selectedChip = 100, spinning = false, rotation = 0;
+let balance = 0, selectedChip = 100, spinning = false, rotation = 352.5;
 let bets = {};
 let historyArr = ['red','black','blue','green','red','black'];
 
@@ -734,11 +733,11 @@ async function spin(){
   const targetAngle = (360 - centerAngle) % 360;
 
   /*
-   * ИСПРАВЛЕНИЕ: вместо бесконечного накопления rotation (rotation += ...),
-   * сбрасываем к текущему углу (mod 360) и добавляем 8 полных оборотов + смещение.
-   * Это предотвращает рост числа и гарантирует стабильное поведение transition.
+   * ИСПРАВЛЕНИЕ: правильный расчёт дельты от текущей позиции
+   * до целевой, + 8 полных оборотов.
    */
-  rotation = (rotation % 360) + 360 * 8 + targetAngle;
+  const delta = (targetAngle - (rotation % 360) + 360) % 360;
+  rotation = rotation + 360 * 8 + delta;
 
   $('wheel').classList.add('spinning');
   $('wheel').style.transform = `perspective(900px) rotateX(14deg) rotate(${rotation}deg)`;
@@ -746,7 +745,13 @@ async function spin(){
   // ball — теперь sibling колеса, анимируется независимо
   const ball = $('ball');
   ball.classList.remove('animate');
+  document.documentElement.style.setProperty('--ball-final-angle', '0deg');
   void ball.offsetWidth; // force reflow для перезапуска анимации
+
+  // Финальный угол шарика = targetAngle (останавливается там же, где стрелка)
+  const ballFinalAngle = targetAngle;
+  document.documentElement.style.setProperty('--ball-final-angle', `${ballFinalAngle}deg`);
+
   ball.classList.add('animate');
 
   const payout = calculatePayout(result);
@@ -795,7 +800,7 @@ async function spin(){
     spinning = false;
     $('spinBtn').disabled = false;
     $('clearBtn').disabled = false;
-  }, 4800); // увеличен с 4700 до 4800 для надёжного завершения анимаций
+  }, 5000);
 }
 
 /* ── events ── */
