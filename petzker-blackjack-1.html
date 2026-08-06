@@ -261,6 +261,8 @@ let activeHand = 0;
 let dealer = [];
 let dealerHoleHidden = true;
 let busy = false;
+let currentRoundId = null;      // для защиты от race condition в setTimeout
+let settledThisRound = false;   // для защиты от повторного вызова finishRound
 
 const $ = id => document.getElementById(id);
 
@@ -453,13 +455,14 @@ async function settle(totalBet, payout, overallResult, playerScore, dealerScore,
       balance = Number(data);
       return {ok:true, rpc:true};
     }
-    // fallback
+    
+    // fallback: атомарное обновление через вычисление дельты
+    const delta = payout - totalBet;
     const {data:row, error:e} = await sb.from('player_ratings')
       .select('total_score').eq('telegram_user_id', player.id).maybeSingle();
     if(e) throw e;
     const current = Number(row?.total_score || 0);
-    const next = current - totalBet + payout;
-    if(next < 0) throw new Error('Недостаточно очков');
+    const next = Math.max(0, current + delta);
     const {error:u} = await sb.from('player_ratings').upsert({
       telegram_user_id: player.id,
       name: player.name,
@@ -478,7 +481,7 @@ async function settle(totalBet, payout, overallResult, playerScore, dealerScore,
       player_score: playerScore,
       dealer_score: dealerScore,
       result: overallResult,
-      net_result: payout - totalBet,
+      net_result: delta,
       hands_json: handsData,
       played_at: new Date().toISOString()
     }]);
@@ -538,6 +541,8 @@ async function deal(){
     return;
   }
   busy = true;
+  currentRoundId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  settledThisRound = false;
   updateUI();
 
   hands = [{ cards: [newCard(), newCard()], bet, stood: false, doubled: false, bust: false, result: null }];
@@ -701,6 +706,10 @@ async function playDealer(){
 }
 
 async function finishRound(overall, totalBet, payout){
+  // Защита от повторного вызова finishRound
+  if(settledThisRound) return;
+  settledThisRound = true;
+  
   if(totalBet === undefined){
     totalBet = hands.reduce((s,h) => s + h.bet, 0);
     payout = 0;
@@ -746,12 +755,18 @@ async function finishRound(overall, totalBet, payout){
   updateUI();
 
   // auto return to betting after short delay
+  // Защита от race condition: сохраняем roundId и проверяем его в setTimeout
+  const savedRoundId = currentRoundId;
   setTimeout(() => {
+    // Если roundId изменился, значит пользователь уже начал новую игру
+    if(currentRoundId !== savedRoundId) return;
+    
     bet = 0;
     hands = [];
     dealer = [];
     dealerHoleHidden = true;
     phase = 'betting';
+    settledThisRound = false;
     setStatus('Поставьте ставку', 'info');
     $('statusDetail').textContent = '—';
     updateUI();
